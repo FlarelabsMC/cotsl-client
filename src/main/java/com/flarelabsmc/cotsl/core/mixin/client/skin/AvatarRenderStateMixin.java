@@ -1,0 +1,22 @@
+package com.flarelabsmc.cotsl.core.mixin.client.skin;
+
+import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import org.spongepowered.asm.mixin.Mixin;
+
+import java.util.UUID;
+
+@Mixin(AvatarRenderState.class)
+public class AvatarRenderStateMixin implements AvatarRenderStateExt {
+    private UUID uuid;
+
+    @Override
+    public UUID getUUID() {
+        return uuid;
+    }
+
+    @Override
+    public void setUUID(UUID uuid) {
+        this.uuid = uuid;
+    }
+}

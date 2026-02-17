@@ -15,23 +15,20 @@ public record CharData(
         int hairColor,
         int facialHair,
         int bodyType,
-        int shirtType,
         int shirtColor,
-        int pantsType,
+        int legType,
         int pantsColor,
         int shoesType,
         int shoesColor,
-        boolean canChangeSkinColor,
         int skinColor,
         int eyesColor,
-        int eyebrowsColor,
         double height
 ) {
     public static CharData init() {
         return new CharData(
-                0, 0, 0, 0x000000, 0, 0, 0, 0xFFFFFF,
-                0, 0xFFFFFF, 0, 0xFFFFFF, true,
-                0xF5CFA3, 0xFFFFFF, 0xFFFFFF, 1.0
+                0, 0, 0, 0, 0, 0, 0xFFFFFF, 0,
+                0xFFFFFF, 0, 0xFFFFFF, 0,
+                0, 1.0
         );
     }
 
@@ -41,9 +38,8 @@ public record CharData(
 
     public static class Builder {
         private int headShape, jawShape, hair, hairColor, facialHair, bodyType;
-        private int shirtType, shirtColor, pantsType, pantsColor, shoesType, shoesColor;
-        private boolean canChangeSkinColor;
-        private int skinColor, eyesColor, eyebrowsColor;
+        private int shirtColor, legType, pantsColor, shoesType, shoesColor;
+        private int skinColor, eyesColor;
         private double height;
 
         public Builder(CharData data) {
@@ -53,16 +49,13 @@ public record CharData(
             this.hairColor = data.hairColor;
             this.facialHair = data.facialHair;
             this.bodyType = data.bodyType;
-            this.shirtType = data.shirtType;
             this.shirtColor = data.shirtColor;
-            this.pantsType = data.pantsType;
+            this.legType = data.legType;
             this.pantsColor = data.pantsColor;
             this.shoesType = data.shoesType;
             this.shoesColor = data.shoesColor;
-            this.canChangeSkinColor = data.canChangeSkinColor;
             this.skinColor = data.skinColor;
             this.eyesColor = data.eyesColor;
-            this.eyebrowsColor = data.eyebrowsColor;
             this.height = data.height;
         }
 
@@ -72,23 +65,20 @@ public record CharData(
         public Builder hairColor(int hairColor) { this.hairColor = hairColor; return this; }
         public Builder facialHair(int facialHair) { this.facialHair = facialHair; return this; }
         public Builder bodyType(int bodyType) { this.bodyType = bodyType; return this; }
-        public Builder shirtType(int shirtType) { this.shirtType = shirtType; return this; }
         public Builder shirtColor(int shirtColor) { this.shirtColor = shirtColor; return this; }
-        public Builder pantsType(int pantsType) { this.pantsType = pantsType; return this; }
+        public Builder legType(int legType) { this.legType = legType; return this; }
         public Builder pantsColor(int pantsColor) { this.pantsColor = pantsColor; return this; }
         public Builder shoesType(int shoesType) { this.shoesType = shoesType; return this; }
         public Builder shoesColor(int shoesColor) { this.shoesColor = shoesColor; return this; }
-        public Builder canChangeSkinColor(boolean canChangeSkinColor) { this.canChangeSkinColor = canChangeSkinColor; return this; }
         public Builder skinColor(int skinColor) { this.skinColor = skinColor; return this; }
         public Builder eyesColor(int eyesColor) { this.eyesColor = eyesColor; return this; }
-        public Builder eyebrowsColor(int eyebrowsColor) { this.eyebrowsColor = eyebrowsColor; return this; }
         public Builder height(double height) { this.height = height; return this; }
 
         public CharData build() {
             return new CharData(headShape, jawShape, hair, hairColor, facialHair,
-                    bodyType, shirtType, shirtColor, pantsType, pantsColor,
-                    shoesType, shoesColor, canChangeSkinColor, skinColor,
-                    eyesColor, eyebrowsColor, height);
+                    bodyType, shirtColor, legType, pantsColor,
+                    shoesType, shoesColor, skinColor,
+                    eyesColor, height);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.geo;
 
-import com.flarelabsmc.cotsl.client.render.EntityRenderers;
+import com.flarelabsmc.cotsl.client.render.CotSLEntityRenderers;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -20,7 +20,7 @@ public class GeoEmissiveEntityRenderer<T extends Entity & GeoAnimatable, R exten
 
     public final Identifier TEXTURE = Identifier.fromNamespaceAndPath("cotsl", "textures/entity/wayfinder_beam.png");
 
-    public final RenderType RENDER_TYPE = RenderType.create("entity_cutout_no_cull_emissive", RenderSetup.builder(EntityRenderers.ENTITY_CUTOUT_NO_CULL_EMISSIVE)
+    public final RenderType RENDER_TYPE = RenderType.create("entity_cutout_no_cull_emissive", RenderSetup.builder(CotSLEntityRenderers.ENTITY_CUTOUT_NO_CULL_EMISSIVE)
             .withTexture("Sampler0", TEXTURE)
             .affectsCrumbling()
             .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)

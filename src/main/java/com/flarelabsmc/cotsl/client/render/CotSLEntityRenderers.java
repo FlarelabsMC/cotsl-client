@@ -14,7 +14,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 
 @EventBusSubscriber(Dist.CLIENT)
-public class EntityRenderers {
+public class CotSLEntityRenderers {
     public static void init() {}
 
     @SubscribeEvent
