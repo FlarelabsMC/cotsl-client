@@ -76,9 +76,9 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
         @Override
         public void setupAnim(AvatarRenderState state) {
-            float diff = ((state.bodyRot * Mth.DEG_TO_RAD) - state.yRot) * 3f;
-            this.leftEye.x = diff / 360 + 1.25f;
-            this.rightEye.x = diff / 360 + 1.25f;
+            float diff = ((Mth.wrapDegrees(state.bodyRot) * Mth.DEG_TO_RAD) - state.yRot) * 3f;
+            this.leftEye.x = diff / 360;
+            this.rightEye.x = diff / 360;
         }
     }
 }
