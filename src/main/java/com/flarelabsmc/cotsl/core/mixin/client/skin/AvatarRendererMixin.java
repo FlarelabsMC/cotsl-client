@@ -2,9 +2,10 @@ package com.flarelabsmc.cotsl.core.mixin.client.skin;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
+import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerMouthRenderLayer;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
-import com.flarelabsmc.cotsl.common.storage.user.PermanentUserStorage;
+import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -37,6 +38,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
+        this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
     }
 
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;bakeLayer(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;"))
@@ -50,7 +52,8 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         Identifier id = Identifier.parse("cotsl:avatars/" + entity.getUUID());
         DynamicTexture cached = Frankenstein.getCachedTexture(id);
         if (cached != null) return;
-        NativeImage skin = CharacterSkinGenerator.createSkin(PermanentUserStorage.getUserData(entity.getUUID()).getCharacterData());
+//        CharData data = PermanentUserStorage.getUserData(entity.getUUID()).getCharacterData();
+        NativeImage skin = CharacterSkinGenerator.createSkin(CharData.init().rebuild().shirtColor(0x88495734).pantsColor(0x88b5b274).build());
         Frankenstein.registerTexture(id, skin);
     }
 

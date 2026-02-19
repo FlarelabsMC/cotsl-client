@@ -125,32 +125,52 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
-    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor) {
+    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor, int shoesColor) {
         Frankenstein.Monster builder = new Frankenstein.Monster(64, 64);
         NativeImage headTexture = getHeadShape(headShape, skinColor);
         NativeImage jawTexture = getJawShape(jawShape, skinColor);
         NativeImage eyesTexture = getEyes(eyeColor);
+        NativeImage bodyTexture = getBodyType(gender, bodyType, skinColor);
+        NativeImage shirtTexture = getShirt(gender, bodyType);
+        NativeImage leftSleeveTexture = getSleeve(gender, bodyType, true);
+        NativeImage rightSleeveTexture = getSleeve(gender, bodyType, false);
+        NativeImage leftArmTexture = getArms(skinColor, true);
+        NativeImage rightArmTexture = getArms(skinColor, false);
+        NativeImage leftLegTexture = getLegs(skinColor, true);
+        NativeImage rightLegTexture = getLegs(skinColor, false);
+        NativeImage leftPantsTexture = getPants(legType, true);
+        NativeImage rightPantsTexture = getPants(legType, false);
         builder.addTexture(headTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 0, false));
         builder.addTexture(jawTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 1, true));
         builder.addTexture(eyesTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 0, false));
-        builder.addTexture(getBodyType(gender, bodyType, skinColor), new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
-        builder.addTexture(getShirt(gender, bodyType), new Frankenstein.UVLocation(16, 32, 24, 16, 0, false));
-        builder.addTexture(getSleeve(gender, bodyType, true), new Frankenstein.UVLocation(40, 32, 14, 16, 0, false));
-        builder.addTexture(getSleeve(gender, bodyType, false), new Frankenstein.UVLocation(48, 48, 14, 16, 0, false));
-        builder.addTexture(getArms(skinColor, true), new Frankenstein.UVLocation(32, 48, 14, 16, 0, false));
-        builder.addTexture(getArms(skinColor, false), new Frankenstein.UVLocation(40, 16, 14, 16, 0, false));
-        builder.addTexture(getLegs(skinColor, true), new Frankenstein.UVLocation(16, 48, 16, 16, 0, false));
-        builder.addTexture(getLegs(skinColor, false), new Frankenstein.UVLocation(0, 16, 16, 16, 0, false));
-        builder.addTexture(getPants(legType, true), new Frankenstein.UVLocation(0, 48, 16, 16, 0, false));
-        builder.addTexture(getPants(legType, false), new Frankenstein.UVLocation(16, 48, 16, 16, 0, false));
+        builder.addTexture(bodyTexture, new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(shirtTexture, shirtColor), new Frankenstein.UVLocation(16, 32, 24, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(leftSleeveTexture, shirtColor), new Frankenstein.UVLocation(40, 32, 14, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(rightSleeveTexture, shirtColor), new Frankenstein.UVLocation(48, 48, 14, 16, 0, false));
+        builder.addTexture(leftArmTexture, new Frankenstein.UVLocation(32, 48, 14, 16, 0, false));
+        builder.addTexture(rightArmTexture, new Frankenstein.UVLocation(40, 16, 14, 16, 0, false));
+        builder.addTexture(leftLegTexture, new Frankenstein.UVLocation(16, 48, 16, 16, 0, false));
+        builder.addTexture(rightLegTexture, new Frankenstein.UVLocation(0, 16, 16, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(leftPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 48, 16, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(rightPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 32, 16, 16, 0, false));
         NativeImage result = builder.build();
         headTexture.close();
         jawTexture.close();
         eyesTexture.close();
+        bodyTexture.close();
+        shirtTexture.close();
+        leftSleeveTexture.close();
+        rightSleeveTexture.close();
+        leftArmTexture.close();
+        rightArmTexture.close();
+        leftLegTexture.close();
+        rightLegTexture.close();
+        leftPantsTexture.close();
+        rightPantsTexture.close();
         return result;
     }
 
     public static NativeImage createSkin(CharData data) {
-        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor());
+        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor(), data.shoesColor());
     }
 }

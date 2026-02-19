@@ -57,6 +57,29 @@ public class Frankenstein {
         return resultImage;
     }
 
+    public static NativeImage tint(NativeImage source, int tintColor) {
+        NativeImage resultImage = new NativeImage(source.getWidth(), source.getHeight(), true);
+        int tintR = (tintColor >> 16) & 0xFF;
+        int tintG = (tintColor >> 8) & 0xFF;
+        int tintB = tintColor & 0xFF;
+        for (int x = 0; x < source.getWidth(); x++) {
+            for (int y = 0; y < source.getHeight(); y++) {
+                int pixel = source.getPixel(x, y);
+                int alpha = (pixel >> 24) & 0xFF;
+                if (alpha == 0) {
+                    resultImage.setPixel(x, y, pixel);
+                    continue;
+                }
+                int r = ((pixel >> 16) & 0xFF) * tintR / 255;
+                int g = ((pixel >> 8) & 0xFF) * tintG / 255;
+                int b = (pixel & 0xFF) * tintB / 255;
+                int tinted = (alpha << 24) | (r << 16) | (g << 8) | b;
+                resultImage.setPixel(x, y, tinted);
+            }
+        }
+        return resultImage;
+    }
+
     /**
      * Texture builder. The name is clear.
      */

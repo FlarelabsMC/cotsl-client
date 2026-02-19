@@ -5,4 +5,10 @@ import java.util.UUID;
 public interface AvatarRenderStateExt {
     UUID getUUID();
     void setUUID(UUID uuid);
+    int getMouthPose();
+    void setMouthPose(int pose);
+    String getCurrentSpeech();
+    void setCurrentSpeech(String key);
+    float getSpeechProgress();
+    void setSpeechProgress(float progress);
 }

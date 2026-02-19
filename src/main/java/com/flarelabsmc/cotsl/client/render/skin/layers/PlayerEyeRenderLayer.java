@@ -33,7 +33,6 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
-        float xrot = state.xRot, yrot = state.yRot;
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateExt) state).getUUID();
