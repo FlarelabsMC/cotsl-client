@@ -29,7 +29,7 @@ public class Frankenstein {
 
     public static NativeImage paletteSwap(Map<Integer, Integer> colorMap, NativeImage sourceImage) {
         NativeImage resultImage = new NativeImage(sourceImage.getWidth(), sourceImage.getHeight(), true);
-        for (int x = 0; x < sourceImage.getWidth(); x++) {
+        for (int x = 0; x < sourceImage.getWidth(); x++)
             for (int y = 0; y < sourceImage.getHeight(); y++) {
                 int pixel = sourceImage.getPixel(x, y);
                 int alpha = (pixel >> 24) & 0xFF;
@@ -42,22 +42,18 @@ public class Frankenstein {
                     int newRgb = colorMap.get(rgb);
                     int newPixel = (alpha << 24) | newRgb;
                     resultImage.setPixel(x, y, newPixel);
-                } else {
-                    resultImage.setPixel(x, y, pixel);
-                }
+                } else resultImage.setPixel(x, y, pixel);
             }
-        }
         return resultImage;
     }
 
     public static NativeImage snip(NativeImage source, int u, int v, int width, int height) {
         NativeImage resultImage = new NativeImage(width, height, true);
-        for (int x = 0; x < width; x++) {
+        for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++) {
                 int pixel = source.getPixel(u + x, v + y);
                 resultImage.setPixel(x, y, pixel);
             }
-        }
         return resultImage;
     }
 
@@ -83,9 +79,7 @@ public class Frankenstein {
                 throw new UnsupportedOperationException("[Frankenstein] Texture exceeds Monster dimensions. Texture: \"" + texture.toString() + "\", with UVLocation " + uvLocation + ", exceeds Monster dimensions of width=" + this.width + ", height=" + this.height);
             }
             Optional<Resource> t = Minecraft.getInstance().getResourceManager().getResource(texture);
-            if (t.isEmpty()) {
-                throw new IOException("[Frankenstein] Texture not found: " + texture);
-            }
+            if (t.isEmpty()) throw new IOException("[Frankenstein] Texture not found: " + texture);
             textures.put(NativeImage.read(t.get().open()), uvLocation);
             return this;
         }
@@ -103,23 +97,18 @@ public class Frankenstein {
 
         public NativeImage build() {
             NativeImage stitchedImage = new NativeImage(width, height, true);
-            for (int x = 0; x < this.width; x++) {
-                for (int y = 0; y < this.height; y++) {
-                    stitchedImage.setPixel(x, y, 0);
-                }
-            }
+            for (int x = 0; x < this.width; x++)
+                for (int y = 0; y < this.height; y++) stitchedImage.setPixel(x, y, 0);
             Map<NativeImage, UVLocation> texturesByLayer = this.textures.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().layer)).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), HashMap::putAll);
             for (Map.Entry<NativeImage, UVLocation> entry : texturesByLayer.entrySet()) {
                 NativeImage texture = entry.getKey();
                 UVLocation uvLocation = entry.getValue();
-                for (int x = 0; x < uvLocation.width; x++) {
+                for (int x = 0; x < uvLocation.width; x++)
                     for (int y = 0; y < uvLocation.height; y++) {
                         int pixel = texture.getPixel(x, y);
                         int alpha = (pixel >> 24) & 0xFF;
 
-                        if (alpha == 0) {
-                            continue;
-                        }
+                        if (alpha == 0) continue;
                         if (uvLocation.mixAlpha) {
                             int existingPixel = stitchedImage.getPixel(uvLocation.u + x, uvLocation.v + y);
                             int existingAlpha = (existingPixel >> 24) & 0xFF;
@@ -131,7 +120,6 @@ public class Frankenstein {
                         }
                         stitchedImage.setPixel(uvLocation.u + x, uvLocation.v + y, pixel);
                     }
-                }
             }
             return stitchedImage;
         }

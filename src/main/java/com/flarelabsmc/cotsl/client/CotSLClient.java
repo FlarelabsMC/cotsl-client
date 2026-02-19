@@ -15,7 +15,6 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 public class CotSLClient {
     public CotSLClient(ModContainer container) {
         CotSLEntityRenderers.init();
-        ;
     }
 
     @SubscribeEvent

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.StandardCharsets;
 
 public record CharData(
+        int gender,
         int headShape,
         int jawShape,
         int hair,
@@ -26,6 +27,7 @@ public record CharData(
 ) {
     public static CharData init() {
         return new CharData(
+                0,
                 0, 0, 0, 0, 0, 0, 0xFFFFFF, 0,
                 0xFFFFFF, 0, 0xFFFFFF, 0,
                 0, 1.0
@@ -37,12 +39,14 @@ public record CharData(
     }
 
     public static class Builder {
+        private int gender;
         private int headShape, jawShape, hair, hairColor, facialHair, bodyType;
         private int shirtColor, legType, pantsColor, shoesType, shoesColor;
         private int skinColor, eyesColor;
         private double height;
 
         public Builder(CharData data) {
+            this.gender = data.gender;
             this.headShape = data.headShape;
             this.jawShape = data.jawShape;
             this.hair = data.hair;
@@ -59,6 +63,7 @@ public record CharData(
             this.height = data.height;
         }
 
+        public Builder gender(int gender) { this.gender = gender; return this; }
         public Builder headShape(int headShape) { this.headShape = headShape; return this; }
         public Builder jawShape(int jawShape) { this.jawShape = jawShape; return this; }
         public Builder hair(int hair) { this.hair = hair; return this; }
@@ -75,10 +80,13 @@ public record CharData(
         public Builder height(double height) { this.height = height; return this; }
 
         public CharData build() {
-            return new CharData(headShape, jawShape, hair, hairColor, facialHair,
+            return new CharData(
+                    gender,
+                    headShape, jawShape, hair, hairColor, facialHair,
                     bodyType, shirtColor, legType, pantsColor,
                     shoesType, shoesColor, skinColor,
-                    eyesColor, height);
+                    eyesColor, height
+            );
         }
     }
 
