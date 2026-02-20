@@ -1,5 +1,6 @@
 package com.flarelabsmc.cotsl.common.storage.user;
 
+import com.flarelabsmc.cotsl.common.network.packets.SendUserDataPacket;
 import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
 import com.j256.ormlite.dao.Dao;
@@ -10,6 +11,7 @@ import com.j256.ormlite.table.TableUtils;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -22,6 +24,12 @@ public class PermanentUserStorage {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static DBAccess access;
     private static final int COMPRESSION_LEVEL = 3;
+
+    public static void updateAndBroadcast(PermanentUser user, MinecraftServer server) throws SQLException {
+        mergeUserData(user);
+        PacketDistributor.sendToAllPlayers(new SendUserDataPacket(user));
+        LOGGER.debug("Broadcasted updated user data for UUID: {}", user.getUUID());
+    }
 
     public static void init(MinecraftServer server) {
         Path zestyPath = server.getWorldPath(LevelResource.ROOT).resolve("cotsl").resolve("players.db.zst");

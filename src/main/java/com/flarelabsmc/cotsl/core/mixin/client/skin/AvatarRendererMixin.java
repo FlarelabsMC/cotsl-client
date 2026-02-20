@@ -5,6 +5,7 @@ import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerMouthRenderLayer;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
+import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.entity.ClientAvatarEntity;
@@ -52,7 +53,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         Identifier id = Identifier.parse("cotsl:avatars/" + entity.getUUID());
         DynamicTexture cached = Frankenstein.getCachedTexture(id);
         if (cached != null) return;
-//        CharData data = PermanentUserStorage.getUserData(entity.getUUID()).getCharacterData();
+        CharData data = NetworkHandler.getCachedUserData(entity.getUUID()).getCharacterData();
         NativeImage skin = CharacterSkinGenerator.createSkin(CharData.init().rebuild().shirtColor(0x88495734).pantsColor(0x88b5b274).build());
         Frankenstein.registerTexture(id, skin);
     }

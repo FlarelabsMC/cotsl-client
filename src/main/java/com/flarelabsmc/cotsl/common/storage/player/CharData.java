@@ -98,8 +98,7 @@ public record CharData(
                 byte[] bytes = new byte[length];
                 buffer.readBytes(bytes);
                 String json = new String(bytes, StandardCharsets.UTF_8);
-                return (CharData) RecordType.getSingleton()
-                        .parseDefaultString(null, json);
+                return RecordType.getSingleton().getObjectMapper().readValue(json, CharData.class);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to decode CharData", e);
             }
@@ -108,8 +107,7 @@ public record CharData(
         @Override
         public void encode(ByteBuf buffer, CharData data) {
             try {
-                String json = (String) RecordType.getSingleton()
-                        .javaToSqlArg(null, data);
+                String json = RecordType.getSingleton().getObjectMapper().writeValueAsString(data);
                 byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
                 ByteBufCodecs.VAR_INT.encode(buffer, bytes.length);
                 buffer.writeBytes(bytes);

@@ -2,6 +2,8 @@ package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.speech.SpeechData;
+import com.flarelabsmc.cotsl.common.network.NetworkHandler;
+import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -33,14 +35,26 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
         this.getParentModel().head.translateAndRotate(stack);
         AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
         ext.setCurrentSpeech("test");
-        float duration = SpeechData.getDuration("test");
-        ext.setSpeechProgress((float) (System.currentTimeMillis() / 1000.0 % duration));
 
         String speech = ext.getCurrentSpeech();
+
+        if (speech != null) {
+            float duration = SpeechData.getDuration(speech);
+            float progress = (float) (System.currentTimeMillis() / 1000.0 % duration);
+            ext.setSpeechProgress(progress);
+        }
+
         float progress = ext.getSpeechProgress();
         int pose = speech != null ? SpeechData.getMouthPoseAtTime(speech, progress) : 8;
+
         ext.setMouthPose(pose);
-        RenderType type = RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/mouth_poses.png"));
+        PermanentUser user = NetworkHandler.getCachedUserData(ext.getUUID());
+        if (user == null) {
+            stack.popPose();
+            return;
+        }
+
+        RenderType type = RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/mouth/mouth_" + user.getCharacterData().skinColor() + ".png"));
         collector.submitModelPart(mouthModel.mouthPoses[pose], stack, type, packedLight, OverlayTexture.NO_OVERLAY, null);
 
         stack.popPose();

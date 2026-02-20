@@ -14,7 +14,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 @Mod(value = CotSL.MOD_ID, dist = Dist.CLIENT)
-@EventBusSubscriber
+@EventBusSubscriber(modid = CotSL.MOD_ID, value = Dist.CLIENT)
 public class CotSLClient {
     public CotSLClient(ModContainer container) {
         CotSLEntityRenderers.init();

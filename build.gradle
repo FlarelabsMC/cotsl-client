@@ -96,6 +96,7 @@ dependencies {
     implementation(jarJar('com.j256.ormlite:ormlite-core:6.1'))
     implementation(jarJar('com.j256.ormlite:ormlite-jdbc:6.1'))
     implementation(jarJar('com.fasterxml.jackson.core:jackson-databind:2.15.0'))
+    implementation(jarJar('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2'))
     implementation(jarJar('com.github.luben:zstd-jni:1.5.7-7'))
 
     // utility

@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RecordType extends BaseDataType {
     private static final RecordType INSTANCE = new RecordType();
     private static final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.module.paramnames.ParameterNamesModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -59,5 +60,9 @@ public class RecordType extends BaseDataType {
         } catch (Exception e) {
             throw new SQLException("Failed to serialize record: " + e.getMessage(), e);
         }
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 }
