@@ -5,6 +5,7 @@
   "client": [
     "client.skin.AvatarRendererMixin",
     "client.skin.AvatarRenderStateMixin",
+    "client.skin.PlayerModelMixin",
     "client.tweaks.LocalPlayerMixin"
   ],
   "mixins": [],
