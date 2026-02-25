@@ -1,6 +1,7 @@
 package com.flarelabsmc.cotsl.common;
 
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
+import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUserHandler;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -15,8 +16,9 @@ public class CotSL {
 
     public CotSL(IEventBus modEventBus, ModContainer modContainer) {
         PermanentUserHandler.init();
-        EntityRegistry.init();
+//        EntityRegistry.init();
+        CotSLSoundEvents.SOUND_EVENTS.register(modEventBus);
 
-        EntityRegistry.ENTITY_TYPES.register(modEventBus);
+//        EntityRegistry.ENTITY_TYPES.register(modEventBus);
     }
 }

@@ -20,7 +20,6 @@ public record CharData(
         int legType,
         int pantsColor,
         int shoesType,
-        int shoesColor,
         int skinColor,
         int eyesColor,
         double height
@@ -29,7 +28,7 @@ public record CharData(
         return new CharData(
                 0,
                 0, 0, 0, 0, 0, 0, 0xFFFFFF, 0,
-                0xFFFFFF, 0, 0xFFFFFF, 0,
+                0xFFFFFF, 0, 0,
                 0, 1.0
         );
     }
@@ -41,7 +40,7 @@ public record CharData(
     public static class Builder {
         private int gender;
         private int headShape, jawShape, hair, hairColor, facialHair, bodyType;
-        private int shirtColor, legType, pantsColor, shoesType, shoesColor;
+        private int shirtColor, legType, pantsColor, shoesType;
         private int skinColor, eyesColor;
         private double height;
 
@@ -57,7 +56,6 @@ public record CharData(
             this.legType = data.legType;
             this.pantsColor = data.pantsColor;
             this.shoesType = data.shoesType;
-            this.shoesColor = data.shoesColor;
             this.skinColor = data.skinColor;
             this.eyesColor = data.eyesColor;
             this.height = data.height;
@@ -74,7 +72,6 @@ public record CharData(
         public Builder legType(int legType) { this.legType = legType; return this; }
         public Builder pantsColor(int pantsColor) { this.pantsColor = pantsColor; return this; }
         public Builder shoesType(int shoesType) { this.shoesType = shoesType; return this; }
-        public Builder shoesColor(int shoesColor) { this.shoesColor = shoesColor; return this; }
         public Builder skinColor(int skinColor) { this.skinColor = skinColor; return this; }
         public Builder eyesColor(int eyesColor) { this.eyesColor = eyesColor; return this; }
         public Builder height(double height) { this.height = height; return this; }
@@ -84,7 +81,7 @@ public record CharData(
                     gender,
                     headShape, jawShape, hair, hairColor, facialHair,
                     bodyType, shirtColor, legType, pantsColor,
-                    shoesType, shoesColor, skinColor,
+                    shoesType, skinColor,
                     eyesColor, height
             );
         }

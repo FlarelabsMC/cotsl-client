@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render;
 
-import com.flarelabsmc.cotsl.client.render.geo.GeoEmissiveEntityRenderer;
+import com.flarelabsmc.cotsl.client.render.geo.WayfinderBeamEntityRenderer;
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
@@ -19,7 +19,7 @@ public class CotSLEntityRenderers {
 
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new GeoEmissiveEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
+//        event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new WayfinderBeamEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
     }
 
     public static final RenderPipeline.Snippet ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET;
@@ -30,7 +30,7 @@ public class CotSLEntityRenderers {
                 .withVertexShader("core/entity")
                 .withFragmentShader("core/entity")
                 .withSampler("Sampler0")
-                .withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
+                .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                 .withShaderDefine("EMISSIVE")
                 .withShaderDefine("NO_OVERLAY")
                 .withShaderDefine("NO_CARDINAL_LIGHTING")
@@ -44,7 +44,7 @@ public class CotSLEntityRenderers {
                 .withCull(false)
                 .withDepthWrite(true)
                 .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
-                .withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
+                .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                 .build();
     }
 

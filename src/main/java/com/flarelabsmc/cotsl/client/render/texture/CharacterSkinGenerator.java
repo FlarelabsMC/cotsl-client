@@ -12,7 +12,7 @@ public class CharacterSkinGenerator {
     static final int headShapes = 4, jawShapes = 4;
     static final int hairTypes = 8, facialHairTypes = 8;
     static final int bodyTypes = 3, legTypes = 2;
-    static final int pantsTypes = 2, shoesTypes = 4;
+    static final int pantsTypes = 2, shoesTypes = 2;
     static final int skinColors = 5, eyeColors = 8;
 
     private static NativeImage getTexture(Identifier texture) throws RuntimeException {
@@ -79,6 +79,17 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
+    private static NativeImage getShirtOverlay(int gender, int bodyType) {
+        if (bodyType < 0 || bodyType >= CharacterSkinGenerator.bodyTypes) {
+            throw new IllegalArgumentException("Invalid body type index: " + bodyType);
+        }
+        String g = gender == 0 ? "male" : "female";
+        NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/" + g + "_body_types.png"));
+        NativeImage snip = Frankenstein.snip(full, 52, bodyType * 32 + 16, 24, 16);
+        full.close();
+        return snip;
+    }
+
     private static NativeImage getSleeve(int gender, int bodyType, boolean left) {
         if (bodyType < 0 || bodyType >= CharacterSkinGenerator.bodyTypes) {
             throw new IllegalArgumentException("Invalid body type index: " + bodyType);
@@ -86,6 +97,18 @@ public class CharacterSkinGenerator {
         String g = gender == 0 ? "male" : "female";
         NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/" + g + "_body_types.png"));
         int u = left ? 24 : 38;
+        NativeImage snip = Frankenstein.snip(full, u, bodyType * 32 + 16, 14, 16);
+        full.close();
+        return snip;
+    }
+
+    private static NativeImage getSleeveOverlay(int gender, int bodyType, boolean left) {
+        if (bodyType < 0 || bodyType >= CharacterSkinGenerator.bodyTypes) {
+            throw new IllegalArgumentException("Invalid body type index: " + bodyType);
+        }
+        String g = gender == 0 ? "male" : "female";
+        NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/" + g + "_body_types.png"));
+        int u = left ? 76 : 90;
         NativeImage snip = Frankenstein.snip(full, u, bodyType * 32 + 16, 14, 16);
         full.close();
         return snip;
@@ -125,7 +148,18 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
-    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor, int shoesColor) {
+    private static NativeImage getShoes(int type, boolean left) {
+        if (type < 0 || type >= CharacterSkinGenerator.shoesTypes) {
+            throw new IllegalArgumentException("Invalid shoes type index: " + type);
+        }
+        NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/shoes.png"));
+        int u = (left ? 0 : 16) + (type * 32);
+        NativeImage snip = Frankenstein.snip(full, u, 0, 16, 16);
+        full.close();
+        return snip;
+    }
+
+    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor) {
         Frankenstein.Monster builder = new Frankenstein.Monster(64, 64);
         NativeImage headTexture = getHeadShape(headShape, skinColor);
         NativeImage jawTexture = getJawShape(jawShape, skinColor);
@@ -136,6 +170,9 @@ public class CharacterSkinGenerator {
         NativeImage rightSleeveTexture = getSleeve(gender, bodyType, false);
         NativeImage leftArmTexture = getArms(skinColor, true);
         NativeImage rightArmTexture = getArms(skinColor, false);
+        NativeImage leftSleeveOverlayTexture = getSleeveOverlay(gender, bodyType, true);
+        NativeImage rightSleeveOverlayTexture = getSleeveOverlay(gender, bodyType, false);
+        NativeImage shirtOverlayTexture = getShirtOverlay(gender, bodyType);
         NativeImage leftLegTexture = getLegs(skinColor, true);
         NativeImage rightLegTexture = getLegs(skinColor, false);
         NativeImage leftPantsTexture = getPants(legType, true);
@@ -144,15 +181,20 @@ public class CharacterSkinGenerator {
         builder.addTexture(jawTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 1, true));
         builder.addTexture(eyesTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 0, false));
         builder.addTexture(bodyTexture, new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(shirtTexture, shirtColor), new Frankenstein.UVLocation(16, 32, 24, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(leftSleeveTexture, shirtColor), new Frankenstein.UVLocation(40, 32, 14, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(rightSleeveTexture, shirtColor), new Frankenstein.UVLocation(48, 48, 14, 16, 0, false));
         builder.addTexture(leftArmTexture, new Frankenstein.UVLocation(32, 48, 14, 16, 0, false));
         builder.addTexture(rightArmTexture, new Frankenstein.UVLocation(40, 16, 14, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(shirtTexture, shirtColor), new Frankenstein.UVLocation(16, 16, 24, 16, 1, true));
+        builder.addTexture(Frankenstein.tint(leftSleeveTexture, shirtColor), new Frankenstein.UVLocation(32, 48, 14, 16, 1, false));
+        builder.addTexture(Frankenstein.tint(rightSleeveTexture, shirtColor), new Frankenstein.UVLocation(40, 16, 14, 16, 1, false));
+        builder.addTexture(Frankenstein.tint(leftSleeveOverlayTexture, shirtColor), new Frankenstein.UVLocation(48, 48, 14, 16, 1, true));
+        builder.addTexture(Frankenstein.tint(rightSleeveOverlayTexture, shirtColor), new Frankenstein.UVLocation(40, 32, 14, 16, 1, true));
+        builder.addTexture(Frankenstein.tint(shirtOverlayTexture, shirtColor), new Frankenstein.UVLocation(16, 32, 24, 16, 1, true));
         builder.addTexture(leftLegTexture, new Frankenstein.UVLocation(16, 48, 16, 16, 0, false));
         builder.addTexture(rightLegTexture, new Frankenstein.UVLocation(0, 16, 16, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(leftPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 48, 16, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(rightPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 32, 16, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(leftPantsTexture, pantsColor), new Frankenstein.UVLocation(16, 48, 16, 16, 1, false));
+        builder.addTexture(Frankenstein.tint(rightPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 16, 16, 16, 1, false));
+        builder.addTexture(getShoes(shoesType, true), new Frankenstein.UVLocation(0, 48, 16, 16, 1, false));
+        builder.addTexture(getShoes(shoesType, false), new Frankenstein.UVLocation(0, 32, 16, 16, 1, false));
         NativeImage result = builder.build();
         headTexture.close();
         jawTexture.close();
@@ -171,6 +213,6 @@ public class CharacterSkinGenerator {
     }
 
     public static NativeImage createSkin(CharData data) {
-        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor(), data.shoesColor());
+        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor());
     }
 }

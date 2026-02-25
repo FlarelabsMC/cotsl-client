@@ -7,8 +7,4 @@ public interface AvatarRenderStateExt {
     void setUUID(UUID uuid);
     int getMouthPose();
     void setMouthPose(int pose);
-    String getCurrentSpeech();
-    void setCurrentSpeech(String key);
-    float getSpeechProgress();
-    void setSpeechProgress(float progress);
 }

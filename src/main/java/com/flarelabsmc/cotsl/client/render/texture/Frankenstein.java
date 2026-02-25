@@ -1,16 +1,14 @@
 package com.flarelabsmc.cotsl.client.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 // stitch deez nuts am i right
 public class Frankenstein {
@@ -86,12 +84,16 @@ public class Frankenstein {
     public static class Monster {
         private final int width;
         private final int height;
-        private final Map<NativeImage, UVLocation> textures;
+//        private final Map<NativeImage, UVLocation> textures;
+        private final Map<Pair<NativeImage, Integer>, UVLocation> textures;
+        private Pair<Integer, Integer> counter;
+
 
         public Monster(int width, int height) {
             this.width = width;
             this.height = height;
             this.textures = new HashMap<>();
+            this.counter = Pair.of(0, 0);
         }
 
         public Monster addTexture(Identifier texture, UVLocation uvLocation) throws IOException {
@@ -103,7 +105,8 @@ public class Frankenstein {
             }
             Optional<Resource> t = Minecraft.getInstance().getResourceManager().getResource(texture);
             if (t.isEmpty()) throw new IOException("[Frankenstein] Texture not found: " + texture);
-            textures.put(NativeImage.read(t.get().open()), uvLocation);
+            textures.put(Pair.of(NativeImage.read(t.get().open()), counter.getFirst()), uvLocation);
+            counter = Pair.of(counter.getFirst() + 1, uvLocation.layer);
             return this;
         }
 
@@ -114,7 +117,8 @@ public class Frankenstein {
             if (uvLocation.u + uvLocation.width > this.width || uvLocation.v + uvLocation.height > this.height) {
                 throw new UnsupportedOperationException("[Frankenstein] Texture exceeds Monster dimensions. Texture with UVLocation " + uvLocation + ", exceeds Monster dimensions of width=" + this.width + ", height=" + this.height);
             }
-            textures.put(texture, uvLocation);
+            textures.put(Pair.of(texture, uvLocation.layer), uvLocation);
+            counter = Pair.of(counter.getFirst() + 1, uvLocation.layer);
             return this;
         }
 
@@ -122,7 +126,11 @@ public class Frankenstein {
             NativeImage stitchedImage = new NativeImage(width, height, true);
             for (int x = 0; x < this.width; x++)
                 for (int y = 0; y < this.height; y++) stitchedImage.setPixel(x, y, 0);
-            Map<NativeImage, UVLocation> texturesByLayer = this.textures.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().layer)).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), HashMap::putAll);
+//            Map<NativeImage, UVLocation> texturesByLayer = this.textures.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().layer)).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), HashMap::putAll);
+            Map<NativeImage, UVLocation> texturesByLayer = new LinkedHashMap<>();
+                this.textures.entrySet().stream()
+                        .sorted(Comparator.comparingInt(e -> e.getValue().layer))
+                        .forEachOrdered(e -> texturesByLayer.put(e.getKey().getFirst(), e.getValue()));
             for (Map.Entry<NativeImage, UVLocation> entry : texturesByLayer.entrySet()) {
                 NativeImage texture = entry.getKey();
                 UVLocation uvLocation = entry.getValue();

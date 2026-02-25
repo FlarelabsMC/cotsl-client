@@ -1,10 +1,12 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
-import com.flarelabsmc.cotsl.client.speech.SpeechData;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
+import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
+import com.flarelabsmc.cotsl.common.sound.TrackableSoundInstance;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -20,9 +22,12 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.DebugStickItem;
 
 public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
     private final PlayerMouthModel mouthModel;
+    private TrackableSoundInstance currentSound;
 
     public PlayerMouthRenderLayer(RenderLayerParent<S, M> renderer, EntityModelSet set) {
         super(renderer);
@@ -34,19 +39,31 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
-        ext.setCurrentSpeech("test");
 
-        String speech = ext.getCurrentSpeech();
-
-        if (speech != null) {
-            float duration = SpeechData.getDuration(speech);
-            float progress = (float) (System.currentTimeMillis() / 1000.0 % duration);
-            ext.setSpeechProgress(progress);
+        float duration = 15.53f;
+        if (currentSound == null) {
+            if (!(Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem)) {
+                stack.popPose();
+                return;
+            }
+            TrackableSoundInstance sound = new TrackableSoundInstance(
+                    CotSLSoundEvents.TEST,
+                    duration,
+                    SoundSource.VOICE,
+                    Minecraft.getInstance().player, 0, 0, 0
+            );
+            Minecraft.getInstance().getSoundManager().play(sound);
+            currentSound = sound;
+        }
+        if (currentSound.isStopped()) {
+            currentSound = null;
+            ext.setMouthPose(0);
+            stack.popPose();
+            return;
         }
 
-        float progress = ext.getSpeechProgress();
-        int pose = speech != null ? SpeechData.getMouthPoseAtTime(speech, progress) : 8;
-
+        float soundProgress = currentSound.getProgress();
+        int pose = Math.sin(soundProgress * (2 * Math.PI) / 0.25) > 0 ? 1 : 2;
         ext.setMouthPose(pose);
         PermanentUser user = NetworkHandler.getCachedUserData(ext.getUUID());
         if (user == null) {
@@ -56,7 +73,6 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
 
         RenderType type = RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/mouth/mouth_" + user.getCharacterData().skinColor() + ".png"));
         collector.submitModelPart(mouthModel.mouthPoses[pose], stack, type, packedLight, OverlayTexture.NO_OVERLAY, null);
-
         stack.popPose();
     }
 

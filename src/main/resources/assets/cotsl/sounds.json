@@ -1,0 +1,12 @@
+{
+  "test": {
+    "subtitle": "Dialogue",
+    "sounds": [
+      {
+        "name": "cotsl:dialogue/test",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  }
+}
