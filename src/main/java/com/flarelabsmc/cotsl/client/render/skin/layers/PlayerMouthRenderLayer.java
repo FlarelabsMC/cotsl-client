@@ -42,29 +42,27 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
 
         float duration = 15.53f;
         if (currentSound == null) {
-            if (!(Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem)) {
-                stack.popPose();
-                return;
+            if (Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem) {
+                TrackableSoundInstance sound = new TrackableSoundInstance(
+                        CotSLSoundEvents.TEST,
+                        duration,
+                        SoundSource.VOICE,
+                        Minecraft.getInstance().player, 0, 0, 0
+                );
+                Minecraft.getInstance().getSoundManager().play(sound);
+                currentSound = sound;
             }
-            TrackableSoundInstance sound = new TrackableSoundInstance(
-                    CotSLSoundEvents.TEST,
-                    duration,
-                    SoundSource.VOICE,
-                    Minecraft.getInstance().player, 0, 0, 0
-            );
-            Minecraft.getInstance().getSoundManager().play(sound);
-            currentSound = sound;
         }
-        if (currentSound.isStopped()) {
-            currentSound = null;
-            ext.setMouthPose(0);
-            stack.popPose();
-            return;
+        int pose = 0;
+        if (currentSound != null) {
+            float soundProgress = currentSound.getProgress();
+            pose = Math.sin(soundProgress * (2 * Math.PI) / 0.25) > 0 ? 1 : 2;
+            ext.setMouthPose(pose);
+            if (currentSound.isStopped()) {
+                currentSound = null;
+                ext.setMouthPose(0);
+            }
         }
-
-        float soundProgress = currentSound.getProgress();
-        int pose = Math.sin(soundProgress * (2 * Math.PI) / 0.25) > 0 ? 1 : 2;
-        ext.setMouthPose(pose);
         PermanentUser user = NetworkHandler.getCachedUserData(ext.getUUID());
         if (user == null) {
             stack.popPose();

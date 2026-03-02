@@ -54,7 +54,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         DynamicTexture cached = Frankenstein.getCachedTexture(id);
         if (cached != null) return;
         CharData data = NetworkHandler.getCachedUserData(entity.getUUID()).getCharacterData();
-        NativeImage skin = CharacterSkinGenerator.createSkin(CharData.init().rebuild().shirtColor(0x435241).pantsColor(0xc4ba86).build());
+        NativeImage skin = CharacterSkinGenerator.createSkin(CharData.init().rebuild().gender(1).bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(2).jawShape(2).build());
         Frankenstein.registerTexture(id, skin);
     }
 
