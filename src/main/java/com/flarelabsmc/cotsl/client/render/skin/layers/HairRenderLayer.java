@@ -10,23 +10,14 @@ import com.mojang.math.Axis;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.resources.Identifier;
-
-import java.util.UUID;
 
 public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, PlayerModel> {
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     public final HairModel model;
-    private final UUID player;
 
-    public HairRenderLayer(RenderLayerParent<AvatarRenderState, PlayerModel> renderer, HairModel model, UUID player) {
+    public HairRenderLayer(RenderLayerParent<AvatarRenderState, PlayerModel> renderer, HairModel model) {
         super(renderer, model);
         this.model = model;
-        this.player = player;
-    }
-
-    public UUID getPlayer() {
-        return player;
     }
 
     @Override
