@@ -39,7 +39,7 @@ import java.util.UUID;
 public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity> extends LivingEntityRenderer<AvatarlikeEntity, AvatarRenderState, PlayerModel> {
     private HairRenderLayer hairLayer;
     private Identifier hairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
-    private Identifier hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0.png");
+    private Identifier hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
     private UUID playerUUID = UUID.randomUUID();
 
     public AvatarRendererMixin(EntityRendererProvider.Context context, PlayerModel model, float shadowRadius, AvatarRenderState state) {
@@ -73,7 +73,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         CharData newData = CharData.init().rebuild().bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(3).jawShape(0).eyesColor(1).build();
         NativeImage skin = CharacterSkinGenerator.createSkin(newData);
         user.setCharacterData(newData);
-        hairTexture = Identifier.fromNamespaceAndPath("cotsl", "textures/skin/hair/hair_" + data.hair() + ".png");
+        hairTexture = Identifier.fromNamespaceAndPath("cotsl", "textures/skin/hair/hair_" + data.hair() + "_color.png");
         hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair());
         hairLayer.model.setStyle(newData.hair());
         hairLayer.model.setTexture(hairTexture);

@@ -160,9 +160,17 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
+    private static NativeImage getHair(int hairType) {
+        NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/hair/hair_" + hairType + ".png"));
+        NativeImage snip = Frankenstein.snip(full, 32, 39, 32, 16);
+        full.close();
+        return snip;
+    }
+
     private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor, int hairColor) {
         Frankenstein.Monster builder = new Frankenstein.Monster(64, 64);
         NativeImage headTexture = getHeadShape(headShape, skinColor);
+        NativeImage hairUnderlayTexture = getHair(hairType);
         NativeImage jawTexture = getJawShape(jawShape, skinColor);
         NativeImage eyesTexture = getEyes(eyeColor);
         NativeImage bodyTexture = getBodyType(gender, bodyType, skinColor);
@@ -179,6 +187,7 @@ public class CharacterSkinGenerator {
         NativeImage leftPantsTexture = getPants(legType, true);
         NativeImage rightPantsTexture = getPants(legType, false);
         builder.addTexture(headTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 0, false));
+        builder.addTexture(Frankenstein.tint(hairUnderlayTexture, 0x2f211a), new Frankenstein.UVLocation(0, 0, 32, 16, 1, false));
         builder.addTexture(jawTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 1, true));
         builder.addTexture(eyesTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 0, false));
         builder.addTexture(bodyTexture, new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
