@@ -16,9 +16,9 @@ public class CotSL {
 
     public CotSL(IEventBus modEventBus, ModContainer modContainer) {
         PermanentUserHandler.init();
-//        EntityRegistry.init();
+        EntityRegistry.init();
         CotSLSoundEvents.SOUND_EVENTS.register(modEventBus);
 
-//        EntityRegistry.ENTITY_TYPES.register(modEventBus);
+        EntityRegistry.ENTITY_TYPES.register(modEventBus);
     }
 }

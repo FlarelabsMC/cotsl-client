@@ -19,7 +19,7 @@ public class CotSLEntityRenderers {
 
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-//        event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new WayfinderBeamEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
+        event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new WayfinderBeamEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
     }
 
     public static final RenderPipeline.Snippet ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET;

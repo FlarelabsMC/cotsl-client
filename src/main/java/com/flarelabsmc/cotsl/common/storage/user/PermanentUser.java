@@ -7,6 +7,7 @@ import com.j256.ormlite.table.DatabaseTable;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.UUID;
 
@@ -46,7 +47,9 @@ public class PermanentUser {
         return characterData;
     }
 
-    void setCharacterData(CharData characterData) {
+    // ONLY USE FOR TESTING PURPOSES, THIS WILL CAUSE DATA INCONSISTENCY
+    @ApiStatus.Internal
+    public void setCharacterData(CharData characterData) {
         this.characterData = characterData;
     }
 }

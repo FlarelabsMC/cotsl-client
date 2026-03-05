@@ -1,0 +1,1 @@
+Sounds should keep to 44.1kHz. Dialogue should be split into individual sentences and should be set in folders separating dialogue audio between event, character, and context.

@@ -1,6 +1,8 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.client.speech.SpeechData;
+import com.flarelabsmc.cotsl.common.CotSL;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
 import com.flarelabsmc.cotsl.common.sound.TrackableSoundInstance;
@@ -40,12 +42,10 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
         this.getParentModel().head.translateAndRotate(stack);
         AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
 
-        float duration = 15.53f;
         if (currentSound == null) {
             if (Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem) {
                 TrackableSoundInstance sound = new TrackableSoundInstance(
                         CotSLSoundEvents.TEST,
-                        duration,
                         SoundSource.VOICE,
                         Minecraft.getInstance().player, 0, 0, 0
                 );
@@ -56,7 +56,9 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
         int pose = 0;
         if (currentSound != null) {
             float soundProgress = currentSound.getProgress();
-            pose = Math.sin(soundProgress * (2 * Math.PI) / 0.25) > 0 ? 1 : 2;
+            CotSL.LOGGER.debug("Sound progress: {}", soundProgress);
+            CotSL.LOGGER.debug("paused: {}", currentSound.isStopped());
+            pose = SpeechData.getMouthPoseAtTime("test", soundProgress);
             ext.setMouthPose(pose);
             if (currentSound.isStopped()) {
                 currentSound = null;

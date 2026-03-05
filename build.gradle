@@ -102,6 +102,113 @@ dependencies {
 //    implementation(jarJar('libs:geckolib:neoforge-26.1-snapshot-7-5.5'))
     // utility
 //    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:5.5"
+
+    // misc
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+tasks.register('downloadRhubarb') {
+    group = 'setup'
+
+    def rhubarbDir = file('rhubarb')
+    def rhubarbExe = new File(rhubarbDir, 'rhubarb')
+    def buildDir = layout.buildDirectory.asFile.get()
+    outputs.file(rhubarbExe)
+    doLast {
+        rhubarbDir.mkdirs()
+        def os = System.getProperty('os.name').toLowerCase()
+        def downloadUrl
+
+        if (os.contains('win')) downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-Windows.zip'
+        else if (os.contains('mac')) downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-macOS.zip'
+        else downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-Linux.zip'
+
+        def zipFile = new File(buildDir, 'rhubarb.zip')
+        println "Downloading Rhubarb from ${downloadUrl}..."
+        new URL(downloadUrl).withInputStream { i ->
+            zipFile.withOutputStream { it << i }
+        }
+        println "Extracting Rhubarb..."
+        def zip = new ZipFile(zipFile)
+        zip.entries().each { entry ->
+            def path = entry.name
+            def firstSlash = path.indexOf('/')
+            if (firstSlash > 0) path = path.substring(firstSlash + 1)
+            if (!path.isEmpty()) {
+                def file = new File(rhubarbDir, path)
+                if (entry.directory) file.mkdirs()
+                else {
+                    file.parentFile.mkdirs()
+                    file.withOutputStream { out ->
+                        zip.getInputStream(entry).withStream { i -> out << i }
+                    }
+                }
+            }
+        }
+        zip.close()
+        if (!os.contains('win')) rhubarbExe.setExecutable(true)
+        zipFile.delete()
+        println "Downloaded Rhubarb"
+    }
+}
+
+tasks.register('generateDialogueMetadata') {
+    group = 'build'
+    dependsOn downloadRhubarb
+
+    def modId = project.mod_id
+    def audioDir = file("src/main/resources/assets/${modId}/sounds/dialogue")
+    def rhubarbExeWin = file('rhubarb/rhubarb.exe')
+    def rhubarbExeUnix = file('rhubarb/rhubarb')
+    def audioFiles = fileTree(audioDir) {
+        include '**/*.ogg'
+    }
+    def buildOutputDir = file("${layout.buildDirectory.asFile.get()}/resources/main/assets/${modId}")
+    def speechJson = new File(buildOutputDir, 'speech.json')
+    inputs.dir(audioDir)
+    outputs.file(speechJson)
+
+    doLast {
+        def rhubarbExe = System.getProperty('os.name').toLowerCase().contains('win') ? rhubarbExeWin : rhubarbExeUnix
+        if (!rhubarbExe.exists()) {
+            println "Rhubarb executable not found at ${rhubarbExe}, skipping dialogue metadata generation"
+            return
+        }
+        if (!audioDir.exists()) {
+            println "No audio directory found at ${audioDir}, skipping dialogue metadata generation"
+            return
+        }
+        buildOutputDir.mkdirs()
+        def audioData = [:]
+        audioFiles.each { audioFile ->
+            def audioName = audioFile.name.replaceAll(/\.ogg$/, '')
+            def tempOutputFile = File.createTempFile("rhubarb_${audioName}", '.json')
+            println "Generating dialogue metadata for ${audioName}..."
+            def args = ['-f', 'json', '-o', tempOutputFile.absolutePath, audioFile.absolutePath]
+            def dialogueFile = new File(audioDir, "${audioName}.txt")
+            if (dialogueFile.exists()) {
+                args.addAll(['-d', dialogueFile.absolutePath])
+            }
+            def process = new ProcessBuilder(rhubarbExe.absolutePath, *args).start()
+            process.waitFor()
+            if (tempOutputFile.exists()) {
+                def json = new groovy.json.JsonSlurper().parse(tempOutputFile)
+                audioData[audioName] = [
+                        sound: "${modId}:${audioFile.name}",
+                        duration: json.metadata.duration,
+                        mouthCues: json.mouthCues
+                ]
+                tempOutputFile.delete()
+            }
+            println "  -> Added ${audioName}"
+        }
+        speechJson.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(audioData))
+        println "Generated speech.json with ${audioData.size()} entries"
+    }
+}
+
+processResources {
+    dependsOn generateDialogueMetadata
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

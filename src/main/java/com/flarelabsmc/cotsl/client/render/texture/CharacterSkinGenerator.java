@@ -14,6 +14,7 @@ public class CharacterSkinGenerator {
     static final int bodyTypes = 3, legTypes = 2;
     static final int pantsTypes = 2, shoesTypes = 2;
     static final int skinColors = 5, eyeColors = 8;
+    static final int hairColors = 4;
 
     private static NativeImage getTexture(Identifier texture) throws RuntimeException {
         Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
@@ -63,7 +64,7 @@ public class CharacterSkinGenerator {
         }
         String g = gender == 0 ? "male" : "female";
         NativeImage fullb = getTexture(Identifier.parse("cotsl:textures/skin/" + g + "_body_types.png"));
-        NativeImage snipb = Frankenstein.snip(fullb, 24 + skinColor * 32, bodyType * 32, 24, 16);
+        NativeImage snipb = Frankenstein.snip(fullb, 24 + skinColor * 24, bodyType * 32, 24, 16);
         fullb.close();
         return snipb;
     }
@@ -159,7 +160,7 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
-    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor) {
+    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor, int hairColor) {
         Frankenstein.Monster builder = new Frankenstein.Monster(64, 64);
         NativeImage headTexture = getHeadShape(headShape, skinColor);
         NativeImage jawTexture = getJawShape(jawShape, skinColor);
@@ -209,10 +210,11 @@ public class CharacterSkinGenerator {
         rightLegTexture.close();
         leftPantsTexture.close();
         rightPantsTexture.close();
+
         return result;
     }
 
     public static NativeImage createSkin(CharData data) {
-        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor());
+        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor(), data.hairColor());
     }
 }
