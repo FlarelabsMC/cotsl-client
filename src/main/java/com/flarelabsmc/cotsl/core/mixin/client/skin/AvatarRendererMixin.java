@@ -48,7 +48,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
-        HairRenderLayer hairLayer = new HairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel), playerUUID);
+        HairRenderLayer hairLayer = new HairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(hairLayer);
