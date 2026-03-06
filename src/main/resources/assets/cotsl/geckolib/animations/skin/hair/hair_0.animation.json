@@ -1,0 +1,92 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"move.walk": {
+			"loop": true,
+			"animation_length": 0.4583,
+			"bones": {
+				"hair": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [2.5, 0, 0]
+						},
+						"0.4583": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"long": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2917": {
+							"vector": [45, 0, 0],
+							"easing": "easeOutSine"
+						},
+						"0.4583": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"back_0": {
+					"rotation": {
+						"0.0": {
+							"vector": [7.5, 0, 0],
+							"easing": "easeOutSine"
+						},
+						"0.25": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"vector": [7.5, 0, 0],
+							"easing": "easeOutSine"
+						}
+					}
+				},
+				"top_front": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [-10.15108, 9.84655, -1.75378],
+							"easing": "easeInOutSine"
+						},
+						"0.4583": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}
