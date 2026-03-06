@@ -2,7 +2,6 @@ package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.geo.layer.vanilla.GeoModelRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
-import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
@@ -27,10 +26,13 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<>((test) -> {
-            if (renderState.walkAnimationSpeed > 0) {
-                test.setControllerSpeed(renderState.walkAnimationSpeed);
+        controllerRegistrar.add(new AnimationController<>("Default", 10, (test) -> {
+            test.setControllerSpeed(1);
+            if (renderState.walkAnimationSpeed > 0.01f) {
+                test.setControllerSpeed(Math.max(renderState.walkAnimationSpeed, 0.5f));
                 return test.setAndContinue(DefaultAnimations.WALK);
+            } else if (renderState.walkAnimationSpeed < 0.01f) {
+                return test.setAndContinue(DefaultAnimations.IDLE);
             }
             return PlayState.STOP;
         }));
