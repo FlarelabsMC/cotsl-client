@@ -5,8 +5,6 @@ import com.geckolib.model.GeoModel;
 import com.geckolib.renderer.base.GeoRenderState;
 import net.minecraft.resources.Identifier;
 
-import java.util.UUID;
-
 public class HairModel extends GeoModel<GeoAnimatable> {
     private int style = 0;
     private Identifier texture;

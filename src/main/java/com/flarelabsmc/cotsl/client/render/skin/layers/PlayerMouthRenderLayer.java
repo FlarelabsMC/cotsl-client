@@ -8,6 +8,7 @@ import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
 import com.flarelabsmc.cotsl.common.sound.TrackableSoundInstance;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -71,6 +72,8 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
             return;
         }
 
+        stack.mulPose(Axis.ZP.rotationDegrees(2.5f));
+
         RenderType type = RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/mouth/mouth_" + user.getCharacterData().skinColor() + ".png"));
         collector.submitModelPart(mouthModel.mouthPoses[pose], stack, type, packedLight, OverlayTexture.NO_OVERLAY, null);
         stack.popPose();
@@ -106,7 +109,6 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
 
         @Override
         public void setupAnim(AvatarRenderState state) {
-            super.setupAnim(state);
             AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
             for (ModelPart mouthPose : mouthPoses) mouthPose.visible = false;
             mouthPoses[ext.getMouthPose()].visible = true;

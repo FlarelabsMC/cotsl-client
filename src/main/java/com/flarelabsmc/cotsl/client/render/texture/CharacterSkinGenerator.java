@@ -58,6 +58,16 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
+    private static NativeImage getEyebrows(int hairColor) {
+        if (hairColor < 0 || hairColor >= CharacterSkinGenerator.hairColors) {
+            throw new IllegalArgumentException("Invalid hair color index: " + hairColor);
+        }
+        NativeImage full = getTexture(Identifier.parse("cotsl:textures/skin/hair/eyebrows_0_color.png"));
+        NativeImage snip = Frankenstein.snip(full, hairColor * 8, 0, 8, 8);
+        full.close();
+        return snip;
+    }
+
     private static NativeImage getBodyType(int gender, int bodyType, int skinColor) throws RuntimeException {
         if (bodyType < 0 || bodyType >= CharacterSkinGenerator.bodyTypes) {
             throw new IllegalArgumentException("Invalid body type index: " + bodyType);
@@ -173,6 +183,7 @@ public class CharacterSkinGenerator {
         NativeImage hairUnderlayTexture = getHair(hairType);
         NativeImage jawTexture = getJawShape(jawShape, skinColor);
         NativeImage eyesTexture = getEyes(eyeColor);
+        NativeImage eyebrowsTexture = getEyebrows(hairColor);
         NativeImage bodyTexture = getBodyType(gender, bodyType, skinColor);
         NativeImage shirtTexture = getShirt(gender, bodyType);
         NativeImage leftSleeveTexture = getSleeve(gender, bodyType, true);
@@ -190,6 +201,7 @@ public class CharacterSkinGenerator {
         builder.addTexture(Frankenstein.tint(hairUnderlayTexture, 0x2f211a), new Frankenstein.UVLocation(0, 0, 32, 16, 1, false));
         builder.addTexture(jawTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 1, true));
         builder.addTexture(eyesTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 0, false));
+        builder.addTexture(eyebrowsTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 1, false));
         builder.addTexture(bodyTexture, new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
         builder.addTexture(leftArmTexture, new Frankenstein.UVLocation(32, 48, 14, 16, 0, false));
         builder.addTexture(rightArmTexture, new Frankenstein.UVLocation(40, 16, 14, 16, 0, false));
@@ -209,6 +221,7 @@ public class CharacterSkinGenerator {
         headTexture.close();
         jawTexture.close();
         eyesTexture.close();
+        eyebrowsTexture.close();
         bodyTexture.close();
         shirtTexture.close();
         leftSleeveTexture.close();

@@ -1,17 +1,13 @@
 package com.flarelabsmc.cotsl.core.mixin.client.skin;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
-import com.flarelabsmc.cotsl.client.render.skin.layers.HairRenderLayer;
-import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
-import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerMouthRenderLayer;
+import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
-import com.flarelabsmc.cotsl.common.storage.user.PermanentUserHandler;
-import com.flarelabsmc.cotsl.common.storage.user.PermanentUserStorage;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -49,9 +45,13 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
         HairRenderLayer hairLayer = new HairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
+        PlayerEyebrowRenderLayer<AvatarRenderState, PlayerModel> eyebrowLayer = new PlayerEyebrowRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
+        HandsRenderLayer<AvatarRenderState, PlayerModel> handsLayer = new HandsRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(hairLayer);
+        this.addLayer(eyebrowLayer);
+        this.addLayer(handsLayer);
         this.hairLayer = hairLayer;
     }
 

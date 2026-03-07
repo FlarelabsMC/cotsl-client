@@ -26,6 +26,18 @@ import java.util.UUID;
 public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
     private final PlayerEyeModel eyeModel;
 
+    private float eyeTargetX;
+    private float eyeCurrentX;
+    private float eyeCurrentY;
+    private int idleTimer;
+    private int nextMoveTick;
+
+    private float glanceTargetX;
+    private float glanceCurrentX;
+    private int glanceDuration;
+    private int glanceTimer;
+    private int nextGlanceTick;
+
     public PlayerEyeRenderLayer(RenderLayerParent<S, M> renderer, EntityModelSet set) {
         super(renderer);
         this.eyeModel = new PlayerEyeModel(set.bakeLayer(PlayerEyeModel.MODEL_LAYER));
@@ -33,6 +45,46 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
+        if (state.walkAnimationSpeed > 0.01f) {
+            idleTimer = 0;
+            nextMoveTick = 0;
+            eyeTargetX = 0;
+            glanceTargetX = 0;
+            glanceDuration = 0;
+        } else idleTimer++;
+
+        if (idleTimer > 3) {
+            if (idleTimer >= nextMoveTick) {
+                eyeTargetX = (float)(Math.random() * 0.06f - 0.03f);
+                nextMoveTick = idleTimer + 60 + (int)(Math.random() * 80);
+            }
+
+            if (glanceDuration == 0 && idleTimer >= nextGlanceTick) {
+                if (Math.random() < 0.3f) {
+                    glanceTargetX = (float)(Math.random() < 0.5
+                            ? 0.15f + Math.random() * 0.1f
+                            : -(0.15f + Math.random() * 0.1f)
+                    );
+                    glanceDuration = 80 + (int)(Math.random() * 60);
+                    glanceTimer = 0;
+                }
+                nextGlanceTick = idleTimer + 100 + (int)(Math.random() * 100);
+            }
+
+            if (glanceDuration > 0) {
+                glanceTimer++;
+                if (glanceTimer >= glanceDuration) {
+                    glanceTargetX = 0;
+                    glanceDuration = 0;
+                    glanceTimer = 0;
+                }
+            }
+        }
+
+        glanceCurrentX = Mth.lerp(0.12f, glanceCurrentX, glanceTargetX);
+        eyeCurrentX = Mth.lerp(0.05f, eyeCurrentX, eyeTargetX);
+        eyeModel.setIdleOffset(eyeCurrentX + glanceCurrentX);
+
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateExt) state).getUUID();
@@ -44,10 +96,16 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
         public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Identifier.parse("cotsl:eyes"), "main");
         private final ModelPart leftEye, rightEye;
 
+        private float idleOffsetX;
+
         public PlayerEyeModel(ModelPart root) {
             super(root);
             this.leftEye = root.getChild("left_eye");
             this.rightEye = root.getChild("right_eye");
+        }
+
+        public void setIdleOffset(float x) {
+            this.idleOffsetX = x;
         }
 
         public static LayerDefinition createLayer() {
@@ -76,8 +134,8 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
         @Override
         public void setupAnim(AvatarRenderState state) {
             float diff = ((Mth.wrapDegrees(state.bodyRot) * Mth.DEG_TO_RAD) - state.yRot) * 3f;
-            this.leftEye.x = diff / 360;
-            this.rightEye.x = diff / 360;
+            this.leftEye.x = diff / 360 + idleOffsetX;
+            this.rightEye.x = diff / 360 + idleOffsetX;
         }
     }
 }

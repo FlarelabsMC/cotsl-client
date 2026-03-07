@@ -1,7 +1,9 @@
 package com.flarelabsmc.cotsl.client;
 
 import com.flarelabsmc.cotsl.client.render.CotSLEntityRenderers;
+import com.flarelabsmc.cotsl.client.render.skin.layers.HandsRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
+import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyebrowRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerMouthRenderLayer;
 import com.flarelabsmc.cotsl.client.speech.SpeechData;
 import com.flarelabsmc.cotsl.common.CotSL;
@@ -28,6 +30,9 @@ public class CotSLClient {
     @SubscribeEvent
     public static void registerModelLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(PlayerEyeRenderLayer.PlayerEyeModel.MODEL_LAYER, PlayerEyeRenderLayer.PlayerEyeModel::createLayer);
+        event.registerLayerDefinition(PlayerEyebrowRenderLayer.PlayerEyebrowModel.MODEL_LAYER, PlayerEyebrowRenderLayer.PlayerEyebrowModel::createLayer);
         event.registerLayerDefinition(PlayerMouthRenderLayer.PlayerMouthModel.MODEL_LAYER, PlayerMouthRenderLayer.PlayerMouthModel::createLayer);
+        event.registerLayerDefinition(HandsRenderLayer.LeftHandModel.MODEL_LAYER, HandsRenderLayer.LeftHandModel::createLayer);
+        event.registerLayerDefinition(HandsRenderLayer.RightHandModel.MODEL_LAYER, HandsRenderLayer.RightHandModel::createLayer);
     }
 }
