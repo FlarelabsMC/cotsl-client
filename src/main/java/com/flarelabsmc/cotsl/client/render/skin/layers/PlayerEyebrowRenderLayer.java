@@ -64,7 +64,7 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
             head.addOrReplaceChild(
                     "right_eyebrow",
                     CubeListBuilder.create()
-                            .texOffs(5, 2)
+                            .texOffs(1, 2)
                             .addBox(1F, -6.25F, -4.02F, 2.0F, 1.0F, 0.0F),
                     PartPose.ZERO
             );

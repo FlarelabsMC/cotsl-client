@@ -28,8 +28,7 @@ public class PermanentUserHandler {
 
     @SubscribeEvent
     public static void playerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity().level().isClientSide()) return;
-        try {
+        if (!event.getEntity().level().isClientSide()) try {
             UUID uuid = event.getEntity().getUUID();
             if (PermanentUserStorage.getUserData(uuid) != null) LOGGER.debug("Player data already exists for {}, with {}", uuid, PermanentUserStorage.getUserData(uuid).getCharacterData());
             PermanentUserStorage.registerPlayer(uuid);
@@ -54,9 +53,7 @@ public class PermanentUserHandler {
         if (event.getEntity() instanceof Player player) {
             UUID uuid = player.getUUID();
             PermanentUser data = PermanentUserStorage.getUserData(uuid);
-            if (data != null) {
-                PacketDistributor.sendToAllPlayers(new SendUserDataPacket(data));
-            }
+            if (data != null) PacketDistributor.sendToAllPlayers(new SendUserDataPacket(data));
         }
     }
 }

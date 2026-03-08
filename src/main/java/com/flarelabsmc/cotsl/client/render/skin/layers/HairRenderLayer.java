@@ -39,11 +39,15 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
         controllerRegistrar.add(new AnimationController<>("Default", 10, (test) -> {
             test.setControllerSpeed(1);
-            if (renderState.walkAnimationSpeed > 0.01f) {
-                test.setControllerSpeed(Math.max(renderState.walkAnimationSpeed, 0.5f));
+            float waterAnim = (renderState.isInWater ? 1.0f : 0.0f);
+            if (renderState.walkAnimationSpeed > 0.01f || renderState.swimAmount > 0.01f) {
+                test.setControllerSpeed(Math.max(renderState.walkAnimationSpeed + renderState.swimAmount + waterAnim, 0.5f));
                 return test.setAndContinue(DefaultAnimations.WALK);
-            } else if (renderState.walkAnimationSpeed < 0.01f) {
-                return test.setAndContinue(DefaultAnimations.IDLE);
+            } else if (renderState.walkAnimationSpeed < 0.01f && renderState.swimAmount < 0.01f) {
+                if (renderState.isInWater) {
+                    test.setControllerSpeed(waterAnim * 0.5f);
+                    return test.setAndContinue(DefaultAnimations.WALK);
+                } else return test.setAndContinue(DefaultAnimations.IDLE);
             }
             return PlayState.STOP;
         }));
@@ -55,7 +59,8 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
         vel += ((diff * 2) - vel * 0.5f) * 0.1f;
         double vMotion = renderState.xRot + (float) ((renderState.y - lastY) * 1000f);
         float targetRotZ = (float) Math.sin(vel * 0.1f);
-        float targetRotX = (float) Math.min(30 * Mth.DEG_TO_RAD, vMotion * Mth.DEG_TO_RAD);
+        float targetRotX = !renderState.isVisuallySwimming ? (float) Math.min(30 * Mth.DEG_TO_RAD, vMotion * Mth.DEG_TO_RAD)
+                : (float) Math.max(Math.min(10 * Mth.DEG_TO_RAD, (vMotion - renderState.xRot) * Mth.DEG_TO_RAD), -45 * Mth.DEG_TO_RAD);
         float targetRotY = ((renderState.yRot * Mth.DEG_TO_RAD) * 0.5f);
         float lerpFactor = 0.15f;
         currentRotZ = Mth.lerp(lerpFactor, currentRotZ, targetRotZ);
