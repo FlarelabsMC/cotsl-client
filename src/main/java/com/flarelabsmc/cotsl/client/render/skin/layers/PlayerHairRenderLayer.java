@@ -2,6 +2,7 @@ package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.geo.layer.vanilla.GeoModelRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
+import com.flarelabsmc.cotsl.client.render.skin.layers.model.HandsModel;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
@@ -19,7 +20,7 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 
-public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, PlayerModel> {
+public class PlayerHairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, PlayerModel> {
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     public final HairModel model;
     private AvatarRenderState renderState = new AvatarRenderState();
@@ -30,7 +31,7 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
     private float currentRotY;
     private float currentRotZ;
 
-    public HairRenderLayer(RenderLayerParent<AvatarRenderState, PlayerModel> renderer, HairModel model) {
+    public PlayerHairRenderLayer(RenderLayerParent<AvatarRenderState, PlayerModel> renderer, HairModel model) {
         super(renderer, model);
         this.model = model;
     }
@@ -83,14 +84,11 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
     }
 
     @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geoCache;
-    }
-
-    @Override
     public PoseStack modifyPose(PoseStack poseStack, AvatarRenderState renderState, float yRot, float xRot) {
         this.renderState = renderState;
-        this.getParentModel().head.translateAndRotate(poseStack);
+        poseStack.mulPose(Axis.YP.rotationDegrees(renderState.yRot - this.getParentModel().head.yRot * Mth.DEG_TO_RAD));
+        poseStack.mulPose(Axis.XP.rotationDegrees(renderState.xRot - this.getParentModel().head.xRot * Mth.DEG_TO_RAD));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(this.getParentModel().head.zRot * Mth.DEG_TO_RAD));
         poseStack.translate(0.5, 0.5, -0.5);
         poseStack.mulPose(Axis.XP.rotationDegrees(180f));
         poseStack.mulPose(Axis.YP.rotationDegrees(180f));
@@ -99,5 +97,10 @@ public class HairRenderLayer extends GeoModelRenderLayer<AvatarRenderState, Play
             poseStack.translate(0.04, 0, 0);
         }
         return poseStack;
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geoCache;
     }
 }

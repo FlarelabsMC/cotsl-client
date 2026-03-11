@@ -25,11 +25,11 @@ import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 
-public class HandsRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
+public class PlayerHandsRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
     private final LeftHandModel leftHandModel;
     private final RightHandModel rightHandModel;
 
-    public HandsRenderLayer(RenderLayerParent<S, M> renderer, EntityModelSet set) {
+    public PlayerHandsRenderLayer(RenderLayerParent<S, M> renderer, EntityModelSet set) {
         super(renderer);
         this.leftHandModel = new LeftHandModel(set.bakeLayer(LeftHandModel.MODEL_LAYER));
         this.rightHandModel = new RightHandModel(set.bakeLayer(RightHandModel.MODEL_LAYER));
@@ -43,14 +43,14 @@ public class HandsRenderLayer<S extends AvatarRenderState, M extends PlayerModel
         stack.pushPose();
         this.getParentModel().leftArm.translateAndRotate(stack);
         stack.rotateAround(Axis.ZP.rotationDegrees(-22.5f), 0F, 1, 1F);
-        stack.translate(0.13, 0.08, 0);
+        stack.translate(0.135, 0.07, 0);
         stack.scale(1.01f, 1.01f, 1.01f);
         collector.submitModel(leftHandModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/hands/hands_" + skinColor + ".png")), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();
         stack.pushPose();
         this.getParentModel().rightArm.translateAndRotate(stack);
         stack.rotateAround(Axis.ZP.rotationDegrees(22.5f), 0F, 1, 1f);
-        stack.translate(-0.13, 0.08, 0);
+        stack.translate(-0.135, 0.07, 0);
         stack.scale(1.01f, 1.01f, 1.01f);
         collector.submitModel(rightHandModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/hands/hands_" + skinColor + ".png")), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();
@@ -77,7 +77,7 @@ public class HandsRenderLayer<S extends AvatarRenderState, M extends PlayerModel
                     PartPose.ZERO
             );
 
-            return LayerDefinition.create(def, 8, 12);
+            return LayerDefinition.create(def, 12, 12);
         }
 
         @Override
@@ -107,7 +107,7 @@ public class HandsRenderLayer<S extends AvatarRenderState, M extends PlayerModel
                     PartPose.ZERO
             );
 
-            return LayerDefinition.create(def, 8, 12);
+            return LayerDefinition.create(def, 12, 12);
         }
 
         @Override

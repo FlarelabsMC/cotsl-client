@@ -26,6 +26,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.DebugStickItem;
 
 public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
@@ -40,13 +41,16 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
         stack.pushPose();
-        this.getParentModel().head.translateAndRotate(stack);
+//        this.getParentModel().head.translateAndRotate(stack);
+        stack.mulPose(Axis.YP.rotationDegrees(state.yRot - this.getParentModel().head.yRot * Mth.DEG_TO_RAD));
+        stack.mulPose(Axis.XP.rotationDegrees(state.xRot - this.getParentModel().head.xRot * Mth.DEG_TO_RAD));
+        stack.mulPose(Axis.ZP.rotationDegrees(this.getParentModel().head.zRot * Mth.DEG_TO_RAD));
         AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
 
         if (currentSound == null) {
             if (Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem) {
                 TrackableSoundInstance sound = new TrackableSoundInstance(
-                        CotSLSoundEvents.TEST,
+                        CotSLSoundEvents.TEST_2,
                         SoundSource.VOICE,
                         Minecraft.getInstance().player, 0, 0, 0
                 );
@@ -59,7 +63,7 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
             float soundProgress = currentSound.getProgress();
             CotSL.LOGGER.debug("Sound progress: {}", soundProgress);
             CotSL.LOGGER.debug("paused: {}", currentSound.isStopped());
-            pose = SpeechData.getMouthPoseAtTime("test", soundProgress);
+            pose = SpeechData.getMouthPoseAtTime("test_2", soundProgress);
             ext.setMouthPose(pose);
             if (currentSound.isStopped()) {
                 currentSound = null;

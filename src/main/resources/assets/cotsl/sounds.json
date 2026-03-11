@@ -8,5 +8,15 @@
         "pitch": 1.0
       }
     ]
+  },
+  "test_2": {
+    "subtitle": "Dialogue",
+    "sounds": [
+      {
+          "name": "cotsl:dialogue/test_2",
+          "volume": 1.0,
+          "pitch": 1.0
+      }
+    ]
   }
 }

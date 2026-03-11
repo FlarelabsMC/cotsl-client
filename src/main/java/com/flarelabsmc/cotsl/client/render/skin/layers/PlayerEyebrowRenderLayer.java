@@ -2,6 +2,7 @@ package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -19,6 +20,7 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 
 import java.util.UUID;
 
@@ -33,7 +35,10 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
         stack.pushPose();
-        this.getParentModel().head.translateAndRotate(stack);
+//        this.getParentModel().head.translateAndRotate(stack);
+        stack.mulPose(Axis.YP.rotationDegrees(state.yRot - this.getParentModel().head.yRot * Mth.DEG_TO_RAD));
+        stack.mulPose(Axis.XP.rotationDegrees(state.xRot - this.getParentModel().head.xRot * Mth.DEG_TO_RAD));
+        stack.mulPose(Axis.ZP.rotationDegrees(this.getParentModel().head.zRot * Mth.DEG_TO_RAD));
         UUID uuid = ((AvatarRenderStateExt) state).getUUID();
         collector.submitModel(eyebrowModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();

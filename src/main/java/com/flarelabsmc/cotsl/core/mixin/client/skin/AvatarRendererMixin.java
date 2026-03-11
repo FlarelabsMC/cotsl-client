@@ -3,6 +3,7 @@ package com.flarelabsmc.cotsl.core.mixin.client.skin;
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
+import com.flarelabsmc.cotsl.client.render.skin.layers.model.HandsModel;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
@@ -33,7 +34,7 @@ import java.util.UUID;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity> extends LivingEntityRenderer<AvatarlikeEntity, AvatarRenderState, PlayerModel> {
-    private HairRenderLayer hairLayer;
+    private PlayerHairRenderLayer hairLayer;
     private Identifier hairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
     private Identifier hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
     private UUID playerUUID = UUID.randomUUID();
@@ -44,9 +45,10 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
-        HairRenderLayer hairLayer = new HairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
+        PlayerHairRenderLayer hairLayer = new PlayerHairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
         PlayerEyebrowRenderLayer<AvatarRenderState, PlayerModel> eyebrowLayer = new PlayerEyebrowRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
-        HandsRenderLayer<AvatarRenderState, PlayerModel> handsLayer = new HandsRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
+//        PlayerHandRenderLayer handsLayer = new PlayerHandRenderLayer((AvatarRenderer<?>) (Object) this, new HandsModel(playerUUID), this.model);
+        PlayerHandsRenderLayer<AvatarRenderState, PlayerModel> handsLayer = new PlayerHandsRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(hairLayer);
