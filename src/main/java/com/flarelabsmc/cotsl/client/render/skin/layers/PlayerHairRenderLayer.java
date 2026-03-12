@@ -86,9 +86,7 @@ public class PlayerHairRenderLayer extends GeoModelRenderLayer<AvatarRenderState
     @Override
     public PoseStack modifyPose(PoseStack poseStack, AvatarRenderState renderState, float yRot, float xRot) {
         this.renderState = renderState;
-        poseStack.mulPose(Axis.YP.rotationDegrees(renderState.yRot - this.getParentModel().head.yRot * Mth.DEG_TO_RAD));
-        poseStack.mulPose(Axis.XP.rotationDegrees(renderState.xRot - this.getParentModel().head.xRot * Mth.DEG_TO_RAD));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(this.getParentModel().head.zRot * Mth.DEG_TO_RAD));
+        this.getParentModel().head.translateAndRotate(poseStack);
         poseStack.translate(0.5, 0.5, -0.5);
         poseStack.mulPose(Axis.XP.rotationDegrees(180f));
         poseStack.mulPose(Axis.YP.rotationDegrees(180f));

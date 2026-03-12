@@ -3,7 +3,6 @@ package com.flarelabsmc.cotsl.client.render;
 import com.flarelabsmc.cotsl.client.render.geo.WayfinderBeamEntityRenderer;
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -42,8 +41,6 @@ public class CotSLEntityRenderers {
                 .withSampler("Sampler0")
                 .withSampler("Sampler2")
                 .withCull(false)
-                .withDepthWrite(true)
-                .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
                 .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                 .build();
     }

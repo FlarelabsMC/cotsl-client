@@ -29,7 +29,7 @@ repositories {
             }
         }
         filter {
-            includeGroup('software.bernie.geckolib')
+            includeGroup('com.geckolib')
         }
     }
     flatDir {
@@ -52,6 +52,12 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            jvmArgument '-javaagent:spark-1.10.169-standalone-agent.jar'
+            jvmArgument '-Xms2G'
+            jvmArgument '-Xmx8G'
+            jvmArgument '-XX:+UnlockExperimentalVMOptions'
+            jvmArgument '-XX:+UseZGC'
+            jvmArgument '-XX:+ZGenerational'
         }
 
         server {
@@ -93,23 +99,26 @@ configurations {
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    implementation(jarJar("maven.modrinth:minecraft-sqlite-jdbc:3.51.1.0+2025-12-01"))
-    implementation(jarJar('com.j256.ormlite:ormlite-core:6.1'))
-    implementation(jarJar('com.j256.ormlite:ormlite-jdbc:6.1'))
-    implementation(jarJar('com.fasterxml.jackson.core:jackson-databind:2.15.0'))
-    implementation(jarJar('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2'))
-    implementation(jarJar('com.github.luben:zstd-jni:1.5.7-7'))
+//    implementation(jarJar("maven.modrinth:minecraft-sqlite-jdbc:3.51.1.0+2025-12-01"))
+    jarJar(implementation('org.xerial:sqlite-jdbc:3.51.2.0'))
+    jarJar(implementation('com.j256.ormlite:ormlite-core:6.1'))
+    jarJar(implementation('com.j256.ormlite:ormlite-jdbc:6.1'))
+    jarJar(implementation('com.fasterxml.jackson.core:jackson-core:2.15.0'))
+    jarJar(implementation('com.fasterxml.jackson.core:jackson-databind:2.15.0'))
+    jarJar(implementation('com.fasterxml.jackson.core:jackson-annotations:2.15.0'))
+    jarJar(implementation('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2'))
+    jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
 
 //    implementation(jarJar('libs:geckolib:neoforge-26.1-snapshot-7-5.5'))
     // utility
-//    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:5.5"
+    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:5.5"))
 
     // misc
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 tasks.register('downloadRhubarb') {
-    group = 'setup'
+//    group = 'setup'
 
     def rhubarbDir = file('rhubarb')
     def rhubarbExe = new File(rhubarbDir, 'rhubarb')
@@ -164,8 +173,8 @@ tasks.register('generateDialogueMetadata') {
     def audioFiles = fileTree(audioDir) {
         include '**/*.ogg'
     }
-    def buildOutputDir = file("${layout.buildDirectory.asFile.get()}/resources/main/assets/${modId}")
-    def speechJson = new File(buildOutputDir, 'speech.json')
+    def srcOutputDir = file("src/main/resources/assets/${modId}")
+    def speechJson = new File(srcOutputDir, 'speech.json')
     inputs.dir(audioDir)
     outputs.file(speechJson)
 
@@ -179,7 +188,7 @@ tasks.register('generateDialogueMetadata') {
             println "No audio directory found at ${audioDir}, skipping dialogue metadata generation"
             return
         }
-        buildOutputDir.mkdirs()
+        srcOutputDir.mkdirs()
         def audioData = [:]
         audioFiles.each { audioFile ->
             def audioName = audioFile.name.replaceAll(/\.ogg$/, '')
@@ -209,7 +218,7 @@ tasks.register('generateDialogueMetadata') {
 }
 
 processResources {
-    dependsOn generateDialogueMetadata
+//    dependsOn generateDialogueMetadata
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

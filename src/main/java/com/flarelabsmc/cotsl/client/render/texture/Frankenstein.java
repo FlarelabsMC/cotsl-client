@@ -1,5 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.texture;
 
+import com.flarelabsmc.cotsl.common.CotSL;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
@@ -12,17 +13,56 @@ import java.util.*;
 
 // stitch deez nuts am i right
 public class Frankenstein {
-    private static final Map<Identifier, DynamicTexture> textureCache = new HashMap<>();
+    private static final Set<Identifier> registeredTextures = new HashSet<>();
+    private static final Map<Identifier, DynamicTexture> textureObjects = new HashMap<>();
+    private static final Set<Identifier> placeholderTextures = new HashSet<>();
 
-    public static DynamicTexture getCachedTexture(Identifier location) {
-        return textureCache.get(location);
+    public static void registerTexture(Identifier location, NativeImage image) {
+        if (registeredTextures.contains(location)) {
+            CotSL.LOGGER.warn("[Frankenstein] Texture already registered at location: " + location);
+            return;
+        }
+        DynamicTexture texture = new DynamicTexture(location::toString, image);
+        Minecraft.getInstance().getTextureManager().register(location, texture);
+        registeredTextures.add(location);
+        textureObjects.put(location, texture);
     }
 
-    public static DynamicTexture registerTexture(Identifier location, NativeImage image) {
-        DynamicTexture dynamicTexture = new DynamicTexture(location::toString, image);
-        textureCache.put(location, dynamicTexture);
-        Minecraft.getInstance().getTextureManager().register(location, dynamicTexture);
-        return dynamicTexture;
+    public static void registerPlaceholder(Identifier location) {
+        if (registeredTextures.contains(location)) return;
+        NativeImage blank = new NativeImage(64, 64, true);
+        DynamicTexture texture = new DynamicTexture(location::toString, blank);
+        Minecraft.getInstance().getTextureManager().register(location, texture);
+        registeredTextures.add(location);
+        textureObjects.put(location, texture);
+        placeholderTextures.add(location);
+    }
+
+    public static void updateTexture(Identifier location, NativeImage image) {
+        DynamicTexture texture = textureObjects.get(location);
+        if (texture == null) {
+            registerTexture(location, image);
+            return;
+        }
+        texture.setPixels(image);
+        texture.upload();
+        placeholderTextures.remove(location);
+    }
+
+    public static boolean isPlaceholder(Identifier location) {
+        return placeholderTextures.contains(location);
+    }
+
+    public static void closeTexture(Identifier location) {
+        if (!registeredTextures.contains(location)) return;
+        Minecraft.getInstance().getTextureManager().release(location);
+        registeredTextures.remove(location);
+        textureObjects.remove(location);
+        placeholderTextures.remove(location);
+    }
+
+    public static boolean isRegistered(Identifier location) {
+        return registeredTextures.contains(location);
     }
 
     public static NativeImage paletteSwap(Map<Integer, Integer> colorMap, NativeImage sourceImage) {

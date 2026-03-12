@@ -2,6 +2,7 @@ package com.flarelabsmc.cotsl.common.storage.user;
 
 import com.flarelabsmc.cotsl.common.network.packets.SendUserDataPacket;
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -32,6 +33,7 @@ public class PermanentUserHandler {
             UUID uuid = event.getEntity().getUUID();
             if (PermanentUserStorage.getUserData(uuid) != null) LOGGER.debug("Player data already exists for {}, with {}", uuid, PermanentUserStorage.getUserData(uuid).getCharacterData());
             PermanentUserStorage.registerPlayer(uuid);
+            PacketDistributor.sendToPlayer((ServerPlayer) event.getEntity(), new SendUserDataPacket(PermanentUserStorage.getUserData(uuid)));
         } catch (SQLException e) {
             LOGGER.error("Failed to register player data", e);
         }

@@ -44,7 +44,7 @@ public class PermanentUser {
     }
 
     public CharData getCharacterData() {
-        return characterData;
+        return characterData != null ? characterData : CharData.init();
     }
 
     // ONLY USE FOR TESTING PURPOSES, THIS WILL CAUSE DATA INCONSISTENCY

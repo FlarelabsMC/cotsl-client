@@ -3,25 +3,31 @@ package com.flarelabsmc.cotsl.core.mixin.client.skin;
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
-import com.flarelabsmc.cotsl.client.render.skin.layers.model.HandsModel;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
+import com.flarelabsmc.cotsl.common.network.packets.RequestUserDataPacket;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.network.Connection;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,7 +35,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Mixin(AvatarRenderer.class)
@@ -43,17 +50,34 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         super(context, model, shadowRadius);
     }
 
+    @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
+                    shift = At.Shift.BEFORE
+            )
+    )
+    private void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci) {
+        UUID uuid = ((AvatarRenderStateExt) state).getUUID();
+        ClientPacketListener listener = Minecraft.getInstance().getConnection();
+        if (listener == null) return;
+        Connection connection = listener.getConnection();
+        if (!connection.isConnected()) return;
+        if (NetworkHandler.getCachedUserData(uuid) == null && NetworkHandler.tryAddPendingRequest(uuid)) {
+            Minecraft.getInstance().execute(() ->
+                    ClientPacketDistributor.sendToServer(new RequestUserDataPacket(uuid))
+            );
+        }
+    }
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
         PlayerHairRenderLayer hairLayer = new PlayerHairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
         PlayerEyebrowRenderLayer<AvatarRenderState, PlayerModel> eyebrowLayer = new PlayerEyebrowRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
-//        PlayerHandRenderLayer handsLayer = new PlayerHandRenderLayer((AvatarRenderer<?>) (Object) this, new HandsModel(playerUUID), this.model);
-        PlayerHandsRenderLayer<AvatarRenderState, PlayerModel> handsLayer = new PlayerHandsRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(hairLayer);
         this.addLayer(eyebrowLayer);
-        this.addLayer(handsLayer);
         this.hairLayer = hairLayer;
     }
 
@@ -63,15 +87,15 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     }
 
     @Inject(method = "extractRenderState*", at = @At("TAIL"))
-    private void storeUUID(AvatarlikeEntity entity, AvatarRenderState state, float partialTick, CallbackInfo ci) throws SQLException {
+    private void storeUUID(AvatarlikeEntity entity, AvatarRenderState state, float partialTick, CallbackInfo ci) {
         playerUUID = entity.getUUID();
         ((AvatarRenderStateExt) state).setUUID(playerUUID);
         Identifier id = Identifier.parse("cotsl:avatars/" + entity.getUUID());
-        DynamicTexture cached = Frankenstein.getCachedTexture(id);
-        if (cached != null) return;
+        if (!Frankenstein.isRegistered(id)) Frankenstein.registerPlaceholder(id);
+        if (!Frankenstein.isPlaceholder(id)) return;
         PermanentUser user = NetworkHandler.getCachedUserData(entity.getUUID());
+        if (user == null) return;
         CharData data = user.getCharacterData();
-//        NativeImage skin = CharacterSkinGenerator.createSkin(CharData.init().rebuild().gender(1).bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(2).jawShape(2).build());
         CharData newData = CharData.init().rebuild().bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(3).jawShape(0).eyesColor(1).build();
         NativeImage skin = CharacterSkinGenerator.createSkin(newData);
         user.setCharacterData(newData);
@@ -80,8 +104,9 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         hairLayer.model.setStyle(newData.hair());
         hairLayer.model.setTexture(hairTexture);
         hairLayer.model.setModel(hairModel);
-        Frankenstein.registerTexture(id, skin);
+        Frankenstein.updateTexture(id, skin);
     }
+
 
     @Inject(method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;", at = @At("RETURN"), cancellable = true)
     private void getTextureLocation(AvatarRenderState state, CallbackInfoReturnable<Identifier> cir) {

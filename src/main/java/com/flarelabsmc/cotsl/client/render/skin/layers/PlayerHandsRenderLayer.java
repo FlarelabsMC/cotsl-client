@@ -3,6 +3,7 @@ package com.flarelabsmc.cotsl.client.render.skin.layers;
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
+import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.EntityModel;
@@ -38,7 +39,9 @@ public class PlayerHandsRenderLayer<S extends AvatarRenderState, M extends Playe
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
         UUID uuid = ((AvatarRenderStateExt) state).getUUID();
-        CharData charData = NetworkHandler.getCachedUserData(uuid).getCharacterData();
+        PermanentUser user = NetworkHandler.getCachedUserData(uuid);
+        if (user == null) return;
+        CharData charData = user.getCharacterData();
         int skinColor = charData.skinColor();
         stack.pushPose();
         this.getParentModel().leftArm.translateAndRotate(stack);

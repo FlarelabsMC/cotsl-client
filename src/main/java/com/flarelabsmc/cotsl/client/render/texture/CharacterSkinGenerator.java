@@ -219,13 +219,17 @@ public class CharacterSkinGenerator {
         builder.addTexture(getShoes(shoesType, false), new Frankenstein.UVLocation(0, 32, 16, 16, 1, false));
         NativeImage result = builder.build();
         headTexture.close();
+        hairUnderlayTexture.close();
         jawTexture.close();
         eyesTexture.close();
         eyebrowsTexture.close();
         bodyTexture.close();
         shirtTexture.close();
+        shirtOverlayTexture.close();
         leftSleeveTexture.close();
         rightSleeveTexture.close();
+        leftSleeveOverlayTexture.close();
+        rightSleeveOverlayTexture.close();
         leftArmTexture.close();
         rightArmTexture.close();
         leftLegTexture.close();

@@ -103,10 +103,7 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 //        state.xRot = Mth.wrapDegrees(state.xRot + lookCurrentY);
 
         stack.pushPose();
-//        this.getParentModel().head.translateAndRotate(stack);
-        stack.mulPose(Axis.YP.rotationDegrees(state.yRot - this.getParentModel().head.yRot * Mth.DEG_TO_RAD));
-        stack.mulPose(Axis.XP.rotationDegrees(state.xRot - this.getParentModel().head.xRot * Mth.DEG_TO_RAD));
-        stack.mulPose(Axis.ZP.rotationDegrees(this.getParentModel().head.zRot * Mth.DEG_TO_RAD));
+        this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateExt) state).getUUID();
         collector.submitModel(eyeModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();
