@@ -53,17 +53,29 @@ public class Frankenstein {
         return placeholderTextures.contains(location);
     }
 
+    public static void markLoaded(Identifier location) {
+        placeholderTextures.remove(location);
+    }
+
     public static void closeTexture(Identifier location) {
         if (!registeredTextures.contains(location)) return;
         Minecraft.getInstance().getTextureManager().release(location);
         registeredTextures.remove(location);
         textureObjects.remove(location);
-        placeholderTextures.remove(location);
+        markLoaded(location);
     }
 
     public static boolean isRegistered(Identifier location) {
         return registeredTextures.contains(location);
     }
+
+    // clear tracking, ONLY used on asset reload
+    public static void reset() {
+        registeredTextures.clear();
+        textureObjects.clear();
+        placeholderTextures.clear();
+    }
+
 
     public static NativeImage paletteSwap(Map<Integer, Integer> colorMap, NativeImage sourceImage) {
         NativeImage resultImage = new NativeImage(sourceImage.getWidth(), sourceImage.getHeight(), true);

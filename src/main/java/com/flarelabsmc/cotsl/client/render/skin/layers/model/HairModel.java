@@ -1,9 +1,17 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers.model;
 
+import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
+import com.flarelabsmc.cotsl.common.CotSL;
 import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.model.GeoModel;
 import com.geckolib.renderer.base.GeoRenderState;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+
+import java.util.Optional;
 
 public class HairModel extends GeoModel<GeoAnimatable> {
     private int style = 0;
@@ -32,26 +40,27 @@ public class HairModel extends GeoModel<GeoAnimatable> {
         this.style = style;
     }
 
-    public void setTexture(Identifier texture) {
-        this.texture = texture;
+    public boolean setTexture(Identifier texture) {
+        Identifier tex = texture.withPath("textures/" + texture.getPath() + ".png");
+        ResourceManager manager = Minecraft.getInstance().getResourceManager();
+        try {
+            Optional<Resource> resource = manager.getResource(tex);
+            if (resource.isEmpty()) return false;
+            NativeImage img = NativeImage.read(resource.get().open());
+            this.texture = tex;
+            Frankenstein.updateTexture(tex, img);
+            return true;
+        } catch (Exception e) {
+            CotSL.LOGGER.warn("Failed to load texture {}: {}", tex, e.getMessage());
+            return false;
+        }
     }
 
     public void setModel(Identifier model) {
         this.model = model;
     }
 
-    @Override
-    public Identifier getModelResource(GeoRenderState geoRenderState) {
-        return model;
-    }
-
-    @Override
-    public Identifier getTextureResource(GeoRenderState geoRenderState) {
-        return texture;
-    }
-
-    @Override
-    public Identifier getAnimationResource(GeoAnimatable geoAnimatable) {
-        return anim;
-    }
+    @Override public Identifier getModelResource(GeoRenderState s) { return model; }
+    @Override public Identifier getTextureResource(GeoRenderState s) { return texture; }
+    @Override public Identifier getAnimationResource(GeoAnimatable a) { return anim; }
 }

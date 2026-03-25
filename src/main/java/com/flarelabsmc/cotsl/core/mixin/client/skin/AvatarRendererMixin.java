@@ -35,8 +35,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Mixin(AvatarRenderer.class)
@@ -90,23 +88,29 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     private void storeUUID(AvatarlikeEntity entity, AvatarRenderState state, float partialTick, CallbackInfo ci) {
         playerUUID = entity.getUUID();
         ((AvatarRenderStateExt) state).setUUID(playerUUID);
-        Identifier id = Identifier.parse("cotsl:avatars/" + entity.getUUID());
-        if (!Frankenstein.isRegistered(id)) Frankenstein.registerPlaceholder(id);
-        if (!Frankenstein.isPlaceholder(id)) return;
+        Identifier skinId = Identifier.parse("cotsl:avatars/" + entity.getUUID());
+        Identifier hairId = Identifier.parse("cotsl:hair/" + entity.getUUID());
+        if (!Frankenstein.isRegistered(skinId)) Frankenstein.registerPlaceholder(skinId);
+        if (!Frankenstein.isRegistered(hairId)) Frankenstein.registerPlaceholder(hairId);
+        if (!Frankenstein.isPlaceholder(skinId) && !Frankenstein.isPlaceholder(hairId)) return;
         PermanentUser user = NetworkHandler.getCachedUserData(entity.getUUID());
         if (user == null) return;
         CharData data = user.getCharacterData();
-        CharData newData = CharData.init().rebuild().bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(3).jawShape(0).eyesColor(1).build();
-        NativeImage skin = CharacterSkinGenerator.createSkin(newData);
-        user.setCharacterData(newData);
-        hairTexture = Identifier.fromNamespaceAndPath("cotsl", "textures/skin/hair/hair_" + data.hair() + "_color.png");
-        hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair());
-        hairLayer.model.setStyle(newData.hair());
-        hairLayer.model.setTexture(hairTexture);
-        hairLayer.model.setModel(hairModel);
-        Frankenstein.updateTexture(id, skin);
-    }
 
+        if (Frankenstein.isPlaceholder(hairId)) {
+            Identifier newHairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair() + "_color");
+            Identifier newHairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair());
+            hairLayer.model.setStyle(data.hair());
+            hairLayer.model.setModel(newHairModel);
+            if (hairLayer.model.setTexture(newHairTexture)) Frankenstein.markLoaded(hairId);
+        }
+        if (Frankenstein.isPlaceholder(skinId)) {
+            CharData newData = CharData.init().rebuild().bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(3).jawShape(0).eyesColor(1).build();
+            NativeImage skin = CharacterSkinGenerator.createSkin(newData);
+            user.setCharacterData(newData);
+            Frankenstein.updateTexture(skinId, skin);
+        }
+    }
 
     @Inject(method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;", at = @At("RETURN"), cancellable = true)
     private void getTextureLocation(AvatarRenderState state, CallbackInfoReturnable<Identifier> cir) {

@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.client.render.geo.layer.vanilla;
+package com.flarelabsmc.cotsl.client.render.geo.layers.vanilla;
 
 import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.model.GeoModel;

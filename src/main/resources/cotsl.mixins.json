@@ -4,6 +4,8 @@
   "refmap": "cotsl.refmap.json",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "client.render.entity.EntityRenderDispatcherMixin",
+    "client.render.entity.layer.LivingEntityRendererMixin",
     "client.skin.AvatarRendererMixin",
     "client.skin.AvatarRenderStateMixin",
     "client.tweaks.LocalPlayerMixin"

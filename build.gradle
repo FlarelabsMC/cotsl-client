@@ -15,6 +15,7 @@ version = mod_version
 group = mod_group_id
 
 repositories {
+    mavenCentral()
     mavenLocal()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     maven {
@@ -53,11 +54,10 @@ neoForge {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             jvmArgument '-javaagent:spark-1.10.169-standalone-agent.jar'
-            jvmArgument '-Xms2G'
-            jvmArgument '-Xmx8G'
             jvmArgument '-XX:+UnlockExperimentalVMOptions'
             jvmArgument '-XX:+UseZGC'
             jvmArgument '-XX:+ZGenerational'
+            jvmArgument "-javaagent:${project.tasks.named('jar').get().archiveFile.get().asFile.absolutePath}"
         }
 
         server {
@@ -111,7 +111,7 @@ dependencies {
 
 //    implementation(jarJar('libs:geckolib:neoforge-26.1-snapshot-7-5.5'))
     // utility
-    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:5.5"))
+    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
 
     // misc
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -258,6 +258,15 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('jar', Jar) {
     from rootProject.file('LICENSE')
+    manifest {
+        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith("run")) {
+        dependsOn tasks.named('jar')
+    }
 }
 
 idea {

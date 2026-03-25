@@ -1,6 +1,7 @@
 package com.flarelabsmc.cotsl.common;
 
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
+import com.flarelabsmc.cotsl.common.registry.ParticleRegistry;
 import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUserHandler;
 import com.mojang.logging.LogUtils;
@@ -20,5 +21,6 @@ public class CotSL {
         CotSLSoundEvents.SOUND_EVENTS.register(modEventBus);
 
         EntityRegistry.ENTITY_TYPES.register(modEventBus);
+        ParticleRegistry.PARTICLE_TYPES.register(modEventBus);
     }
 }
