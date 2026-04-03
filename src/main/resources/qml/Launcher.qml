@@ -1,0 +1,176 @@
+import QtQuick
+import QtQuick.Effects
+
+Window {
+    id: root
+    width: 860; height: 520
+    minimumWidth: 640; minimumHeight: 400
+    visible: true
+    flags: Qt.FramelessWindowHint | Qt.Window
+    color: "#0f0d0b"
+
+    x: (Screen.width - width) / 2
+    y: (Screen.height - height) / 2
+
+    property real targetMX: 0.5
+    property real targetMY: 0.5
+
+    property real smoothMX: 0.5
+    Behavior on smoothMX { SmoothedAnimation { velocity: -1; duration: 400 } }
+    property real smoothMY: 0.5
+    Behavior on smoothMY { SmoothedAnimation { velocity: -1; duration: 400 } }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: (mouse) => {
+            root.targetMX = mouse.x / root.width
+            root.targetMY = mouse.y / root.height
+        }
+        propagateComposedEvents: true
+        onPressed: (mouse) => mouse.accepted = false
+    }
+
+    Timer {
+        interval: 16; running: true; repeat: true
+        onTriggered: {
+            root.smoothMX = root.targetMX
+            root.smoothMY = root.targetMY
+        }
+    }
+
+    Item {
+        id: bgContainer
+        anchors.fill: parent
+        clip: true
+
+        Image {
+            id: bgImage
+            anchors.centerIn: parent
+            width: parent.width * 1.2
+            height: parent.height * 1.2
+            source: Qt.resolvedUrl("textures/launch/bg/launch_bg.png")
+            fillMode: Image.Stretch
+            smooth: true
+
+            transform: [
+                Rotation {
+                    origin.x: bgImage.width / 2
+                    origin.y: bgImage.height / 2
+                    axis { x: 0; y: 1; z: 0 }
+                    angle: (root.smoothMX - 0.5) * 24
+                },
+                Rotation {
+                    origin.x: bgImage.width / 2
+                    origin.y: bgImage.height / 2
+                    axis { x: 1; y: 0; z: 0 }
+                    angle: -(root.smoothMY - 0.5) * 32
+                }
+            ]
+        }
+    }
+
+    property real fadeProgress: 0.0
+    property bool fadeActive: false
+
+    ShaderEffectSource {
+        id: sceneCapture
+        sourceItem: bgContainer
+        hideSource: false
+        live: !root.fadeActive
+    }
+
+    ShaderEffect {
+        id: fadeEffect
+        anchors.fill: parent
+        visible: root.fadeActive
+        opacity: root.fadeActive ? 1.0 : 0.0
+
+        property var source: sceneCapture
+        property real progress: root.fadeProgress
+        property real imgWidth: root.width
+        property real imgHeight: root.height
+
+        fragmentShader: Qt.resolvedUrl("shaders/pixelate.frag.qsb")
+    }
+
+    NumberAnimation {
+        id: fadeAnim
+        target: root
+        property: "fadeProgress"
+        from: 0.0; to: 1.0
+        duration: 800
+        easing.type: Easing.InQuad
+        onFinished: {
+            root.visible = false
+            bridge.launch()
+            Qt.quit()
+        }
+    }
+
+    Rectangle {
+        id: titleBar
+        anchors { top: parent.top; left: parent.left; right: parent.right }
+        height: 32
+        color: "#cc0f0d0b"
+
+        DragHandler {
+            onActiveChanged: if (active) root.startSystemMove()
+        }
+
+        BitmapText {
+            anchors.centerIn: parent
+            text: "Crypt of the Second Lord"
+            textColor: "#b4a58c"
+            charScale: 2
+        }
+
+        Image {
+            id: closeBtn
+            anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
+            width: 12; height: 14
+            source: Qt.resolvedUrl("textures/launch/ui/x.png")
+            smooth: false
+
+            property bool hovered: false
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                colorizationColor: closeBtn.hovered ? "#dc503c" : "#e3bf91"
+                colorization: 1.0
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onEntered: closeBtn.hovered = true
+                onExited: closeBtn.hovered = false
+                onClicked: Qt.quit()
+            }
+        }
+    }
+
+    Rectangle {
+        id: bottomBar
+        anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+        height: 64
+        color: "#cc0f0d0b"
+
+        BitmapText {
+            anchors { right: parent.right; bottom: parent.bottom; rightMargin: 12; bottomMargin: 12 }
+            text: "1.0.0"
+            textColor: "#b4a58c"
+            charScale: 2
+        }
+
+        GlowButton {
+            anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 24 }
+            width: 220; height: 72
+            label: "Launch"
+            onClicked: {
+                root.fadeActive = true
+                sceneCapture.live = false
+                fadeAnim.start()
+            }
+        }
+    }
+}

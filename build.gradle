@@ -42,6 +42,28 @@ base {
     archivesName = mod_id
 }
 
+def qtVersion = '6.11.0'
+def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
+def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
+    def os = System.getProperty('os.name').toLowerCase()
+    if (os.contains('win')) return 'windows-x64'
+    if (os.contains('mac')) return 'macos'
+    return 'linux-x64'
+}()
+
+allPlatforms.each { platform ->
+    configurations.create("embedNative_${platform.replace('-', '_')}") {
+        canBeResolved = true
+        canBeConsumed = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+        }
+    }
+}
+
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
@@ -56,8 +78,11 @@ neoForge {
             jvmArgument '-javaagent:spark-1.10.169-standalone-agent.jar'
             jvmArgument '-XX:+UnlockExperimentalVMOptions'
             jvmArgument '-XX:+UseZGC'
-            jvmArgument '-XX:+ZGenerational'
             jvmArgument "-javaagent:${project.tasks.named('jar').get().archiveFile.get().asFile.absolutePath}"
+
+            def qtDir = System.getenv('QTDIR')
+            if (qtDir) environment 'PATH', (System.getenv('PATH') ?: '') + File.pathSeparator + new File(qtDir, 'bin').absolutePath
+            else logger.warn("[CotSL] QTDIR is not set!!")
         }
 
         server {
@@ -93,13 +118,23 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
+    embed {
+        canBeResolved = true
+        canBeConsumed = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+        }
+    }
+    compileOnly.extendsFrom embed
     runtimeClasspath.extendsFrom localRuntime
 }
+
 
 dependencies {
     // deps for local database storage
     // I really hate NBT
-//    implementation(jarJar("maven.modrinth:minecraft-sqlite-jdbc:3.51.1.0+2025-12-01"))
     jarJar(implementation('org.xerial:sqlite-jdbc:3.51.2.0'))
     jarJar(implementation('com.j256.ormlite:ormlite-core:6.1'))
     jarJar(implementation('com.j256.ormlite:ormlite-jdbc:6.1'))
@@ -109,7 +144,17 @@ dependencies {
     jarJar(implementation('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2'))
     jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
 
-//    implementation(jarJar('libs:geckolib:neoforge-26.1-snapshot-7-5.5'))
+    // qtjambi for launcher ui
+    embed 'io.qtjambi:qtjambi:6.11.0'
+    embed 'io.qtjambi:qtjambi-qml:6.11.0'
+    embed 'io.qtjambi:qtjambi-quick:6.11.0'
+    allPlatforms.each { platform ->
+        def cfg = "embedNative_${platform.replace('-', '_')}"
+        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
+    }
+
     // utility
     implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
 
@@ -210,12 +255,57 @@ tasks.register('generateDialogueMetadata') {
                 ]
                 tempOutputFile.delete()
             }
-            println "  -> Added ${audioName}"
+            println "Added ${audioName}"
         }
         speechJson.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(audioData))
         println "Generated speech.json with ${audioData.size()} entries"
     }
 }
+
+tasks.register('compileShaders') {
+    def shaderSrc = file('src/main/resources/qml/shaders')
+    def isWindows = System.getProperty('os.name').toLowerCase().contains('win')
+    def resolvedQsb = {
+        def explicit = System.getenv('QSB_PATH')
+        if (explicit) return explicit
+        def qtDir = System.getenv('QTDIR')
+        if (qtDir) {
+            def candidate = new File(qtDir, isWindows ? 'bin/qsb.exe' : 'bin/qsb')
+            if (candidate.exists()) return candidate.absolutePath
+        }
+        return isWindows ? 'qsb.exe' : 'qsb'
+    }()
+
+    def shaderFiles = fileTree(shaderSrc).matching { include '**/*.frag', '**/*.vert' }
+    inputs.files(shaderFiles)
+    onlyIf {
+        def qsbFile = new File(resolvedQsb)
+        if (qsbFile.absolute) {
+            if (!qsbFile.exists()) return false
+            return true
+        }
+        def found = System.getenv('PATH').split(File.pathSeparator).any { dir ->
+            new File(dir, resolvedQsb).exists()
+        }
+        return found
+    }
+    doLast {
+        def execOps = services.get(org.gradle.process.ExecOperations)
+        shaderFiles.each { f ->
+            def out = new File(f.parent, f.name + '.qsb')
+            execOps.exec {
+                commandLine resolvedQsb,
+                        '--glsl', '150,120,100 es',
+                        '--hlsl', '50',
+                        '--msl',  '12',
+                        '-o', out.absolutePath,
+                        f.absolutePath
+            }
+        }
+    }
+}
+
+processResources.dependsOn compileShaders
 
 processResources {
 //    dependsOn generateDialogueMetadata
@@ -257,10 +347,40 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('jar', Jar) {
+    archiveClassifier = currentPlatform
     from rootProject.file('LICENSE')
+    from(configurations.embed) {
+        into 'META-INF/extjarjar'
+    }
+    from(configurations["embedNative_${currentPlatform.replace('-', '_')}"]) {
+        into 'META-INF/extjarjar'
+    }
     manifest {
         attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
     }
+}
+
+allPlatforms.each { platform ->
+    def safe = platform.replace('-', '_')
+    tasks.register("jar_${safe}", Jar) {
+        group = 'build'
+        description = "Assembles mod JAR for ${platform}"
+        archiveClassifier = platform
+        from sourceSets.main.output
+        from rootProject.file('LICENSE')
+        from(tasks.named('jarJar'))
+        from(configurations.embed) { into 'META-INF/extjarjar' }
+        from(configurations["embedNative_${safe}"]) { into 'META-INF/extjarjar' }
+        manifest {
+            attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+        }
+    }
+}
+
+tasks.register('jarAllPlatforms') {
+    group = 'build'
+    description = 'Assembles mod JARs for all three platforms'
+    dependsOn allPlatforms.collect { "jar_${it.replace('-', '_')}" }
 }
 
 tasks.configureEach {

@@ -5,18 +5,27 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class LaunchAgent {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
     private static final String RELAUNCHED_PROP = "cotsl.relaunched";
 
-    public static void premain(String agentArgs, Instrumentation inst) throws InterruptedException, IOException {
+    public static void premain(String agentArgs, Instrumentation inst) throws Exception {
         if (System.getProperty(RELAUNCHED_PROP) != null) return;
+        loadExtraJars(inst);
         LauncherWindow.create(LAUNCH_LATCH);
-        LAUNCH_LATCH.await();
+
+        if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
+
         tryRelaunch();
     }
 
@@ -26,6 +35,47 @@ public class LaunchAgent {
                 : Runtime.getRuntime().maxMemory() / (1024 * 1024);
         try { doRelaunch(recommended); }
         catch (Exception e) { System.err.println("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage()); }
+    }
+
+    private static void loadExtraJars(Instrumentation inst) throws Exception {
+        File selfJar = findSelf();
+        if (selfJar == null) {
+            System.err.println("[CotSL] Could not locate own JAR, skipping extjarjar loading (this is fatal!)");
+            return;
+        }
+        try (JarFile self = new JarFile(selfJar)) {
+            List<JarEntry> entries = self.stream()
+                    .filter(e -> e.getName().startsWith("META-INF/extjarjar/") && e.getName().endsWith(".jar"))
+                    .toList();
+            for (JarEntry entry : entries) {
+                Path tmp = Files.createTempFile("cotsl-ext-", ".jar");
+                tmp.toFile().deleteOnExit();
+                try (InputStream in = self.getInputStream(entry)) {
+                    Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
+                }
+                inst.appendToSystemClassLoaderSearch(new JarFile(tmp.toFile()));
+            }
+        }
+    }
+
+    private static File findSelf() throws Exception {
+        URI selfUri = LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+        File selfFile = new File(selfUri);
+        if (selfFile.isFile()) return selfFile;
+
+        for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+            if (!arg.startsWith("-javaagent:")) continue;
+            String path = arg.substring("-javaagent:".length());
+            int eq = path.indexOf('=');
+            if (eq >= 0) path = path.substring(0, eq);
+            File f = new File(path);
+            if (!f.isFile()) continue;
+            try (JarFile jf = new JarFile(f)) {
+                if (jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null)
+                    return f;
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 
     private static void doRelaunch(long maxHeapMB) throws Exception {
@@ -109,7 +159,6 @@ public class LaunchAgent {
             return entries.get(entries.size() - 1)[1];
         }
     }
-
 
     private static String quoteForArgFile(String arg) {
         String escaped = arg.replace("\\", "\\\\").replace("\"", "\\\"");
