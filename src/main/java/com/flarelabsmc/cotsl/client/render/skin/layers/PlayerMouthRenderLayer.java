@@ -63,6 +63,9 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
                 ext.setMouthPose(0);
             }
         }
+        if (state.hasRedOverlay) {
+            pose = 1;
+        }
         PermanentUser user = NetworkHandler.getCachedUserData(ext.getUUID());
         if (user == null) {
             stack.popPose();

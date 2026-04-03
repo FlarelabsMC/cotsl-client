@@ -7,4 +7,8 @@ public interface AvatarRenderStateExt {
     void setUUID(UUID uuid);
     int getMouthPose();
     void setMouthPose(int pose);
+    float getHealth();
+    void setHealth(float health);
+    float getMaxHealth();
+    void setMaxHealth(float maxHealth);
 }

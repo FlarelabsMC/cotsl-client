@@ -18,5 +18,30 @@
           "pitch": 1.0
       }
     ]
+  },
+  "male_hurt": {
+    "subtitle": "Male hurt",
+    "sounds": [
+      {
+        "name": "cotsl:hurt/player/male_hurt_0",
+        "weight": 3
+      },
+      {
+        "name": "cotsl:hurt/player/male_hurt_1",
+        "weight": 2
+      },
+      {
+        "name": "cotsl:hurt/player/male_hurt_2",
+        "weight": 1
+      },
+      {
+        "name": "cotsl:hurt/player/male_hurt_3",
+        "weight": 2
+      },
+      {
+        "name": "cotsl:hurt/player/male_hurt_4",
+        "weight": 3
+      }
+    ]
   }
 }

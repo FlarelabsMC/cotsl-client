@@ -10,6 +10,8 @@ import java.util.UUID;
 public class AvatarRenderStateMixin implements AvatarRenderStateExt {
     private UUID uuid;
     private int mouthPose;
+    private float health;
+    private float maxHealth;
 
     @Override
     public UUID getUUID() {
@@ -29,5 +31,25 @@ public class AvatarRenderStateMixin implements AvatarRenderStateExt {
     @Override
     public void setMouthPose(int pose) {
         this.mouthPose = pose;
+    }
+
+    @Override
+    public float getHealth() {
+        return health;
+    }
+
+    @Override
+    public void setHealth(float health) {
+        this.health = health;
+    }
+
+    @Override
+    public float getMaxHealth() {
+        return maxHealth;
+    }
+
+    @Override
+    public void setMaxHealth(float maxHealth) {
+        this.maxHealth = maxHealth;
     }
 }

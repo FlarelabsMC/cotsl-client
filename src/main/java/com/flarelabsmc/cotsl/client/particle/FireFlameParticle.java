@@ -2,26 +2,35 @@ package com.flarelabsmc.cotsl.client.particle;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import org.jspecify.annotations.Nullable;
 
-public class FireFlameParticle extends RisingParticle {
+public class FireFlameParticle extends SingleQuadParticle {
+    private final SpriteSet sprites;
+
     public FireFlameParticle(
             ClientLevel level,
             double x, double y, double z,
             double xd, double yd, double zd,
-            TextureAtlasSprite sprite
+            SpriteSet sprites
     ) {
-        super(level, x, y, z, xd, yd, zd, sprite);
+        super(level, x, y, z, xd, yd, zd, sprites.first());
+        this.sprites = sprites;
+        this.friction = 0.96F;
+        this.xd = this.xd * (double) 0.01F + xd;
+        this.yd = this.yd * (double) 0.01F + yd;
+        this.zd = this.zd * (double) 0.01F + zd;
+        this.x += (this.random.nextFloat() - this.random.nextFloat()) * 0.05F;
+        this.y += (this.random.nextFloat() - this.random.nextFloat()) * 0.05F;
+        this.z += (this.random.nextFloat() - this.random.nextFloat()) * 0.05F;
+        this.lifetime = (int) ((double) 8.0F / ((double) this.random.nextFloat() * 0.8 + 0.2)) + 4;
     }
 
     @Override
-    public SingleQuadParticle.Layer getLayer() {
-        return Layer.TRANSLUCENT_TERRAIN;
+    public void tick() {
+        this.setSpriteFromAge(this.sprites);
+        super.tick();
     }
 
     @Override
@@ -36,16 +45,26 @@ public class FireFlameParticle extends RisingParticle {
         return this.quadSize * (1.0F - s * s * 0.5F);
     }
 
-    public static class FireFlameProvider implements ParticleProvider<SimpleParticleType> {
-        private final SpriteSet sprite;
+    @Override
+    public int getLightCoords(float partialTick) {
+        return LightCoordsUtil.FULL_BRIGHT;
+    }
 
-        public FireFlameProvider(SpriteSet sprite) {
-            this.sprite = sprite;
+    @Override
+    public SingleQuadParticle.Layer getLayer() {
+        return Layer.TRANSLUCENT;
+    }
+
+    public static class FireFlameProvider implements ParticleProvider<SimpleParticleType> {
+        private final SpriteSet sprites;
+
+        public FireFlameProvider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         @Override
         public Particle createParticle(SimpleParticleType options, ClientLevel level, double x, double y, double z, double xAux, double yAux, double zAux, RandomSource random) {
-            FlameParticle particle = new FlameParticle(level, x, y, z, xAux, yAux, zAux, this.sprite.get(random));
+            FireFlameParticle particle = new FireFlameParticle(level, x, y, z, xAux, yAux, zAux, this.sprites);
             particle.scale(1.5F);
             return particle;
         }

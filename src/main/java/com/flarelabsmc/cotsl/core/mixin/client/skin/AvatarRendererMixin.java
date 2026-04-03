@@ -9,6 +9,7 @@ import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.network.packets.RequestUserDataPacket;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
+import com.flarelabsmc.cotsl.core.hotmixin.MixinsClient;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.Identifier;
@@ -43,6 +45,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     private Identifier hairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
     private Identifier hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
     private UUID playerUUID = UUID.randomUUID();
+    private final MixinsClient.AvatarRendererMixin<AvatarlikeEntity> self = new MixinsClient.AvatarRendererMixin<>();
 
     public AvatarRendererMixin(EntityRendererProvider.Context context, PlayerModel model, float shadowRadius, AvatarRenderState state) {
         super(context, model, shadowRadius);
@@ -68,6 +71,11 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         }
     }
 
+    @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V", at = @At("HEAD"))
+    private void submit2(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci) {
+        self.submit(state, poseStack, submitNodeCollector, camera, ci);
+    }
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
         PlayerHairRenderLayer hairLayer = new PlayerHairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
@@ -86,30 +94,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
 
     @Inject(method = "extractRenderState*", at = @At("TAIL"))
     private void storeUUID(AvatarlikeEntity entity, AvatarRenderState state, float partialTick, CallbackInfo ci) {
-        playerUUID = entity.getUUID();
-        ((AvatarRenderStateExt) state).setUUID(playerUUID);
-        Identifier skinId = Identifier.parse("cotsl:avatars/" + entity.getUUID());
-        Identifier hairId = Identifier.parse("cotsl:hair/" + entity.getUUID());
-        if (!Frankenstein.isRegistered(skinId)) Frankenstein.registerPlaceholder(skinId);
-        if (!Frankenstein.isRegistered(hairId)) Frankenstein.registerPlaceholder(hairId);
-        if (!Frankenstein.isPlaceholder(skinId) && !Frankenstein.isPlaceholder(hairId)) return;
-        PermanentUser user = NetworkHandler.getCachedUserData(entity.getUUID());
-        if (user == null) return;
-        CharData data = user.getCharacterData();
-
-        if (Frankenstein.isPlaceholder(hairId)) {
-            Identifier newHairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair() + "_color");
-            Identifier newHairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_" + data.hair());
-            hairLayer.model.setStyle(data.hair());
-            hairLayer.model.setModel(newHairModel);
-            if (hairLayer.model.setTexture(newHairTexture)) Frankenstein.markLoaded(hairId);
-        }
-        if (Frankenstein.isPlaceholder(skinId)) {
-            CharData newData = CharData.init().rebuild().bodyType(2).shirtColor(0x435241).pantsColor(0xc4ba86).headShape(3).jawShape(0).eyesColor(1).build();
-            NativeImage skin = CharacterSkinGenerator.createSkin(newData);
-            user.setCharacterData(newData);
-            Frankenstein.updateTexture(skinId, skin);
-        }
+        self.extractRenderState(entity, state, partialTick, ci, playerUUID, hairLayer);
     }
 
     @Inject(method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;", at = @At("RETURN"), cancellable = true)

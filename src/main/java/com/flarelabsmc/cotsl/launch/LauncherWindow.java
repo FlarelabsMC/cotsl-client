@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class LauncherWindow extends JFrame {
     private static final URL BG = LauncherWindow.class.getResource("/assets/cotsl/textures/launch/bg/launch_bg.png");
-    private static final BufferedImage ASCII_FONT = loadImage("/assets/minecraft/textures/font/ascii.png");
+    private static final BufferedImage ASCII_FONT = loadImage("/assets/cotsl/textures/font/ascii.png");
     private static final BufferedImage CLOSE_ICON_RAW = loadImage("/assets/cotsl/textures/launch/ui/x.png");
 
     private double targetMX = 0.5, targetMY = 0.5;

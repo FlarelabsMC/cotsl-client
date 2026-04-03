@@ -10,7 +10,11 @@
     "client.skin.AvatarRenderStateMixin",
     "client.tweaks.LocalPlayerMixin"
   ],
-  "mixins": [],
+  "mixins": [
+    "common.block.GrindstoneBlockMixin",
+    "common.entity.living.LivingEntityMixin",
+    "common.entity.player.PlayerMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

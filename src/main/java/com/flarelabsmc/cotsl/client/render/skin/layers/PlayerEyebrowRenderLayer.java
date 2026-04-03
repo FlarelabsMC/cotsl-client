@@ -75,12 +75,20 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
         @Override
         public void setupAnim(AvatarRenderState state) {
             boolean canBlink = state.ageInTicks % 100 < ((state.ageInTicks / 100) % 3 * 2);
+            AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
             if (canBlink) {
                 leftEyebrow.y = 1.25F;
                 rightEyebrow.y = 1.25F;
             } else {
                 leftEyebrow.y = 0f;
                 rightEyebrow.y = 0f;
+            }
+            float hh = Math.min(1.25F, 1.25F * (1 - ext.getHealth() / ext.getMaxHealth()));
+            leftEyebrow.y = hh;
+            rightEyebrow.y = hh;
+            if (state.displayFireAnimation || state.hasRedOverlay) {
+                leftEyebrow.y = 1F;
+                rightEyebrow.y = 1F;
             }
         }
     }

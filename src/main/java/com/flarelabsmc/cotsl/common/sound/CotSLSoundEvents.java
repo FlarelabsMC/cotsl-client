@@ -13,4 +13,5 @@ public class CotSLSoundEvents {
 
     public static final Holder<SoundEvent> TEST = SOUND_EVENTS.register("test", (i) -> SoundEvent.createFixedRangeEvent(i, 16f));
     public static final Holder<SoundEvent> TEST_2 = SOUND_EVENTS.register("test_2", (i) -> SoundEvent.createFixedRangeEvent(i, 16f));
+    public static final Holder<SoundEvent> MALE_HURT = SOUND_EVENTS.register("male_hurt", (i) -> SoundEvent.createFixedRangeEvent(i, 16f));
 }

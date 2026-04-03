@@ -6,9 +6,14 @@ import net.minecraft.client.renderer.entity.layers.EnergySwirlLayer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.resources.Identifier;
 
+import java.util.function.Supplier;
+
 public class FireRenderLayer<S extends EntityRenderState, M extends EntityModel<S>> extends EnergySwirlLayer<S, M> {
-    public FireRenderLayer(RenderLayerParent<S, M> renderer) {
+    private final Supplier<M> model;
+
+    public FireRenderLayer(RenderLayerParent<S, M> renderer, Supplier<M> model) {
         super(renderer);
+        this.model = model;
     }
 
     @Override
@@ -28,10 +33,10 @@ public class FireRenderLayer<S extends EntityRenderState, M extends EntityModel<
 
     @Override
     protected M model() {
-        return this.getParentModel();
+        return model.get();
     }
 
     public static <S extends EntityRenderState, M extends EntityModel<S>> FireRenderLayer<S, M> createFor(S state, M model) {
-        return new FireRenderLayer<>(() -> model);
+        return new FireRenderLayer<>(() -> model, () -> model);
     }
 }

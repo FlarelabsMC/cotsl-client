@@ -1,6 +1,8 @@
 package com.flarelabsmc.cotsl.client;
 
 import com.flarelabsmc.cotsl.client.particle.FireFlameParticle;
+import com.flarelabsmc.cotsl.client.particle.FireSparkParticle;
+import com.flarelabsmc.cotsl.client.particle.FireSparkParticleGroup;
 import com.flarelabsmc.cotsl.client.render.CotSLEntityRenderers;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerHandsRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
@@ -21,6 +23,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
 @Mod(value = CotSL.MOD_ID, dist = Dist.CLIENT)
@@ -53,5 +56,11 @@ public class CotSLClient {
     @SubscribeEvent
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ParticleRegistry.FIRE_FLAME.get(), FireFlameParticle.FireFlameProvider::new);
+        event.registerSpriteSet(ParticleRegistry.FIRE_SPARK.get(), FireSparkParticle.FireSparkProvider::new);
+    }
+
+    @SubscribeEvent
+    public static void registerParticleGroups(RegisterParticleGroupsEvent event) {
+        event.register(FireSparkParticle.FIRE_SPARK_RENDER_TYPE, FireSparkParticleGroup::new);
     }
 }
