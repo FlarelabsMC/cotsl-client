@@ -1,16 +1,11 @@
-package com.flarelabsmc.cotsl.core.mixin.client.skin;
+package com.flarelabsmc.cotsl.core.mixin.client.entity.avatar;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
-import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
-import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.network.packets.RequestUserDataPacket;
-import com.flarelabsmc.cotsl.common.storage.player.CharData;
-import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
 import com.flarelabsmc.cotsl.core.hotmixin.MixinsClient;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientAvatarEntity;
@@ -24,7 +19,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.Identifier;

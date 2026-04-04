@@ -6,9 +6,9 @@
   "client": [
     "client.render.entity.EntityRenderDispatcherMixin",
     "client.render.entity.layer.LivingEntityRendererMixin",
-    "client.skin.AvatarRendererMixin",
-    "client.skin.AvatarRenderStateMixin",
-    "client.tweaks.LocalPlayerMixin"
+    "client.entity.avatar.AvatarRendererMixin",
+    "client.entity.avatar.AvatarRenderStateMixin",
+    "client.entity.LocalPlayerMixin"
   ],
   "mixins": [
     "common.block.GrindstoneBlockMixin",
