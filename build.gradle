@@ -145,9 +145,9 @@ dependencies {
     jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
 
     // qtjambi for launcher ui
-    embed 'io.qtjambi:qtjambi:6.11.0'
-    embed 'io.qtjambi:qtjambi-qml:6.11.0'
-    embed 'io.qtjambi:qtjambi-quick:6.11.0'
+    embed "io.qtjambi:qtjambi:${qtVersion}"
+    embed "io.qtjambi:qtjambi-qml:${qtVersion}"
+    embed "io.qtjambi:qtjambi-quick:${qtVersion}"
     allPlatforms.each { platform ->
         def cfg = "embedNative_${platform.replace('-', '_')}"
         dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")

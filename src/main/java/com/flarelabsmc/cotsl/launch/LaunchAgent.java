@@ -21,11 +21,20 @@ public class LaunchAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) throws Exception {
         if (System.getProperty(RELAUNCHED_PROP) != null) return;
+        LinuxQtState qtState = extendLibraryPathForQt();
+        if (qtState == LinuxQtState.NO_QT) {
+            System.err.println("[CotSL] Qt6 runtime not found, cannot launch launcher window. Crashing.");
+            System.exit(1);
+            return;
+        }
         loadExtraJars(inst);
-        LauncherWindow.create(LAUNCH_LATCH);
-
-        if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
-
+        try {
+            LauncherWindow.create(LAUNCH_LATCH);
+            if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
+        } catch (Throwable t) {
+            System.err.println("[CotSL] Launcher unavailable (" + t.getMessage() + "), launching directly");
+            return;
+        }
         tryRelaunch();
     }
 
@@ -62,7 +71,6 @@ public class LaunchAgent {
         URI selfUri = LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI();
         File selfFile = new File(selfUri);
         if (selfFile.isFile()) return selfFile;
-
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (!arg.startsWith("-javaagent:")) continue;
             String path = arg.substring("-javaagent:".length());
@@ -76,6 +84,37 @@ public class LaunchAgent {
             } catch (Exception ignored) {}
         }
         return null;
+    }
+
+    enum LinuxQtState {
+        HAS_QT,
+        NO_QT,
+        NO_LINUX
+    }
+
+    private static LinuxQtState extendLibraryPathForQt() {
+        if (!System.getProperty("os.name", "").toLowerCase().contains("linux")) return LinuxQtState.NO_LINUX;
+        String[] candidates = {
+                "/usr/lib",
+                "/usr/lib/x86_64-linux-gnu",
+                "/usr/lib64",
+                "/usr/local/lib",
+        };
+        String current = System.getProperty("java.library.path", "");
+        for (String dir : candidates) {
+            if (new File(dir, "libQt6Core.so.6").exists()) {
+                System.setProperty("java.library.path", current.isEmpty() ? dir : current + File.pathSeparator + dir);
+                return LinuxQtState.HAS_QT;
+            }
+        }
+        System.err.println("[CotSL] Qt6 runtime not found. This is fatal.");
+        System.err.println("[CotSL] To fix this, install Qt6:");
+        if (new File("/usr/bin/pacman").exists()) System.err.println("[CotSL] sudo pacman -S qt6-base qt6-declarative");
+        else if (new File("/usr/bin/apt").exists()) System.err.println("[CotSL] sudo apt install libqt6core6t64 libqt6quick6 libqt6qml6 libqt6widgets6t64");
+        else if (new File("/usr/bin/dnf").exists()) System.err.println("[CotSL] sudo dnf install qt6-qtbase qt6-qtdeclarative");
+        else if (new File("/usr/bin/zypper").exists()) System.err.println("[CotSL] sudo zypper install libQt6Core6 libQt6Quick6 libQt6Qml6");
+        else System.err.println("[CotSL] Install qt6-base and qt6-declarative via your package manager.");
+        return LinuxQtState.NO_QT;
     }
 
     private static void doRelaunch(long maxHeapMB) throws Exception {
