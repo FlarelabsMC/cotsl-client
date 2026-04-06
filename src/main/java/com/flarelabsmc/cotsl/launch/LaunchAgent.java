@@ -27,7 +27,9 @@ public class LaunchAgent {
             System.exit(1);
             return;
         }
-        loadExtraJars(inst);
+        File selfJar = findSelf();
+        loadExtraJars(inst, selfJar);
+        extractQtNatives(selfJar);
         try {
             LauncherWindow.create(LAUNCH_LATCH);
             if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
@@ -46,8 +48,7 @@ public class LaunchAgent {
         catch (Exception e) { System.err.println("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage()); }
     }
 
-    private static void loadExtraJars(Instrumentation inst) throws Exception {
-        File selfJar = findSelf();
+    private static void loadExtraJars(Instrumentation inst, File selfJar) throws Exception {
         if (selfJar == null) {
             System.err.println("[CotSL] Could not locate own JAR, skipping extjarjar loading (this is fatal!)");
             return;
@@ -67,10 +68,121 @@ public class LaunchAgent {
         }
     }
 
-    private static File findSelf() throws Exception {
-        URI selfUri = LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-        File selfFile = new File(selfUri);
-        if (selfFile.isFile()) return selfFile;
+    private static void extractQtNatives(File selfJar) {
+        if (selfJar == null) return;
+        String os = System.getProperty("os.name", "").toLowerCase();
+        if (os.contains("linux")) return;
+        String platformTag = os.contains("win") ? "windows-x64" : "macos";
+        String nativeExt = os.contains("win") ? ".dll" : ".dylib";
+        try {
+            String nativesId = Long.toHexString(selfJar.length()) + Long.toHexString(selfJar.lastModified());
+            Path tempBase = Path.of(System.getProperty("java.io.tmpdir"));
+            Path nativesDir = tempBase.resolve("cotsl-qt-" + nativesId);
+            Path qmlDir = tempBase.resolve("cotsl-qt-qml-" + nativesId);
+            Path sentinel  = nativesDir.resolve(".cotsl-extracted");
+            try (var listing = Files.list(tempBase)) {
+                listing.filter(p -> {
+                    String n = p.getFileName().toString();
+                    return (n.startsWith("cotsl-qt-") && !n.startsWith("cotsl-qt-qml-") && !n.equals("cotsl-qt-" + nativesId))
+                            || (n.startsWith("cotsl-qt-qml-") && !n.equals("cotsl-qt-qml-" + nativesId));
+                }).forEach(stale -> {
+                    try (var walk = Files.walk(stale)) {
+                        walk.sorted(Comparator.reverseOrder()).forEach(f -> f.toFile().delete());
+                    } catch (IOException ignored) {}
+                });
+            } catch (IOException ignored) {}
+            if (Files.exists(sentinel)) {
+                String dir = nativesDir.toAbsolutePath().toString();
+                String current = System.getProperty("java.library.path", "");
+                System.setProperty("java.library.path", current.isEmpty() ? dir : dir + File.pathSeparator + current);
+                System.out.println("[CotSL] Qt native libs reused from: " + dir);
+                Path platformsDir = nativesDir.resolve("platforms");
+                if (Files.isDirectory(platformsDir)) System.setProperty("cotsl.qt.platformPluginPath", platformsDir.toAbsolutePath().toString());
+                if (Files.isDirectory(qmlDir)) System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
+                return;
+            }
+            Files.createDirectories(nativesDir);
+            int extracted = 0;
+            try (JarFile self = new JarFile(selfJar)) {
+                List<JarEntry> innerJarEntries = self.stream()
+                        .filter(e -> e.getName().startsWith("META-INF/extjarjar/")
+                                && e.getName().endsWith(".jar")
+                                && e.getName().contains("native-" + platformTag))
+                        .toList();
+                if (innerJarEntries.isEmpty()) System.err.println("[CotSL] No bundled native JARs found for platform: " + platformTag);
+                for (JarEntry innerJarEntry : innerJarEntries) {
+                    Path tmpInner = Files.createTempFile("cotsl-native-inner-", ".jar");
+                    tmpInner.toFile().deleteOnExit();
+                    try (InputStream in = self.getInputStream(innerJarEntry)) {
+                        Files.copy(in, tmpInner, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    try (JarFile innerJar = new JarFile(tmpInner.toFile())) {
+                        for (
+                                JarEntry e : innerJar.stream()
+                                    .filter(e -> !e.isDirectory() && e.getName().endsWith(nativeExt))
+                                    .toList()
+                        ) {
+                            String name = e.getName();
+                            String fileName = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
+                            Path dest = nativesDir.resolve(fileName);
+                            if (!Files.exists(dest)) {
+                                try (InputStream in = innerJar.getInputStream(e)) {
+                                    Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+                                    extracted++;
+                                }
+                            }
+                        }
+                    }
+                }
+                String resourcePrefix = "META-INF/qt-natives/" + platformTag + "/";
+                List<JarEntry> bundledDlls = self.stream()
+                        .filter(e -> !e.isDirectory() && e.getName().startsWith(resourcePrefix))
+                        .toList();
+                for (JarEntry e : bundledDlls) {
+                    String relPath = e.getName().substring(resourcePrefix.length());
+                    Path dest = nativesDir.resolve(relPath);
+                    Files.createDirectories(dest.getParent());
+                    if (!Files.exists(dest)) {
+                        try (InputStream in = self.getInputStream(e)) {
+                            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+                            extracted++;
+                        }
+                    }
+                }
+                String qmlPrefix = "META-INF/qt-qml/" + platformTag + "/";
+                List<JarEntry> qmlEntries = self.stream()
+                        .filter(e -> !e.isDirectory() && e.getName().startsWith(qmlPrefix))
+                        .toList();
+                if (!qmlEntries.isEmpty()) {
+                    Files.createDirectories(qmlDir);
+                    for (JarEntry e : qmlEntries) {
+                        String relPath = e.getName().substring(qmlPrefix.length());
+                        Path dest = qmlDir.resolve(relPath);
+                        Files.createDirectories(dest.getParent());
+                        try (InputStream in = self.getInputStream(e)) {
+                            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                    System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
+                    System.out.println("[CotSL] Extracted " + qmlEntries.size() + " QML module files to: " + qmlDir);
+                }
+                if (!bundledDlls.isEmpty()) System.out.println("[CotSL] Extracted " + bundledDlls.size() + " bundled Qt runtime files");
+            }
+            if (extracted > 0) {
+                String dir = nativesDir.toAbsolutePath().toString();
+                String current = System.getProperty("java.library.path", "");
+                System.setProperty("java.library.path", current.isEmpty() ? dir : dir + File.pathSeparator + current);
+                System.out.println("[CotSL] Qt native libs extracted to: " + dir);
+                Path platformsDir = nativesDir.resolve("platforms");
+                if (Files.isDirectory(platformsDir)) System.setProperty("cotsl.qt.platformPluginPath", platformsDir.toAbsolutePath().toString());
+                Files.createFile(sentinel);
+            } else System.err.println("[CotSL] Warning: native JARs for " + platformTag + " were found but contained no " + nativeExt + " files.");
+        } catch (Exception e) {
+            System.err.println("[CotSL] Failed to extract Qt natives: " + e.getMessage());
+        }
+    }
+
+    private static File findSelf() {
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (!arg.startsWith("-javaagent:")) continue;
             String path = arg.substring("-javaagent:".length());
@@ -79,9 +191,15 @@ public class LaunchAgent {
             File f = new File(path);
             if (!f.isFile()) continue;
             try (JarFile jf = new JarFile(f)) {
-                if (jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null)
-                    return f;
-            } catch (Exception ignored) {}
+                boolean hasThis = jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
+                boolean hasPath = jf.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
+                if (path.contains("Temp")) throw new Exception("Sus temp file found, skipping launcher");
+                if (hasThis && hasPath) return f;
+            } catch (Exception exc) {
+                System.err.println("[CotSL] Failed to find agent JAR, continuing: " + exc.getMessage());
+                StackTraceElement[] trace = exc.getStackTrace();
+                for (StackTraceElement s : trace) System.err.println("  at " + s);
+            }
         }
         return null;
     }

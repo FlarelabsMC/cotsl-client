@@ -10,19 +10,28 @@ import io.qt.widgets.QApplication;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class LauncherWindow {
     public static void create(CountDownLatch latch) throws Exception {
         QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL);
-        QApplication.initialize(new String[]{"CotSL"});
+        List<String> appArgs = new ArrayList<>(List.of("CotSL"));
+        String platformPluginPath = System.getProperty("cotsl.qt.platformPluginPath");
+        if (platformPluginPath != null) {
+            appArgs.add("-platformpluginpath");
+            appArgs.add(platformPluginPath);
+            System.out.println("[CotSL] Using bundled platform plugin at: " + platformPluginPath);
+        }
+        QApplication.initialize(appArgs.toArray(new String[0]));
         QApplication.setApplicationName("Crypt of the Second Lord");
         Path qmlRoot = extractResources();
         QQmlApplicationEngine engine = new QQmlApplicationEngine();
+        String qmlImportPath = System.getProperty("cotsl.qt.qmlImportPath");
+        if (qmlImportPath != null) engine.addImportPath(qmlImportPath.replace('\\', '/'));
         String qtDir = System.getenv("QTDIR");
-        if (qtDir != null) {
-            engine.addImportPath(qtDir.replace('\\', '/') + "/qml");
-        }
+        if (qtDir != null) engine.addImportPath(qtDir.replace('\\', '/') + "/qml");
         LaunchBridge bridge = new LaunchBridge();
         engine.rootContext().setContextProperty("bridge", bridge);
         engine.warnings.connect(warnings -> warnings.forEach(w -> System.err.println("[QML ERROR] " + w)));

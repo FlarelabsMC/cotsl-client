@@ -1,3 +1,5 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipFile
 
 plugins {
@@ -305,6 +307,151 @@ tasks.register('compileShaders') {
     }
 }
 
+def qtNativesGenDirWindows = layout.buildDirectory.dir('generated/qt-natives-windows')
+def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos')
+
+tasks.register('bundleQtRuntimeWindows') {
+    group = 'build'
+    def qtDir = System.getenv('QTDIR')
+    onlyIf { System.getProperty('os.name').toLowerCase().contains('win') && qtDir != null }
+    inputs.property('qtDir', qtDir ?: '')
+    outputs.dir(qtNativesGenDirWindows)
+    outputs.upToDateWhen { false }
+    def nativeJarFile = configurations.embedNative_windows_x64
+            .resolvedConfiguration.resolvedArtifacts
+            .find { it.name.contains('qtjambi-native-windows-x64') }?.file
+    doLast {
+        def nativesOut = new File(qtNativesGenDirWindows.get().asFile, 'META-INF/qt-natives/windows-x64')
+        def qmlOut = new File(qtNativesGenDirWindows.get().asFile, 'META-INF/qt-qml/windows-x64')
+        nativesOut.deleteDir()
+        qmlOut.deleteDir()
+        nativesOut.mkdirs()
+        qmlOut.mkdirs()
+        def windeployqt = new File(qtDir, 'bin/windeployqt.exe')
+        def deployed = false
+        if (windeployqt.exists()) {
+            if (nativeJarFile) {
+                def tmpDir = new File(temporaryDir, 'qtjambi-native-extract')
+                tmpDir.mkdirs()
+                def zip = new ZipFile(nativeJarFile)
+                zip.entries().findAll { !it.directory && it.name.endsWith('.dll') }.each { entry ->
+                    def dest = new File(tmpDir, new File(entry.name).name)
+                    dest.withOutputStream { out -> zip.getInputStream(entry).withStream { inp -> out << inp } }
+                }
+                zip.close()
+                def targetDll = new File(tmpDir, 'QtJambiCore6.dll')
+                if (targetDll.exists()) {
+                    def execOps = services.get(ExecOperations)
+                    execOps.exec {
+                        commandLine windeployqt.absolutePath,
+                                '--release',
+                                '--no-compiler-runtime',
+                                '--no-translations',
+                                '--no-opengl-sw',
+                                '--dir', nativesOut.absolutePath,
+                                targetDll.absolutePath
+                    }
+                    deployed = true
+                    def count = nativesOut.listFiles()?.findAll { it.name.endsWith('.dll') }?.size() ?: 0
+                    println "[CotSL] windeployqt bundled ${count} Qt DLLs"
+                } else {
+                    logger.warn('[CotSL] QtJambiCore6.dll not found in native JAR, falling back to explicit list')
+                }
+            }
+        } else {
+            logger.warn("[CotSL] windeployqt not found at ${windeployqt}, falling back to explicit list")
+        }
+        def min = [
+                'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll', 'Qt6OpenGL.dll',
+                'Qt6Qml.dll', 'Qt6QmlCompiler.dll', 'Qt6QmlCore.dll',
+                'Qt6QmlMeta.dll', 'Qt6QmlModels.dll', 'Qt6QmlNetwork.dll',
+                'Qt6QmlWorkerScript.dll', 'Qt6Quick.dll', 'Qt6QuickEffects.dll',
+                'Qt6ShaderTools.dll', 'Qt6Widgets.dll'
+        ]
+        def binDir = new File(qtDir, 'bin')
+        min.each { dll ->
+            def src = new File(binDir, dll)
+            if (src.exists()) Files.copy(src.toPath(), new File(nativesOut, dll).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            else logger.warn("[CotSL] Expected DLL not found: ${dll}")
+        }
+        def platformsDir = new File(nativesOut, 'platforms')
+        platformsDir.mkdirs()
+        def qwindows = new File(qtDir, 'plugins/platforms/qwindows.dll')
+        if (qwindows.exists()) Files.copy(qwindows.toPath(), new File(platformsDir, 'qwindows.dll').toPath(), StandardCopyOption.REPLACE_EXISTING)
+        def qmlSrc = new File(qtDir, 'qml/QtQuick/Effects')
+        if (qmlSrc.exists()) {
+            def qmlDest = new File(qmlOut, 'QtQuick/Effects')
+            qmlDest.mkdirs()
+            qmlSrc.eachFileRecurse { f ->
+                if (f.isFile()) {
+                    def dest = new File(qmlDest, qmlSrc.toPath().relativize(f.toPath()).toString())
+                    dest.parentFile.mkdirs()
+                    Files.copy(f.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+        println "[CotSL] Bundled Qt runtime from: ${qtDir}"
+    }
+}
+
+tasks.register('bundleQtRuntimeMacOS') {
+    group = 'build'
+    def qtDir = System.getenv('QTDIR')
+    onlyIf { System.getProperty('os.name').toLowerCase().contains('mac') && qtDir != null }
+    inputs.property('qtDir', qtDir ?: '')
+    outputs.dir(qtNativesGenDirMacOS)
+    outputs.upToDateWhen { false }
+    doLast {
+        def nativesOut = new File(qtNativesGenDirMacOS.get().asFile, 'META-INF/qt-natives/macos')
+        def qmlOut = new File(qtNativesGenDirMacOS.get().asFile, 'META-INF/qt-qml/macos')
+        nativesOut.deleteDir()
+        qmlOut.deleteDir()
+        nativesOut.mkdirs()
+        qmlOut.mkdirs()
+        def libDir = new File(qtDir, 'lib')
+        def min = [
+                'libQt6Core.6.dylib', 'libQt6Gui.6.dylib', 'libQt6Network.6.dylib',
+                'libQt6OpenGL.6.dylib', 'libQt6OpenGLWidgets.6.dylib',
+                'libQt6Qml.6.dylib', 'libQt6QmlCompiler.6.dylib', 'libQt6QmlCore.6.dylib',
+                'libQt6QmlMeta.6.dylib', 'libQt6QmlModels.6.dylib', 'libQt6QmlNetwork.6.dylib',
+                'libQt6QmlWorkerScript.6.dylib', 'libQt6Quick.6.dylib',
+                'libQt6QuickEffects.6.dylib', 'libQt6QuickShapes.6.dylib',
+                'libQt6ShaderTools.6.dylib', 'libQt6Widgets.6.dylib'
+        ]
+        min.each { dylib ->
+            def src = new File(libDir, dylib)
+            if (src.exists()) {
+                def real = src.toPath().toRealPath()
+                Files.copy(real, new File(nativesOut, dylib).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            } else {
+                logger.warn("[CotSL] Expected dylib not found: ${dylib}")
+            }
+        }
+        def platformsDir = new File(nativesOut, 'platforms')
+        platformsDir.mkdirs()
+        def qcocoa = new File(qtDir, 'plugins/platforms/libqcocoa.dylib')
+        if (qcocoa.exists()) {
+            Files.copy(qcocoa.toPath().toRealPath(), new File(platformsDir, 'libqcocoa.dylib').toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } else {
+            logger.warn('[CotSL] libqcocoa.dylib not found, macOS platform plugin will be missing')
+        }
+        def qmlSrc = new File(qtDir, 'qml/QtQuick/Effects')
+        if (qmlSrc.exists()) {
+            def qmlDest = new File(qmlOut, 'QtQuick/Effects')
+            qmlDest.mkdirs()
+            qmlSrc.eachFileRecurse { f ->
+                if (f.isFile()) {
+                    def dest = new File(qmlDest, qmlSrc.toPath().relativize(f.toPath()).toString())
+                    dest.parentFile.mkdirs()
+                    Files.copy(f.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+        def count = nativesOut.listFiles()?.findAll { it.name.endsWith('.dylib') }?.size() ?: 0
+        println "[CotSL] Bundled ${count} Qt dylibs for macOS from: ${qtDir}"
+    }
+}
+
 processResources.dependsOn compileShaders
 
 processResources {
@@ -347,6 +494,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('jar', Jar) {
+    entryCompression = ZipEntryCompression.DEFLATED
     archiveClassifier = currentPlatform
     from rootProject.file('LICENSE')
     from(configurations.embed) {
@@ -360,8 +508,14 @@ tasks.named('jar', Jar) {
     }
 }
 
+def platformBundleTaskNames = [
+        'windows-x64': 'bundleQtRuntimeWindows',
+        'macos': 'bundleQtRuntimeMacOS'
+]
+
 allPlatforms.each { platform ->
     def safe = platform.replace('-', '_')
+    def bundleTaskName = platformBundleTaskNames[platform]
     tasks.register("jar_${safe}", Jar) {
         group = 'build'
         description = "Assembles mod JAR for ${platform}"
@@ -371,6 +525,12 @@ allPlatforms.each { platform ->
         from(tasks.named('jarJar'))
         from(configurations.embed) { into 'META-INF/extjarjar' }
         from(configurations["embedNative_${safe}"]) { into 'META-INF/extjarjar' }
+        if (bundleTaskName != null) {
+            from(tasks.named(bundleTaskName)) {
+                include "META-INF/qt-natives/${platform}/**"
+                include "META-INF/qt-qml/${platform}/**"
+            }
+        }
         manifest {
             attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
         }

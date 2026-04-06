@@ -1046,13 +1046,7 @@
 						},
 						"0.2917": {
 							"post": {
-								"vector": ["70.2572 + (math.sin(query.anim_time * 180) * -20)", "42.7572 + (math.sin(query.anim_time * 180) * -20)", 147.97003]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"0.4583": {
-							"post": {
-								"vector": [46.36488, 24.74127, 146.93984]
+								"vector": ["63.868 + (math.sin(query.anim_time * 180) * -20)", "28.5246 + (math.sin(query.anim_time * 180) * -20)", 129.37535]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -1064,7 +1058,7 @@
 						},
 						"1.5": {
 							"post": {
-								"vector": ["77.9522 + (math.sin(query.anim_time * 180) * -20)", "23.0595 + (math.sin(query.anim_time * 180) * -20)", 142.03692]
+								"vector": ["27.9522 + (math.sin(query.anim_time * 180) * -20)", "23.0595 + (math.sin(query.anim_time * 180) * -20)", 142.03692]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -1088,15 +1082,21 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"0.375": {
+						"0.2917": {
 							"post": {
-								"vector": [39.27, 20.55, 31.3]
+								"vector": [10.67922, 20.55028, 31.29967]
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"0.5417": {
+						"0.4583": {
 							"post": {
 								"vector": [16.95257, 20.5504, 31.29954]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.5": {
+							"post": {
+								"vector": [-35.44263, 20.55326, 31.29625]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -1131,6 +1131,12 @@
 						"0.75": {
 							"post": {
 								"vector": [-14.60237, -1.05258, -40.04281]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.875": {
+							"post": {
+								"vector": [12.26532, -3.36751, -39.89634]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -1190,21 +1196,15 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"0.3333": {
+						"0.2917": {
 							"post": {
-								"vector": [-31.41, 18.1, 32.31]
+								"vector": [11.70379, 8.2842, 32.68666]
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"0.5": {
+						"0.4167": {
 							"post": {
-								"vector": ["-5.3377 + (math.sin(query.anim_time * 180) * -30)", "-39.0288 + (math.sin(query.anim_time * 180) * 45)", 34.49655]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"0.6667": {
-							"post": {
-								"vector": [1.04685, 2.08507, 33.44928]
+								"vector": [-15.47067, 4.59017, 30.95381]
 							},
 							"lerp_mode": "catmullrom"
 						},
