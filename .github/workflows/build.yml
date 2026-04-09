@@ -59,6 +59,7 @@ jobs:
           version: '6.11.0'
           cache: true
           setup-python: false
+          extra: '--base https://download.qt.io/'
 
       - name: Export QTDIR
         shell: bash
