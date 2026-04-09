@@ -1,6 +1,15 @@
 # CotSL Client
 The client and dedicated server mod source code for Crypt of the Second Lord, a Minecraft mod(pack).
 
+# Running
+To run the mod, you will need to either download a JAR from the Releases page or build it from source.
+
+I recommend using Prism Launcher.
+
+- Install the latest NeoForge version for 26.1. Install the mod into the mods folder of that instance, as usual.
+- Add the JAR as a Java agent in the JVM arguments, or through Prism. In Prism, you can do this by going to the instance, clicking the Versions tab, and on the right, click Add Agents and select the same mod JAR you just added to the mods folder. Otherwise, you can add the following JVM argument: `-javaagent:<jar path>.jar`
+- Launch as normal. If you don't see a launcher, **please report it as an issue** and send your full log.
+
 # Setup and Building
 To build from source, you will need:
 - Java 25
