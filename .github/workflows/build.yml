@@ -69,12 +69,12 @@ jobs:
         run: ./gradlew generateDialogueMetadata
 
       - name: Build JAR
-        run: ./gradlew jar_${{ matrix.platform_name }}
+        run: ./gradlew jar_${{ matrix.task_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cotsl-client-${{ matrix.platform_name }}
+          name: cotsl-client-${{ matrix.file_name }}
           path: build/libs/*${{ matrix.file_name }}.jar
           if-no-files-found: error
 
