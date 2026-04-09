@@ -180,6 +180,8 @@ tasks.register('downloadRhubarb') {
         else if (os.contains('mac')) downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-macOS.zip'
         else downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-Linux.zip'
 
+        buildDir.mkdirs()
+
         def zipFile = new File(buildDir, 'rhubarb.zip')
         println "Downloading Rhubarb from ${downloadUrl}..."
         new URL(downloadUrl).withInputStream { i ->

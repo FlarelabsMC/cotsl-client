@@ -52,6 +52,16 @@ jobs:
           target: 'desktop'
           arch: ${{ matrix.qt_arch }}
           cache: true
+          mirror: 'http://mirrors.ocf.berkeley.edu/qt/'
+          setup-python: 'true'
+
+      - name: Export QTDIR manually
+        if: runner.os == 'Windows'
+        run: echo "QTDIR=$env:Qt6_DIR" >> $env:GITHUB_ENV
+
+      - name: Export QTDIR manually (Unix)
+        if: runner.os != 'Windows'
+        run: echo "QTDIR=$Qt6_DIR" >> $GITHUB_ENV
 
       - name: Make gradlew executable
         if: runner.os != 'Windows'
