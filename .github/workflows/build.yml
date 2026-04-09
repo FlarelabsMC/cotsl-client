@@ -55,6 +55,7 @@ jobs:
           target: 'desktop'
           arch: ${{ matrix.qt_arch }}
           cache: true
+          extra: '--base https://download.qt.io/'
 
       - name: Export QTDIR
         shell: bash
