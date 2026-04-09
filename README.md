@@ -30,7 +30,8 @@ The absolute path to your Qt installation depends on your platform and, of cours
 ### `QSB_PATH` (optional)
 The path to the Qt Shader Baker (`qsb`) executable. If your `QTDIR` is set correctly, the buildscript can usually find this automatically. If it fails, set this explicitly:
 - **Windows:** `C:\Qt\6.11.0\msvc2022_64\bin\qsb.exe`
-- **macOS/Linux:** `/Users/<user>/Qt/6.11.0/macos/bin/qsb`
+- **macOS** `/Users/<user>/Qt/6.11.0/macos/bin/qsb`
+- **Linux:** `/opt/Qt/6.11.0/gcc_64/bin/qsb`
 
 ## Building
 To build the project, first, run the `./gradlew generateDialogueMetadata` task, and then run one of the Gradle tasks for your desired operating system:
