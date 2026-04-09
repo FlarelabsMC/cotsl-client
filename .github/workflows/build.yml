@@ -57,6 +57,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.0'
+          host: ${{ matrix.qt_host }}
+          target: 'desktop'
+          arch: ${{ matrix.qt_arch }}
           cache: true
           setup-python: false
           extra: '--base https://download.qt.io/'
