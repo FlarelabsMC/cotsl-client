@@ -364,7 +364,7 @@ tasks.register('bundleQtRuntimeWindows') {
             logger.warn("[CotSL] windeployqt not found at ${windeployqt}, falling back to explicit list")
         }
         def min = [
-                'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll',
+                'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll', 'Qt6OpenGL.dll',
                 'Qt6Qml.dll', 'Qt6QmlCompiler.dll', 'Qt6QmlCore.dll',
                 'Qt6QmlMeta.dll', 'Qt6QmlModels.dll', 'Qt6QmlNetwork.dll',
                 'Qt6QmlWorkerScript.dll', 'Qt6Quick.dll', 'Qt6QuickEffects.dll',
