@@ -9,8 +9,12 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.Window
     color: "#0f0d0b"
 
-    x: (Screen.width - width) / 2
-    y: (Screen.height - height) / 2
+    onVisibleChanged: {
+        if (visible) {
+            x = (Screen.width - width) / 2
+            y = (Screen.height - height) / 2
+        }
+    }
 
     property real targetMX: 0.5
     property real targetMY: 0.5

@@ -410,27 +410,49 @@ tasks.register('bundleQtRuntimeMacOS') {
         qmlOut.mkdirs()
         def libDir = new File(qtDir, 'lib')
         def min = [
-                'libQt6Core.6.dylib', 'libQt6Gui.6.dylib', 'libQt6Network.6.dylib',
-                'libQt6Qml.6.dylib', 'libQt6QmlCompiler.6.dylib', 'libQt6QmlCore.6.dylib',
-                'libQt6QmlMeta.6.dylib', 'libQt6QmlModels.6.dylib', 'libQt6QmlNetwork.6.dylib',
-                'libQt6QmlWorkerScript.6.dylib', 'libQt6Quick.6.dylib',
-                'libQt6QuickEffects.6.dylib', 'libQt6QuickShapes.6.dylib',
-                'libQt6ShaderTools.6.dylib', 'libQt6Widgets.6.dylib'
+                'QtCore', 'QtDBus', 'QtGui', 'QtNetwork', 'QtQml', 'QtQmlCompiler', 'QtQmlCore', 'QtOpenGL',
+                'QtQmlMeta', 'QtQmlModels', 'QtQmlNetwork', 'QtQmlWorkerScript',
+                'QtQuick', 'QtQuickEffects', 'QtQuickShapes', 'QtShaderTools', 'QtWidgets'
         ]
-        min.each { dylib ->
-            def src = new File(libDir, dylib)
+        min.each { fw ->
+            def targetPath = "${fw}.framework/Versions/A/${fw}"
+            def src = new File(libDir, targetPath)
+            if (!src.exists()) {
+                targetPath = "${fw}.framework/${fw}"
+                src = new File(libDir, targetPath)
+            }
+            if (!src.exists()) {
+                targetPath = "libQt6${fw.substring(2)}.6.dylib"
+                src = new File(libDir, targetPath)
+            }
             if (src.exists()) {
+                def dest = new File(nativesOut, targetPath)
+                dest.parentFile.mkdirs()
                 def real = src.toPath().toRealPath()
-                Files.copy(real, new File(nativesOut, dylib).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                Files.copy(real, dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                try {
+                    def execOps = services.get(ExecOperations)
+                    execOps.exec {
+                        commandLine 'codesign', '--force', '-s', '-', dest.absolutePath
+                    }
+                } catch (Exception e) {
+                    logger.warn("[CotSL] Could not remote signature from ${dest.name}: ${e.message}")
+                }
             } else {
-                logger.warn("[CotSL] Expected dylib not found: ${dylib}")
+                logger.warn("[CotSL] Expected framework/dylib not found: ${fw}")
             }
         }
         def platformsDir = new File(nativesOut, 'platforms')
         platformsDir.mkdirs()
         def qcocoa = new File(qtDir, 'plugins/platforms/libqcocoa.dylib')
         if (qcocoa.exists()) {
-            Files.copy(qcocoa.toPath().toRealPath(), new File(platformsDir, 'libqcocoa.dylib').toPath(), StandardCopyOption.REPLACE_EXISTING)
+            def dest = new File(platformsDir, 'libqcocoa.dylib')
+            Files.copy(qcocoa.toPath().toRealPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            try {
+                services.get(ExecOperations).exec {
+                    commandLine 'codesign', '--force', '-s', '-', dest.absolutePath
+                }
+            } catch (Exception e) {}
         } else {
             logger.warn('[CotSL] libqcocoa.dylib not found, macOS platform plugin will be missing')
         }

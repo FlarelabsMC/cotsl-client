@@ -17,7 +17,10 @@ import java.util.concurrent.CountDownLatch;
 public class LauncherWindow {
     public static void create(CountDownLatch latch) throws Exception {
         // there's almost no need to use Vulkan in the launcher but since Minecraft is using it now, I might as well
-        QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Vulkan);
+        // Vulkan isn't supported on macOS, just use Metal if so
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("mac")) QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Metal);
+        else QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Vulkan);
         List<String> appArgs = new ArrayList<>(List.of("CotSL"));
         String platformPluginPath = System.getProperty("cotsl.qt.platformPluginPath");
         if (platformPluginPath != null) {

@@ -293,6 +293,8 @@ public class LaunchAgent {
         args.add("-Xms512M");
         args.add("-Xmx" + maxHeapMB + "M");
         args.add("-D" + RELAUNCHED_PROP + "=true");
+        // apparently macos crashes without this
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) args.add("-XstartOnFirstThread");
         File argFile = File.createTempFile("cotsl-jvmargs-", ".txt");
         argFile.deleteOnExit();
         try (PrintWriter pw = new PrintWriter(new FileWriter(argFile))) {
