@@ -19,17 +19,20 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            platform_name: linux_x64
+            task_name: linux_x64
+            file_name: linux-x64
             qt_host: linux
             qt_arch: gcc_64
             qt_dir_suffix: gcc_64
           - os: windows-latest
-            platform_name: windows_x64
+            task_name: windows_x64
+            file_name: windows-x64
             qt_host: windows
             qt_arch: win64_msvc2022_64
             qt_dir_suffix: msvc2022_64
           - os: macos-latest
-            platform_name: macos
+            task_name: macos
+            file_name: macos
             qt_host: mac
             qt_arch: clang_64
             qt_dir_suffix: macos
@@ -72,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cotsl-client-${{ matrix.platform_name }}
-          path: build/libs/*${{ matrix.platform_name }}.jar
+          path: build/libs/*${{ matrix.file_name }}.jar
           if-no-files-found: error
 
   release:
