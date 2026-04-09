@@ -371,11 +371,18 @@ tasks.register('bundleQtRuntimeWindows') {
                 'Qt6ShaderTools.dll', 'Qt6Widgets.dll'
         ]
         def binDir = new File(qtDir, 'bin')
+        def missing = []
         min.each { dll ->
             def src = new File(binDir, dll)
             if (src.exists()) Files.copy(src.toPath(), new File(nativesOut, dll).toPath(), StandardCopyOption.REPLACE_EXISTING)
-            else logger.warn("[CotSL] Expected DLL not found: ${dll}")
+            else missing << dll
         }
+        if (!missing.isEmpty()) {
+            throw new GradleException(
+                    "[CotSL] Required Qt DLLs not found in ${binDir}: ${missing.join(', ')}\n"
+            )
+        }
+
         def platformsDir = new File(nativesOut, 'platforms')
         platformsDir.mkdirs()
         def qwindows = new File(qtDir, 'plugins/platforms/qwindows.dll')
