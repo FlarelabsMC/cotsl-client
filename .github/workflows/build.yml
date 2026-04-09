@@ -47,18 +47,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      # https://forum.qt.io/topic/161356/github-actions-ci-best-known-methods-to-support-qt-applications/6
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '>=3.9'
-
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.11.0'
+          version: '6.10.0'
           cache: true
-          setup-python: false
           extra: '--base https://download.qt.io/'
 
       - name: Export QTDIR
