@@ -22,14 +22,17 @@ jobs:
             platform_name: linux_x64
             qt_host: linux
             qt_arch: gcc_64
+            qt_dir_suffix: gcc_64
           - os: windows-latest
             platform_name: windows_x64
             qt_host: windows
             qt_arch: win64_msvc2022_64
+            qt_dir_suffix: msvc2022_64
           - os: macos-latest
             platform_name: macos
             qt_host: mac
             qt_arch: clang_64
+            qt_dir_suffix: macos
 
     steps:
       - name: Checkout Repository
@@ -45,6 +48,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Install Qt 6.11.0
+        id: setup-qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.0'
@@ -52,16 +56,10 @@ jobs:
           target: 'desktop'
           arch: ${{ matrix.qt_arch }}
           cache: true
-          mirror: 'http://mirrors.ocf.berkeley.edu/qt/'
-          setup-python: 'true'
 
-      - name: Export QTDIR manually
-        if: runner.os == 'Windows'
-        run: echo "QTDIR=$env:Qt6_DIR" >> $env:GITHUB_ENV
-
-      - name: Export QTDIR manually (Unix)
-        if: runner.os != 'Windows'
-        run: echo "QTDIR=$Qt6_DIR" >> $GITHUB_ENV
+      - name: Export QTDIR
+        shell: bash
+        run: echo "QTDIR=${{ steps.setup-qt.outputs.qtPath }}/${{ matrix.qt_dir_suffix }}" >> $GITHUB_ENV
 
       - name: Make gradlew executable
         if: runner.os != 'Windows'
