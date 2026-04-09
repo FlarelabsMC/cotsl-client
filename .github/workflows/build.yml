@@ -47,11 +47,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Install Qt 6.11.0
-        id: setup-qt
+      - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.11.0'
+          version: '6.11.*'
           host: ${{ matrix.qt_host }}
           target: 'desktop'
           arch: ${{ matrix.qt_arch }}
@@ -59,7 +58,7 @@ jobs:
 
       - name: Export QTDIR
         shell: bash
-        run: echo "QTDIR=${{ steps.setup-qt.outputs.qtPath }}/${{ matrix.qt_dir_suffix }}" >> $GITHUB_ENV
+        run: echo "QTDIR=${QT_ROOT_DIR}" >> $GITHUB_ENV
 
       - name: Make gradlew executable
         if: runner.os != 'Windows'
