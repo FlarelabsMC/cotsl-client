@@ -16,7 +16,8 @@ import java.util.concurrent.CountDownLatch;
 
 public class LauncherWindow {
     public static void create(CountDownLatch latch) throws Exception {
-        QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL);
+        // there's almost no need to use Vulkan in the launcher but since Minecraft is using it now, I might as well
+        QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Vulkan);
         List<String> appArgs = new ArrayList<>(List.of("CotSL"));
         String platformPluginPath = System.getProperty("cotsl.qt.platformPluginPath");
         if (platformPluginPath != null) {
@@ -30,10 +31,12 @@ public class LauncherWindow {
         QQmlApplicationEngine engine = new QQmlApplicationEngine();
         String qmlImportPath = System.getProperty("cotsl.qt.qmlImportPath");
         if (qmlImportPath != null) engine.addImportPath(qmlImportPath.replace('\\', '/'));
+        // this one is only really used if this is a dev environment or on a PC with the dev variables set if you're a GEEK
         String qtDir = System.getenv("QTDIR");
         if (qtDir != null) engine.addImportPath(qtDir.replace('\\', '/') + "/qml");
         LaunchBridge bridge = new LaunchBridge();
         engine.rootContext().setContextProperty("bridge", bridge);
+        // actually print QML errors if anyone makes a mistake in the production code for some reason
         engine.warnings.connect(warnings -> warnings.forEach(w -> System.err.println("[QML ERROR] " + w)));
         engine.load(qmlRoot.resolve("Launcher.qml").toUri().toString());
         if (engine.rootObjects().isEmpty()) throw new IllegalStateException("[CotSL] QML failed to load");
@@ -41,6 +44,11 @@ public class LauncherWindow {
         QApplication.exec();
     }
 
+    /**
+     * actually adds the QML resources to the launch process. yeah, this has to be done manually, sadly
+     * @return the path of the final resources
+     * @throws Exception
+     */
     private static Path extractResources() throws Exception {
         Path tmp = Files.createTempDirectory("cotsl-qml-");
         tmp.toFile().deleteOnExit();
@@ -70,6 +78,7 @@ public class LauncherWindow {
     public static class LaunchBridge extends QObject {
         public final Signal0 launchRequested = new Signal0();
 
+        @SuppressWarnings("unused") // because not everybody has the proper Qt plugins.
         @QtInvokable
         public void launch() {
             launchRequested.emit();

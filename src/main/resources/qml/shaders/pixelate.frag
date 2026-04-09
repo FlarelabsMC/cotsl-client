@@ -14,7 +14,7 @@ layout(std140, binding = 0) uniform buf {
 };
 
 void main() {
-    float blockSize = max(2.0, pow(progress, 0.6) * 64.0);
+    float blockSize = max(2.0, pow(progress, 0.6) * 128.0);
 
     vec2 pixCount = vec2(imgWidth, imgHeight) / blockSize;
     vec2 snappedUV = floor(qt_TexCoord0 * pixCount) / pixCount;

@@ -15,10 +15,10 @@ Window {
     property real targetMX: 0.5
     property real targetMY: 0.5
 
-    property real smoothMX: 0.5
-    Behavior on smoothMX { SmoothedAnimation { velocity: -1; duration: 400 } }
-    property real smoothMY: 0.5
-    Behavior on smoothMY { SmoothedAnimation { velocity: -1; duration: 400 } }
+    property real smoothMX: 0.7
+    Behavior on smoothMX { SmoothedAnimation { velocity: -0.5; duration: 400 } }
+    property real smoothMY: 0.7
+    Behavior on smoothMY { SmoothedAnimation { velocity: -0.5; duration: 400 } }
 
     MouseArea {
         anchors.fill: parent
@@ -47,8 +47,8 @@ Window {
         Image {
             id: bgImage
             anchors.centerIn: parent
-            width: parent.width * 1.2
-            height: parent.height * 1.2
+            width: parent.width * 1.3
+            height: parent.height * 1.3
             source: Qt.resolvedUrl("textures/launch/bg/launch_bg.png")
             fillMode: Image.Stretch
             smooth: true
@@ -94,6 +94,7 @@ Window {
         fragmentShader: Qt.resolvedUrl("shaders/pixelate.frag.qsb")
     }
 
+    // fade out (activated after launch button pressed)
     NumberAnimation {
         id: fadeAnim
         target: root
@@ -108,6 +109,7 @@ Window {
         }
     }
 
+    // title bar
     Rectangle {
         id: titleBar
         anchors { top: parent.top; left: parent.left; right: parent.right }
@@ -149,6 +151,7 @@ Window {
         }
     }
 
+    // bottom area, holds launch button and version
     Rectangle {
         id: bottomBar
         anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
@@ -163,7 +166,7 @@ Window {
         }
 
         GlowButton {
-            anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 24 }
+            anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 28 }
             width: 220; height: 72
             label: "Launch"
             onClicked: {

@@ -2,7 +2,8 @@
 The client and dedicated server mod source code for Crypt of the Second Lord, a Minecraft mod(pack).
 
 # Setup and Building
-You will need Java 25, IntelliJ or Eclipse, Qt, and a verified Qt.io account to build from source.
+You will need Java 25, IntelliJ or Eclipse, Qt, and a verified Qt.io account to build from source.<br>
+If you don't have IntelliJ Ultimate, I recommend using Visual Studio Code with the [Qt Qml plugin](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.qt-qml) to edit the QML code.
 
 ### Setting up Qt
 First, download and install Qt Community from [here](https://www.qt.io/download). During installation, make sure to select the corresponding Qt version for this build (e.g `6.11.0`), and make sure to select the MSVC 2022 64-bit component.

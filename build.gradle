@@ -362,7 +362,7 @@ tasks.register('bundleQtRuntimeWindows') {
             logger.warn("[CotSL] windeployqt not found at ${windeployqt}, falling back to explicit list")
         }
         def min = [
-                'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll', 'Qt6OpenGL.dll',
+                'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll',
                 'Qt6Qml.dll', 'Qt6QmlCompiler.dll', 'Qt6QmlCore.dll',
                 'Qt6QmlMeta.dll', 'Qt6QmlModels.dll', 'Qt6QmlNetwork.dll',
                 'Qt6QmlWorkerScript.dll', 'Qt6Quick.dll', 'Qt6QuickEffects.dll',
@@ -411,7 +411,6 @@ tasks.register('bundleQtRuntimeMacOS') {
         def libDir = new File(qtDir, 'lib')
         def min = [
                 'libQt6Core.6.dylib', 'libQt6Gui.6.dylib', 'libQt6Network.6.dylib',
-                'libQt6OpenGL.6.dylib', 'libQt6OpenGLWidgets.6.dylib',
                 'libQt6Qml.6.dylib', 'libQt6QmlCompiler.6.dylib', 'libQt6QmlCore.6.dylib',
                 'libQt6QmlMeta.6.dylib', 'libQt6QmlModels.6.dylib', 'libQt6QmlNetwork.6.dylib',
                 'libQt6QmlWorkerScript.6.dylib', 'libQt6Quick.6.dylib',

@@ -5,7 +5,6 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -15,6 +14,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * the agent itself, used to launch the launcher.
+ * TODO in the future this JAR should be runnable on its own and hook into the NeoForge installer to grab Minecraft's install location
+ * TODO contributors, feel free to figure this one out while I work on the launcher UI
+ */
 public class LaunchAgent {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
     private static final String RELAUNCHED_PROP = "cotsl.relaunched";
@@ -40,14 +44,23 @@ public class LaunchAgent {
         tryRelaunch();
     }
 
+    /**
+     * after the agent overrides launch, it grabs the arguments from when it tried to launch as Minecraft, and relaunches the game with proper JVM arguments
+     * @throws IOException
+     */
     private static void tryRelaunch() throws IOException {
         long totalRamMB = getTotalSystemRamMB();
-        long recommended = totalRamMB > 0 ? computeMaxHeap(totalRamMB)
-                : Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long recommended = totalRamMB > 0 ? computeMaxHeap(totalRamMB) : Runtime.getRuntime().maxMemory() / (1024 * 1024);
         try { doRelaunch(recommended); }
         catch (Exception e) { System.err.println("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage()); }
     }
 
+    /**
+     * loads the JARs within the META-INF/extjarjar folder, used by the agent because NeoForge's JarJar does not apply at this stage
+     * @param inst
+     * @param selfJar
+     * @throws Exception
+     */
     private static void loadExtraJars(Instrumentation inst, File selfJar) throws Exception {
         if (selfJar == null) {
             System.err.println("[CotSL] Could not locate own JAR, skipping extjarjar loading (this is fatal!)");
@@ -68,19 +81,27 @@ public class LaunchAgent {
         }
     }
 
+    /**
+     * extracts qt natives for windows and mac to the default temp folder. tries to reuse them, else deletes them
+     * @param selfJar the mod jar itself
+     */
     private static void extractQtNatives(File selfJar) {
         if (selfJar == null) return;
         String os = System.getProperty("os.name", "").toLowerCase();
         if (os.contains("linux")) return;
         String platformTag = os.contains("win") ? "windows-x64" : "macos";
+        // windows natives use DLLs and mac uses dylibs
         String nativeExt = os.contains("win") ? ".dll" : ".dylib";
         try {
+            // unique IDs for each natives folders
             String nativesId = Long.toHexString(selfJar.length()) + Long.toHexString(selfJar.lastModified());
             Path tempBase = Path.of(System.getProperty("java.io.tmpdir"));
             Path nativesDir = tempBase.resolve("cotsl-qt-" + nativesId);
             Path qmlDir = tempBase.resolve("cotsl-qt-qml-" + nativesId);
-            Path sentinel  = nativesDir.resolve(".cotsl-extracted");
+            // extracted natives in the CotSL temp directories
+            Path sentinel = nativesDir.resolve(".cotsl-extracted");
             try (var listing = Files.list(tempBase)) {
+                // clear other temp files if not used
                 listing.filter(p -> {
                     String n = p.getFileName().toString();
                     return (n.startsWith("cotsl-qt-") && !n.startsWith("cotsl-qt-qml-") && !n.equals("cotsl-qt-" + nativesId))
@@ -92,6 +113,7 @@ public class LaunchAgent {
                 });
             } catch (IOException ignored) {}
             if (Files.exists(sentinel)) {
+                // reusing natives from the temp directory if possible
                 String dir = nativesDir.toAbsolutePath().toString();
                 String current = System.getProperty("java.library.path", "");
                 System.setProperty("java.library.path", current.isEmpty() ? dir : dir + File.pathSeparator + current);
@@ -103,6 +125,7 @@ public class LaunchAgent {
             }
             Files.createDirectories(nativesDir);
             int extracted = 0;
+            // finally extract natives
             try (JarFile self = new JarFile(selfJar)) {
                 List<JarEntry> innerJarEntries = self.stream()
                         .filter(e -> e.getName().startsWith("META-INF/extjarjar/")
@@ -134,11 +157,12 @@ public class LaunchAgent {
                         }
                     }
                 }
+                // this is where the Qt natives are located in the JAR when built
                 String resourcePrefix = "META-INF/qt-natives/" + platformTag + "/";
-                List<JarEntry> bundledDlls = self.stream()
+                List<JarEntry> bundled = self.stream()
                         .filter(e -> !e.isDirectory() && e.getName().startsWith(resourcePrefix))
                         .toList();
-                for (JarEntry e : bundledDlls) {
+                for (JarEntry e : bundled) {
                     String relPath = e.getName().substring(resourcePrefix.length());
                     Path dest = nativesDir.resolve(relPath);
                     Files.createDirectories(dest.getParent());
@@ -149,6 +173,7 @@ public class LaunchAgent {
                         }
                     }
                 }
+                // this is where the QML modules are stored
                 String qmlPrefix = "META-INF/qt-qml/" + platformTag + "/";
                 List<JarEntry> qmlEntries = self.stream()
                         .filter(e -> !e.isDirectory() && e.getName().startsWith(qmlPrefix))
@@ -166,7 +191,7 @@ public class LaunchAgent {
                     System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
                     System.out.println("[CotSL] Extracted " + qmlEntries.size() + " QML module files to: " + qmlDir);
                 }
-                if (!bundledDlls.isEmpty()) System.out.println("[CotSL] Extracted " + bundledDlls.size() + " bundled Qt runtime files");
+                if (!bundled.isEmpty()) System.out.println("[CotSL] Extracted " + bundled.size() + " bundled Qt runtime files");
             }
             if (extracted > 0) {
                 String dir = nativesDir.toAbsolutePath().toString();
@@ -182,6 +207,10 @@ public class LaunchAgent {
         }
     }
 
+    /**
+     * gets the agent/mod JAR itself
+     * @return this agent/mod JAR
+     */
     private static File findSelf() {
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (!arg.startsWith("-javaagent:")) continue;
@@ -210,6 +239,11 @@ public class LaunchAgent {
         NO_LINUX
     }
 
+    /**
+     * bundling Qt natives is not necessary for most Linux operating systems, so it's best avoided.<br>
+     * tells the user to install Qt6 if not found for some reason
+     * @return the state of whether Qt6 is available or if this is Linux at all
+     */
     private static LinuxQtState extendLibraryPathForQt() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("linux")) return LinuxQtState.NO_LINUX;
         String[] candidates = {
@@ -235,6 +269,11 @@ public class LaunchAgent {
         return LinuxQtState.NO_QT;
     }
 
+    /**
+     * always called last in the premain method. relaunches the game with its own arguments set within the launcher
+     * @param maxHeapMB the max heap size used when launching Minecraft
+     * @throws Exception
+     */
     private static void doRelaunch(long maxHeapMB) throws Exception {
         String javaExecutable = ProcessHandle.current().info().command()
                 .orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
@@ -275,6 +314,11 @@ public class LaunchAgent {
         System.exit(exitCode);
     }
 
+    /**
+     * gets all the necessary arguments for relaunch
+     * @param allArgs
+     * @return proper program arguments for relaunch
+     */
     private static List<String> extractProgramArgs(String[] allArgs) {
         Set<String> jvmArgSet = new HashSet<>(ManagementFactory.getRuntimeMXBean().getInputArguments());
         for (int i = 0; i < allArgs.length; i++) {
@@ -295,6 +339,12 @@ public class LaunchAgent {
         } catch (Exception e) { return -1; }
     }
 
+    /**
+     * gets the memory values set within rec_mem_values.txt, based on system memory
+     * @param totalRamMB
+     * @return
+     * @throws IOException
+     */
     private static long computeMaxHeap(long totalRamMB) throws IOException {
         InputStream is = LaunchAgent.class.getResourceAsStream("/rec_mem_values.txt");
         if (is == null) throw new FileNotFoundException("rec_mem_values.txt not found in classpath");
