@@ -1,11 +1,6 @@
 package com.flarelabsmc.cotsl.launch;
 
 import com.sun.management.OperatingSystemMXBean;
-import net.lenni0451.commons.httpclient.HttpClient;
-import net.raphimc.minecraftauth.MinecraftAuth;
-import net.raphimc.minecraftauth.step.java.StepMCProfile;
-import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
-import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
@@ -48,17 +43,17 @@ public class LaunchAgent {
         }
     }
 
-    private static void log(String msg) {
+    static void log(String msg) {
         System.out.println(msg);
         if (logWriter != null) logWriter.println(msg);
     }
 
-    private static void logErr(String msg) {
+    static void logErr(String msg) {
         System.err.println(msg);
         if (logWriter != null) logWriter.println("[ERROR] " + msg);
     }
 
-    private static void logErr(String msg, Throwable t) {
+    static void logErr(String msg, Throwable t) {
         logErr(msg);
         if (logWriter != null) t.printStackTrace(logWriter);
         else t.printStackTrace(System.err);
@@ -86,9 +81,11 @@ public class LaunchAgent {
         }
         List<Path> extJars = new ArrayList<>();
         try (JarFile jar = new JarFile(self)) {
-            for (JarEntry e : jar.stream()
+            for (
+                    JarEntry e : jar.stream()
                     .filter(e -> e.getName().startsWith("META-INF/extjarjar/") && e.getName().endsWith(".jar"))
-                    .toList()) {
+                    .toList()
+            ) {
                 Path tmp = Files.createTempFile("cotsl-ext-", ".jar");
                 tmp.toFile().deleteOnExit();
                 try (InputStream in = jar.getInputStream(e)) {
@@ -177,7 +174,8 @@ public class LaunchAgent {
         } catch (Throwable t) {
             logErr("[CotSL] Launcher unavailable (" + t.getMessage() + "), falling back to headless mode.", t);
             try {
-                authIfNeeded();
+                Class<?> authManager = Class.forName("com.flarelabsmc.cotsl.launch.AuthManager");
+                authManager.getMethod("authIfNeeded").invoke(null);
             } catch (Exception e) {
                 logErr("[CotSL] Headless auth failed", e);
                 System.exit(1);
@@ -589,7 +587,7 @@ public class LaunchAgent {
                 String[] versionedLibs = new File(dir).list((d, n) -> n.startsWith("libQt6Core.so.6."));
                 if (versionedLibs != null && versionedLibs.length > 0) {
                     String qtVer = versionedLibs[0].replace("libQt6Core.so.", "");
-                    if (!qtVer.startsWith("6.10.")) logErr("[CotSL] System Qt " + qtVer + " may not match QtJambi 6.10.x. Launcher UI may fail. Build the linux-x64 JAR with QTDIR set to bundle Qt 6.10.");
+                    if (!qtVer.startsWith("6.11.")) logErr("[CotSL] System Qt " + qtVer + " may not match QtJambi 6.11.x. Launcher UI may fail. Build the linux-x64 JAR with QTDIR set to bundle Qt 6.11.");
                 }
                 System.setProperty("java.library.path", current.isEmpty() ? dir : current + File.pathSeparator + dir);
                 return LinuxQtState.HAS_QT;
@@ -709,30 +707,5 @@ public class LaunchAgent {
         String escaped = arg.replace("\\", "\\\\").replace("\"", "\\\"");
         if (arg.contains(" ") || arg.contains("\"")) return "\"" + escaped + "\"";
         return escaped;
-    }
-
-    private static void authIfNeeded() throws Exception {
-        File stateFile = getInstallStateFile();
-        InstallState state = InstallState.load(stateFile);
-        if (state.authToken != null && System.currentTimeMillis() < state.authExpiry) {
-            log("[CotSL] Using existing auth for " + state.playerName);
-            return;
-        }
-        log("[CotSL] Starting Microsoft sign-in...");
-        HttpClient httpClient = new HttpClient();
-        StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(
-                httpClient,
-                new StepMsaDeviceCode.MsaDeviceCodeCallback(code -> {
-                    log("[CotSL] Sign in at: " + code.getDirectVerificationUri());
-                    log("[CotSL] Or visit https://www.microsoft.com/link and enter: " + code.getUserCode());
-                })
-        );
-        StepMCProfile.MCProfile profile = session.getMcProfile();
-        state.authToken = profile.getMcToken().getAccessToken();
-        state.playerName = profile.getName();
-        state.playerUuid = profile.getId().toString();
-        state.authExpiry = profile.getMcToken().getExpireTimeMs();
-        state.save(stateFile);
-        log("[CotSL] Signed in as: " + state.playerName);
     }
 }

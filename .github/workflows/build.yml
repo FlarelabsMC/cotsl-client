@@ -1,106 +1,106 @@
-name: Build CotSL Client
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            task_name: linux_x64
-            file_name: linux-x64
-            qt_host: linux
-            qt_arch: gcc_64
-            qt_dir_suffix: gcc_64
-          - os: windows-latest
-            task_name: windows_x64
-            file_name: windows-x64
-            qt_host: windows
-            qt_arch: win64_msvc2022_64
-            qt_dir_suffix: msvc2022_64
-          - os: macos-latest
-            task_name: macos
-            file_name: macos
-            qt_host: mac
-            qt_arch: clang_64
-            qt_dir_suffix: macos
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.0'
-          cache: true
-          extra: '--base https://download.qt.io/'
-          modules: 'qtshadertools'
-
-
-      - name: Export QTDIR
-        shell: bash
-        run: echo "QTDIR=${QT_ROOT_DIR}" >> $GITHUB_ENV
-
-      - name: Make gradlew executable
-        if: runner.os != 'Windows'
-        run: chmod +x ./gradlew
-
-      - name: Generate dialogue data
-        run: ./gradlew generateDialogueMetadata
-
-      - name: Build JAR
-        run: ./gradlew jar_${{ matrix.task_name }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cotsl-client-${{ matrix.file_name }}
-          path: build/libs/*${{ matrix.file_name }}.jar
-          if-no-files-found: error
-
-  release:
-    name: Publish alpha
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Download all built JARs
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - name: Generate commit hash
-        id: vars
-        run: echo "SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
-
-      - name: Create alpha release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Alpha (${{ env.SHA_SHORT }})"
-          tag_name: "alpha-${{ env.SHA_SHORT }}"
-          prerelease: true
-          generate_release_notes: true
-          files: artifacts/*.jar
+#name: Build CotSL Client
+#
+#on:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+#  workflow_dispatch:
+#
+#permissions:
+#  contents: write
+#
+#jobs:
+#  build:
+#    name: Build on ${{ matrix.os }}
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        include:
+#          - os: ubuntu-latest
+#            task_name: linux_x64
+#            file_name: linux-x64
+#            qt_host: linux
+#            qt_arch: gcc_64
+#            qt_dir_suffix: gcc_64
+#          - os: windows-latest
+#            task_name: windows_x64
+#            file_name: windows-x64
+#            qt_host: windows
+#            qt_arch: win64_msvc2022_64
+#            qt_dir_suffix: msvc2022_64
+#          - os: macos-latest
+#            task_name: macos
+#            file_name: macos
+#            qt_host: mac
+#            qt_arch: clang_64
+#            qt_dir_suffix: macos
+#
+#    steps:
+#      - name: Checkout Repository
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 25
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '25'
+#          distribution: 'temurin'
+#
+#      - name: Setup Gradle
+#        uses: gradle/actions/setup-gradle@v3
+#
+#      - name: Install Qt
+#        uses: jurplel/install-qt-action@v4
+#        with:
+#          version: '6.10.0'
+#          cache: true
+#          extra: '--base https://download.qt.io/'
+#          modules: 'qtshadertools'
+#
+#
+#      - name: Export QTDIR
+#        shell: bash
+#        run: echo "QTDIR=${QT_ROOT_DIR}" >> $GITHUB_ENV
+#
+#      - name: Make gradlew executable
+#        if: runner.os != 'Windows'
+#        run: chmod +x ./gradlew
+#
+#      - name: Generate dialogue data
+#        run: ./gradlew generateDialogueMetadata
+#
+#      - name: Build JAR
+#        run: ./gradlew jar_${{ matrix.task_name }}
+#
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: cotsl-client-${{ matrix.file_name }}
+#          path: build/libs/*${{ matrix.file_name }}.jar
+#          if-no-files-found: error
+#
+#  release:
+#    name: Publish alpha
+#    needs: build
+#    runs-on: ubuntu-latest
+#    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+#    steps:
+#      - name: Download all built JARs
+#        uses: actions/download-artifact@v4
+#        with:
+#          path: artifacts
+#          merge-multiple: true
+#
+#      - name: Generate commit hash
+#        id: vars
+#        run: echo "SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+#
+#      - name: Create alpha release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          name: "Alpha (${{ env.SHA_SHORT }})"
+#          tag_name: "alpha-${{ env.SHA_SHORT }}"
+#          prerelease: true
+#          generate_release_notes: true
+#          files: artifacts/*.jar
