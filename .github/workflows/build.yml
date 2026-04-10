@@ -53,7 +53,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.10.3'
+          version: '6.10.0'
           cache: true
           extra: '--base https://download.qt.io/'
           modules: 'qtshadertools'

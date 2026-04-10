@@ -44,7 +44,7 @@ base {
     archivesName = mod_id
 }
 
-def qtVersion = '6.10.3'
+def qtVersion = '6.10.0'
 def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
 def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
     def os = System.getProperty('os.name').toLowerCase()
