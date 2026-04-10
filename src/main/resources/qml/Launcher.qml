@@ -43,6 +43,24 @@ Window {
         }
     }
 
+    property string authState: "checking"
+    property string authUrl: ""
+    property string authCode: ""
+    property string authErrorMsg: ""
+
+    Component.onCompleted: authState = bridge.needsAuth() ? "auth-needed" : "launch"
+
+    Connections {
+        target: bridge
+        function onAuthCodeReady(url, code) {
+            root.authUrl = url
+            root.authCode = code
+            root.authState = "auth-waiting"
+        }
+        function onAuthDone() { root.authState = "launch" }
+        function onAuthError(msg)  { root.authErrorMsg = msg; root.authState = "auth-error" }
+    }
+
     Item {
         id: bgContainer
         anchors.fill: parent

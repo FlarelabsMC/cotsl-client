@@ -44,7 +44,7 @@ base {
     archivesName = mod_id
 }
 
-def qtVersion = '6.10.0'
+def qtVersion = '6.10.3'
 def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
 def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
     def os = System.getProperty('os.name').toLowerCase()
@@ -140,10 +140,10 @@ dependencies {
     jarJar(implementation('org.xerial:sqlite-jdbc:3.51.2.0'))
     jarJar(implementation('com.j256.ormlite:ormlite-core:6.1'))
     jarJar(implementation('com.j256.ormlite:ormlite-jdbc:6.1'))
-    jarJar(implementation('com.fasterxml.jackson.core:jackson-core:2.15.0'))
-    jarJar(implementation('com.fasterxml.jackson.core:jackson-databind:2.15.0'))
-    jarJar(implementation('com.fasterxml.jackson.core:jackson-annotations:2.15.0'))
-    jarJar(implementation('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2'))
+    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-core:2.15.0')))
+    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-databind:2.15.0')))
+    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-annotations:2.15.0')))
+    jarJar(implementation(embed('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2')))
     jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
 
     // qtjambi for launcher ui
@@ -156,6 +156,9 @@ dependencies {
         dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
         dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
     }
+
+    // launcher auth
+    jarJar(implementation(embed("net.raphimc:MinecraftAuth:4.1.0")))
 
     // utility
     implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
@@ -311,6 +314,7 @@ tasks.register('compileShaders') {
 
 def qtNativesGenDirWindows = layout.buildDirectory.dir('generated/qt-natives-windows')
 def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos')
+def qtNativesGenDirLinux = layout.buildDirectory.dir('generated/qt-natives-linux')
 
 tasks.register('bundleQtRuntimeWindows') {
     group = 'build'
@@ -482,6 +486,67 @@ tasks.register('bundleQtRuntimeMacOS') {
     }
 }
 
+tasks.register('bundleQtRuntimeLinux') {
+    group = 'build'
+    def qtDir = System.getenv('QTDIR')
+    onlyIf { System.getProperty('os.name').toLowerCase().contains('linux') && qtDir != null }
+    inputs.property('qtDir', qtDir ?: '')
+    outputs.dir(qtNativesGenDirLinux)
+    outputs.upToDateWhen { false }
+    doLast {
+        def nativesOut = new File(qtNativesGenDirLinux.get().asFile, 'META-INF/qt-natives/linux-x64')
+        def qmlOut = new File(qtNativesGenDirLinux.get().asFile, 'META-INF/qt-qml/linux-x64')
+        nativesOut.deleteDir(); qmlOut.deleteDir()
+        nativesOut.mkdirs();    qmlOut.mkdirs()
+        def libDir = new File(qtDir, 'lib')
+        def min = [
+            'Qt6Core', 'Qt6DBus', 'Qt6Gui', 'Qt6Network', 'Qt6OpenGL',
+            'Qt6Qml', 'Qt6QmlCompiler', 'Qt6QmlCore', 'Qt6QmlMeta',
+            'Qt6QmlModels', 'Qt6QmlNetwork', 'Qt6QmlWorkerScript',
+            'Qt6Quick', 'Qt6QuickEffects', 'Qt6ShaderTools', 'Qt6Widgets',
+            'Qt6XcbQpa', 'Qt6WaylandClient'
+        ]
+        def count = 0
+        min.each { lib ->
+            def versioned = libDir.listFiles()?.find { it.name ==~ "lib${lib}\\.so\\.\\d+\\.\\d+\\.\\d+" }
+            if (versioned) {
+                def real = versioned.toPath().toRealPath().toFile()
+                Files.copy(real.toPath(), new File(nativesOut, versioned.name).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                count++
+            } else {
+                logger.warn("[CotSL] ${lib} not found in ${libDir}")
+            }
+        }
+        def platformsDir = new File(nativesOut, 'platforms')
+        platformsDir.mkdirs()
+        ['libqxcb.so', 'libqwayland-generic.so', 'libqoffscreen.so'].each { plugin ->
+            def src = new File(qtDir, "plugins/platforms/${plugin}")
+            if (src.exists()) Files.copy(src.toPath(), new File(platformsDir, plugin).toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+        def xcbIntSrc = new File(qtDir, 'plugins/xcbglintegrations')
+        if (xcbIntSrc.exists()) {
+            def xcbIntOut = new File(nativesOut, 'xcbglintegrations')
+            xcbIntOut.mkdirs()
+            xcbIntSrc.listFiles()?.each { f ->
+                Files.copy(f.toPath(), new File(xcbIntOut, f.name).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+        def qmlSrc = new File(qtDir, 'qml/QtQuick/Effects')
+        if (qmlSrc.exists()) {
+            def qmlDest = new File(qmlOut, 'QtQuick/Effects')
+            qmlDest.mkdirs()
+            qmlSrc.eachFileRecurse { f ->
+                if (f.isFile()) {
+                    def dest = new File(qmlDest, qmlSrc.toPath().relativize(f.toPath()).toString())
+                    dest.parentFile.mkdirs()
+                    Files.copy(f.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+        println "[CotSL] Bundled ${count} Qt .so files for Linux from: ${qtDir}"
+    }
+}
+
 processResources.dependsOn compileShaders
 
 processResources {
@@ -534,13 +599,15 @@ tasks.named('jar', Jar) {
         into 'META-INF/extjarjar'
     }
     manifest {
+        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
         attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
     }
 }
 
 def platformBundleTaskNames = [
         'windows-x64': 'bundleQtRuntimeWindows',
-        'macos': 'bundleQtRuntimeMacOS'
+        'macos'      : 'bundleQtRuntimeMacOS',
+        'linux-x64'  : 'bundleQtRuntimeLinux'
 ]
 
 allPlatforms.each { platform ->
@@ -563,6 +630,7 @@ allPlatforms.each { platform ->
         }
         manifest {
             attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+            attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
         }
     }
 }

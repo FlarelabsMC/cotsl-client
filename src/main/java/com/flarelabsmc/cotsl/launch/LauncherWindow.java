@@ -6,6 +6,11 @@ import io.qt.gui.*;
 import io.qt.qml.*;
 import io.qt.quick.*;
 import io.qt.widgets.QApplication;
+import net.lenni0451.commons.httpclient.HttpClient;
+import net.raphimc.minecraftauth.MinecraftAuth;
+import net.raphimc.minecraftauth.step.java.StepMCProfile;
+import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
+import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 
 import java.io.*;
 import java.net.URL;
@@ -80,11 +85,50 @@ public class LauncherWindow {
 
     public static class LaunchBridge extends QObject {
         public final Signal0 launchRequested = new Signal0();
+        public final Signal2<String, String> authCodeReady = new Signal2<>();
+        public final Signal0 authDone = new Signal0();
+        public final Signal1<String> authError = new Signal1<>();
 
-        @SuppressWarnings("unused") // because not everybody has the proper Qt plugins.
         @QtInvokable
         public void launch() {
             launchRequested.emit();
+        }
+
+        @QtInvokable
+        public boolean needsAuth() {
+            try {
+                InstallState state = InstallState.load(LaunchAgent.getInstallStateFile());
+                if (state.authToken == null) return true;
+                return System.currentTimeMillis() >= state.authExpiry;
+            } catch (Exception e) {
+                return true;
+            }
+        }
+
+        @QtInvokable
+        public void startAuth() {
+            Thread.ofVirtual().start(() -> {
+                try {
+                    HttpClient httpClient = new HttpClient();
+                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(
+                            httpClient,
+                            new StepMsaDeviceCode.MsaDeviceCodeCallback(code ->
+                                    authCodeReady.emit(code.getDirectVerificationUri(), code.getUserCode())
+                            )
+                    );
+                    StepMCProfile.MCProfile profile = session.getMcProfile();
+                    File stateFile = LaunchAgent.getInstallStateFile();
+                    InstallState state = InstallState.load(stateFile);
+                    state.authToken = profile.getMcToken().getAccessToken();
+                    state.playerName = profile.getName();
+                    state.playerUuid = profile.getId().toString();
+                    state.authExpiry = profile.getMcToken().getExpireTimeMs();
+                    state.save(stateFile);
+                    authDone.emit();
+                } catch (Exception e) {
+                    authError.emit(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+                }
+            });
         }
     }
 }

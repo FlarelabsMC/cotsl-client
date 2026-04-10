@@ -28,3 +28,8 @@ bak
 
 repo
 /libs
+compile_err.txt
+compile_out.txt
+deps.txt
+deps_out.txt
+build_errors.txt
