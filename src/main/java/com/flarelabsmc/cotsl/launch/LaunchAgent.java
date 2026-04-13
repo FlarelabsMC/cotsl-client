@@ -5,7 +5,6 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -235,20 +234,21 @@ public class LaunchAgent {
     }
 
     private static void installNeoForge(String version, File mcDir) throws Exception {
-        String url = String.format("https://maven.neoforged.net/releases/net/neoforged/neoforge/%s/neoforge-%s-installer.jar", version, version);
-        File installer = File.createTempFile("neoforge-installer-", ".jar");
-        installer.deleteOnExit();
-        log("[CotSL] Downloading NeoForge installer from: " + url);
-        try (InputStream in = new URL(url).openStream(); FileOutputStream out = new FileOutputStream(installer)) {
-            in.transferTo(out);
-        }
-        String java = ProcessHandle.current().info().command().orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
-        int exit = new ProcessBuilder(java, "-jar", installer.getAbsolutePath(), "--installClient", mcDir.getAbsolutePath())
-                .inheritIO()
-                .start()
-                .waitFor();
-
-        if (exit != 0) throw new RuntimeException("NeoForge installer failed with exit code: " + exit);
+//        String url = String.format("https://maven.neoforged.net/releases/net/neoforged/neoforge/%s/neoforge-%s-installer.jar", version, version);
+//        File installer = File.createTempFile("neoforge-installer-", ".jar");
+//        installer.deleteOnExit();
+//        log("[CotSL] Downloading NeoForge installer from: " + url);
+//        try (InputStream in = new URL(url).openStream(); FileOutputStream out = new FileOutputStream(installer)) {
+//            in.transferTo(out);
+//        }
+//        String java = ProcessHandle.current().info().command().orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+//        int exit = new ProcessBuilder(java, "-jar", installer.getAbsolutePath(), "--installClient", mcDir.getAbsolutePath())
+//                .inheritIO()
+//                .start()
+//                .waitFor();
+//
+//        if (exit != 0) throw new RuntimeException("NeoForge installer failed with exit code: " + exit);
+        NeoForgeInstaller.install(version, mcDir, LaunchAgent::log);
     }
 
     private static void deploySelf(File mcDir) throws Exception {

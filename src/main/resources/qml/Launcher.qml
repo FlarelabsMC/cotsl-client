@@ -24,6 +24,83 @@ Window {
     property real smoothMY: 0.7
     Behavior on smoothMY { SmoothedAnimation { velocity: -0.5; duration: 400 } }
 
+    Window {
+        id: authWindow
+        width: 240; height: 240
+        flags: Qt.FramelessWindowHint | Qt.Window | Qt.WindowStaysOnTopHint
+        color: "#0f0d0b"
+        visible: authState === "auth-needed" || authState === "auth-waiting" || authState === "auth-error"
+
+        onClosing: (close) => { close.accepted = false }
+
+        onVisibleChanged: {
+            if (visible) {
+                x = (Screen.width - width) / 2
+                y = (Screen.height - height) / 2
+            }
+        }
+
+        Rectangle {
+            id: authTitleBar
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            height: 32
+            color: "#cc0f0d0b"
+
+            DragHandler {
+                onActiveChanged: if (active) authWindow.startSystemMove()
+            }
+
+            BitmapText {
+                anchors.centerIn: parent
+                text: "Sign in"
+                textColor: "#b4a58c"
+                charScale: 2
+            }
+
+            Image {
+                id: authCloseBtn
+                anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
+                width: 12; height: 14
+                source: Qt.resolvedUrl("textures/launch/ui/x.png")
+                smooth: false
+                property bool hovered: false
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorizationColor: authCloseBtn.hovered ? "#dc503c" : "#e3bf91"
+                    colorization: 1.0
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: authCloseBtn.hovered = true
+                    onExited: authCloseBtn.hovered = false
+                    onClicked: Qt.quit()
+                }
+            }
+        }
+
+        Item {
+            anchors { top: authTitleBar.bottom; bottom: parent.bottom; left: parent.left; right: parent.right }
+
+            GlowButton {
+                anchors.centerIn: parent
+                width: 220; height: 60
+                label: "Sign in"
+                visible: authState === "auth-needed"
+                onClicked: bridge.startAuth()
+            }
+
+            GlowButton {
+                anchors.centerIn: parent
+                width: 220; height: 60
+                fillColor: '#a5be89'
+                label: "Open in browser"
+                visible: authState === "auth-waiting"
+                onClicked: Qt.openUrlExternally(root.authUrl)
+            }
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
@@ -191,6 +268,7 @@ Window {
             anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 28 }
             width: 220; height: 72
             label: "Launch"
+            visible: authState === "launch"
             onClicked: {
                 root.fadeActive = true
                 sceneCapture.live = false
