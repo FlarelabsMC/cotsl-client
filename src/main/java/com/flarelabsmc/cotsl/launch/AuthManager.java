@@ -6,15 +6,11 @@ import net.raphimc.minecraftauth.step.java.StepMCProfile;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 
-import java.io.File;
-
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.getInstallStateFile;
 import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
 
 public class AuthManager {
     public static void authIfNeeded() throws Exception {
-        File stateFile = getInstallStateFile();
-      InstallState state = InstallState.load(stateFile);
+        InstallState.Options state = InstallState.get();
         if (state.authToken != null && System.currentTimeMillis() < state.authExpiry) {
             log("[CotSL] Using existing auth for " + state.playerName);
             return;
@@ -33,7 +29,7 @@ public class AuthManager {
         state.playerName = profile.getName();
         state.playerUuid = profile.getId().toString();
         state.authExpiry = profile.getMcToken().getExpireTimeMs();
-        state.save(stateFile);
+        state.save();
         log("[CotSL] Signed in as: " + state.playerName);
     }
 }
