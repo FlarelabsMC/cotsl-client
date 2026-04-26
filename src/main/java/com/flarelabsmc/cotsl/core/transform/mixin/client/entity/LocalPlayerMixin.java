@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.mixin.client.entity;
+package com.flarelabsmc.cotsl.core.transform.mixin.client.entity;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;

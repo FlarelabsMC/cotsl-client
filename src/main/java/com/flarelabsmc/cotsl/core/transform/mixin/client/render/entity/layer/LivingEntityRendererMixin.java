@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.mixin.client.render.entity.layer;
+package com.flarelabsmc.cotsl.core.transform.mixin.client.render.entity.layer;
 
 import com.flarelabsmc.cotsl.client.render.layers.FireRenderLayer;
 import net.minecraft.client.model.EntityModel;
