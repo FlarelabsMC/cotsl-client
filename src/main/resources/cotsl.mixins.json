@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "com.flarelabsmc.cotsl.core.transform.mixin",
+  "package": "com.flarelabsmc.cotsl.core.mixin",
   "refmap": "cotsl.refmap.json",
   "compatibilityLevel": "JAVA_25",
   "client": [

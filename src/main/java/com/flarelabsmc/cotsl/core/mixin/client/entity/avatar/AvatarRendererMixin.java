@@ -1,11 +1,11 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.client.entity.avatar;
+package com.flarelabsmc.cotsl.core.mixin.client.entity.avatar;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.network.packets.RequestUserDataPacket;
-import com.flarelabsmc.cotsl.core.transform.MixinsClient;
+import com.flarelabsmc.cotsl.core.hotmixin.MixinsClient;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientAvatarEntity;

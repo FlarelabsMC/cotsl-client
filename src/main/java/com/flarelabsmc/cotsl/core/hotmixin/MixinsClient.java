@@ -1,5 +1,6 @@
-package com.flarelabsmc.cotsl.core.transform;
+package com.flarelabsmc.cotsl.core.hotmixin;
 
+import com.flarelabsmc.cotsl.client.particle.options.FireSparkParticleOptions;
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerHairRenderLayer;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
@@ -16,10 +17,15 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 

@@ -1,6 +1,6 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.common.entity.living;
+package com.flarelabsmc.cotsl.core.mixin.common.entity.living;
 
-import com.flarelabsmc.cotsl.core.transform.MixinsCommon;
+import com.flarelabsmc.cotsl.core.hotmixin.MixinsCommon;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,6 +1,6 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.common.entity.player;
+package com.flarelabsmc.cotsl.core.mixin.common.entity.player;
 
-import com.flarelabsmc.cotsl.core.transform.MixinsCommon;
+import com.flarelabsmc.cotsl.core.hotmixin.MixinsCommon;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
