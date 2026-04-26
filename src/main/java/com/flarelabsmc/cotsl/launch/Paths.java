@@ -21,6 +21,6 @@ public class Paths {
     }
 
     public static File getInstanceDir() {
-        return new File(getInstallDir().getParentFile(), "instance");
+        return new File(getInstallDir(), "instance");
     }
 }
