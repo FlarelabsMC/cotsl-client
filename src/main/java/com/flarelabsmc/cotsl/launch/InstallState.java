@@ -15,11 +15,7 @@ public class InstallState {
         public String inNeoVer;
         public String inSelfVer;
         public String mcDir;
-        public String authToken;
-        public String playerName;
-        public String playerUuid;
         public String xuid;
-        public long authExpiry;
 
         public void save() {
             File path = Paths.getInstallStatePath();

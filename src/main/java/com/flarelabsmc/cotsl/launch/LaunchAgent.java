@@ -153,9 +153,9 @@ public class LaunchAgent {
     private static void mainAfterBootstrap() throws Exception {
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) System.exit(1);
-        log("[CotSL] Running install check...");
+        // log("[CotSL] Running install check...");
         try {
-            runInstallIfNeeded();
+            // runInstallIfNeeded();
         } catch (Throwable t) {
             logErr("[CotSL] runInstallIfNeeded() failed", t);
             System.exit(1);

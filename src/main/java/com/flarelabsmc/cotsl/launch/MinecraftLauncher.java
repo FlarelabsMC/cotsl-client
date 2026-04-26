@@ -18,6 +18,9 @@ public class MinecraftLauncher {
                 new File(mcDir, "versions/" + neo.inheritsFrom + "/" + neo.inheritsFrom + ".json"),
                 VersionJson.class
         );
+
+        AuthManager.AuthParameters authParams = AuthManager.getAuthParams();
+
         List<VersionJson.Library> allLibs = new ArrayList<>(vanilla.libraries);
         allLibs.addAll(neo.libraries);
         List<String> classpath = new ArrayList<>();
@@ -26,12 +29,14 @@ public class MinecraftLauncher {
             File jar = resolveLibraryPath(mcDir, lib);
             if (jar != null && jar.exists()) classpath.add(jar.getAbsolutePath());
         }
+
         File vanillaJar = new File(mcDir, "versions/" + neo.inheritsFrom + "/" + neo.inheritsFrom + ".jar");
         if (vanillaJar.exists()) classpath.add(vanillaJar.getAbsolutePath());
         File nativesDir = new File(mcDir, "versions/" + neo.inheritsFrom + "/natives");
         nativesDir.mkdirs();
         String assetIndex = vanilla.assetIndex != null ? vanilla.assetIndex.id
                 : (vanilla.assets != null ? vanilla.assets : neo.inheritsFrom);
+
         Map<String, String> vars = new HashMap<>();
         vars.put("natives_directory",  nativesDir.getAbsolutePath());
         vars.put("launcher_name",      "CotSL");
@@ -43,9 +48,9 @@ public class MinecraftLauncher {
         vars.put("game_directory",     gameDir.getAbsolutePath());
         vars.put("assets_root",        new File(mcDir, "assets").getAbsolutePath());
         vars.put("assets_index_name",  assetIndex);
-        vars.put("auth_player_name",   state.playerName  != null ? state.playerName  : "Player");
-        vars.put("auth_uuid",          state.playerUuid  != null ? state.playerUuid  : "00000000-0000-0000-0000-000000000000");
-        vars.put("auth_access_token",  state.authToken   != null ? state.authToken   : "0");
+        vars.put("auth_player_name",   authParams.playerName()  != null ? authParams.playerName()  : "Player");
+        vars.put("auth_uuid",          authParams.playerUuid()  != null ? authParams.playerUuid().toString() : "00000000-0000-0000-0000-000000000000");
+        vars.put("auth_access_token",  authParams.minecraftToken() != null ? authParams.minecraftToken() : "0");
         vars.put("auth_xuid",          state.xuid        != null ? state.xuid        : "0");
         vars.put("clientid",           "0");
         vars.put("user_type",          "msa");

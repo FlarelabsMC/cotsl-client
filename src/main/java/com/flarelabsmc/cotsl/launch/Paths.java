@@ -4,6 +4,7 @@ import java.io.File;
 
 public class Paths {
     private static final String INSTALL_STATE_FILE = "install_state.json";
+    private static final String AUTH_STATE_FILE = "auth_state.json";
 
     public static File getInstallDir() {
         String os = System.getProperty("os.name", "").toLowerCase();
@@ -18,6 +19,9 @@ public class Paths {
 
     public static File getInstallStatePath() {
         return new File(getInstallDir(), INSTALL_STATE_FILE);
+    }
+    public static File getAuthStatePath() {
+        return new File(getInstallDir(), AUTH_STATE_FILE);
     }
 
     public static File getInstanceDir() {
