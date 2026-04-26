@@ -25,21 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AbstractHorseMixin extends Animal {
     @Shadow private float standAnimO;
     @Unique private final MixinsCommon.AbstractHorseMixin self = new MixinsCommon.AbstractHorseMixin();
-    @Unique private float angularVelocity = 0.0f;
-    @Unique private float speed = 0.0f;
 
     protected AbstractHorseMixin(EntityType<? extends Animal> type, Level level) {
         super(type, level);
-    }
-
-    @Override
-    public float getSpeed() {
-        return speed;
-    }
-
-    @Override
-    public void setSpeed(float speed) {
-        this.speed = speed;
     }
 
     @Inject(method = "getRiddenRotation", at = @At("HEAD"), cancellable = true)
