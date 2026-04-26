@@ -25,7 +25,7 @@ public class LaunchAgent {
 
     private static void initLog() {
         try {
-            File dir = Paths.getInstallStatePath().getParentFile();
+            File dir = InstallState.getPath().getParentFile();
             dir.mkdirs();
             File logFile = new File(dir, "cotsl-launch.log");
             logWriter = new PrintWriter(new FileWriter(logFile, true), true);
@@ -189,8 +189,12 @@ public class LaunchAgent {
             System.exit(1);
         }
         log("[CotSL] Launching Minecraft directly...");
-        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, getReqNeoVer(), findSelf());
+        MinecraftLauncher.launch(new File(state.mcDir), getInstanceDir(), state, getReqNeoVer(), findSelf());
         System.exit(0);
+    }
+
+    static File getInstanceDir() {
+        return new File(InstallState.getPath().getParentFile(), "instance");
     }
 
     public static void runInstallIfNeeded() throws Exception {
@@ -219,7 +223,7 @@ public class LaunchAgent {
         }
         if (selfNeedsUpdate || needsToInstallNeo) {
             log("[CotSL] Deploying mod JAR");
-            deploySelf(Paths.getInstanceDir());
+            deploySelf(getInstanceDir());
             state.inSelfVer = reqSelfVer;
         }
         state.mcDir = mcDir.getAbsolutePath();

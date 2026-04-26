@@ -9,6 +9,7 @@ import java.io.IOException;
 public class InstallState {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static InstallState.Options INSTANCE = null;
+    private static final String INSTALL_STATE_FILE = "install_state.json";
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Options {
@@ -22,7 +23,7 @@ public class InstallState {
         public long authExpiry;
 
         public void save() {
-            File path = Paths.getInstallStatePath();
+            File path = getPath();
             try {
                 MAPPER.writerWithDefaultPrettyPrinter().writeValue(path, this);
             } catch (IOException e) {
@@ -33,9 +34,20 @@ public class InstallState {
 
     public static InstallState.Options get() {
         if (INSTANCE == null) {
-            INSTANCE = loadFromPath(Paths.getInstallStatePath());
+            INSTANCE = loadFromPath(getPath());
         }
         return INSTANCE;
+    }
+
+    public static File getPath() {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        String home = System.getProperty("user.home", ".");
+        File dir;
+        if (os.contains("win") && System.getenv("APPDATA") != null) dir = new File(System.getenv("APPDATA"), ".cotsl");
+        else if (os.contains("mac")) dir = new File(home, "Library/Application Support/.cotsl");
+        else dir = new File(home, ".cotsl");
+        dir.mkdirs();
+        return new File(dir, INSTALL_STATE_FILE);
     }
 
     private static InstallState.Options loadFromPath(File file) {
