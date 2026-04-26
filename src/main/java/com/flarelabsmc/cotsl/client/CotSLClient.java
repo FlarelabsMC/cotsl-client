@@ -14,6 +14,7 @@ import com.flarelabsmc.cotsl.common.CotSL;
 import com.flarelabsmc.cotsl.common.registry.ParticleRegistry;
 import com.flarelabsmc.cotsl.launch.LauncherWindow;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -34,11 +35,6 @@ public class CotSLClient {
     }
 
     @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        SpeechData.load();
-    }
-
-    @SubscribeEvent
     public static void registerModelLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(PlayerEyeRenderLayer.PlayerEyeModel.MODEL_LAYER, PlayerEyeRenderLayer.PlayerEyeModel::createLayer);
         event.registerLayerDefinition(PlayerEyebrowRenderLayer.PlayerEyebrowModel.MODEL_LAYER, PlayerEyebrowRenderLayer.PlayerEyebrowModel::createLayer);
@@ -49,8 +45,12 @@ public class CotSLClient {
 
     @SubscribeEvent
     public static void registerReloadListeners(AddClientReloadListenersEvent event) {
-        event.addListener(Identifier.parse("cotsl:clear_cache"),
-                (ResourceManagerReloadListener) manager -> Frankenstein.reset());
+        event.addListener(Identifier.parse("cotsl:client_resources"), (ResourceManagerReloadListener) CotSLClient::resourceReload);
+    }
+
+    private static void resourceReload(ResourceManager manager) {
+        Frankenstein.reset();
+        SpeechData.load();
     }
 
     @SubscribeEvent

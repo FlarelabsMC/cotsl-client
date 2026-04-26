@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.mixin.client.entity.avatar;
+package com.flarelabsmc.cotsl.core.transform.mixin.client.entity.avatar;
 
 import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
