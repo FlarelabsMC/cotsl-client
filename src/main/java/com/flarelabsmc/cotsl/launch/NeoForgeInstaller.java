@@ -62,12 +62,17 @@ public class NeoForgeInstaller {
         File dest = new File(mcDir, "versions/" + mcVersion + "/" + mcVersion + ".jar");
         File jsonDest = new File(mcDir, "versions/" + mcVersion + "/" + mcVersion + ".json");
         if (dest.exists() && jsonDest.exists()) return dest;
-
-        MCVersionManifest manifest = MCVersionManifest.getManifest();
-        MCVersionManifest.Entry version = manifest.getVersion(mcVersion);
-
-        if (version == null || version.url == null) throw new IllegalArgumentException("Minecraft version not found in manifest: " + mcVersion);
-        JsonNode versionMeta = MAPPER.readTree(new URL(version.url));
+        String manifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json";
+        JsonNode manifest = MAPPER.readTree(new URL(manifestUrl));
+        String versionUrl = null;
+        for (var v : manifest.get("versions")) {
+            if (mcVersion.equals(v.get("id").asText())) {
+                versionUrl = v.get("url").asText();
+                break;
+            }
+        }
+        if (versionUrl == null) throw new IllegalArgumentException("Minecraft version not found in manifest: " + mcVersion);
+        JsonNode versionMeta = MAPPER.readTree(new URL(versionUrl));
         String jarUrl = versionMeta.at("/downloads/client/url").asText();
         String jarSha1 = versionMeta.at("/downloads/client/sha1").asText();
         dest.getParentFile().mkdirs();

@@ -9,7 +9,7 @@ import java.util.*;
 public class MinecraftLauncher {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static Process launch(File mcDir, File gameDir, InstallState.Options state, String neoVer, File agentJar) throws Exception {
+    public static Process launch(File mcDir, File gameDir, InstallState state, String neoVer, File agentJar) throws Exception {
         VersionJson neo = MAPPER.readValue(
                 new File(mcDir, "versions/neoforge-" + neoVer + "/neoforge-" + neoVer + ".json"),
                 VersionJson.class
