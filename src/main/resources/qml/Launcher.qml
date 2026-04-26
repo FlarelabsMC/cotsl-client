@@ -136,6 +136,11 @@ Window {
         }
         function onAuthDone() { root.authState = "launch" }
         function onAuthError(msg)  { root.authErrorMsg = msg; root.authState = "auth-error" }
+        function onStartLaunch() {
+            root.fadeActive = true
+            sceneCapture.live = false
+            fadeAnim.start()
+        }
     }
 
     Item {
@@ -270,9 +275,7 @@ Window {
             label: "Launch"
             visible: authState === "launch"
             onClicked: {
-                root.fadeActive = true
-                sceneCapture.live = false
-                fadeAnim.start()
+                bridge.beginLaunch();
             }
         }
     }

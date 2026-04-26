@@ -21,12 +21,11 @@ public class LaunchAgent {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
     private static final String RELAUNCHED_PROP = "cotsl.relaunched";
     private static final String MAIN_RELAUNCHED_PROP = "cotsl.mainRelaunched";
-    private static final String INSTALL_STATE_FILE = "install_state.json";
     private static PrintWriter logWriter = null;
 
     private static void initLog() {
         try {
-            File dir = getInstallStateFile().getParentFile();
+            File dir = InstallState.getPath().getParentFile();
             dir.mkdirs();
             File logFile = new File(dir, "cotsl-launch.log");
             logWriter = new PrintWriter(new FileWriter(logFile, true), true);
@@ -55,7 +54,7 @@ public class LaunchAgent {
     static void logErr(String msg, Throwable t) {
         logErr(msg);
         if (logWriter != null) t.printStackTrace(logWriter);
-        else t.printStackTrace(System.err);
+        t.printStackTrace(System.err);
     }
 
     public static void main(String[] args) throws Exception {
@@ -141,7 +140,6 @@ public class LaunchAgent {
         File selfJar = findSelf();
         loadExtraJars(inst, selfJar);
         extractQtNatives(selfJar);
-        runInstallIfNeeded();
         try {
             LauncherWindow.create(LAUNCH_LATCH);
             if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
@@ -185,7 +183,7 @@ public class LaunchAgent {
 
 
     private static void launchMinecraft() throws Exception {
-        InstallState state = InstallState.load(getInstallStateFile());
+        InstallState.Options state = InstallState.get();
         if (state.mcDir == null) {
             logErr("[CotSL] No mcDir recorded, cannot launch.");
             System.exit(1);
@@ -196,13 +194,12 @@ public class LaunchAgent {
     }
 
     static File getInstanceDir() {
-        return new File(getInstallStateFile().getParentFile(), "instance");
+        return new File(InstallState.getPath().getParentFile(), "instance");
     }
 
-    private static void runInstallIfNeeded() throws Exception {
+    public static void runInstallIfNeeded() throws Exception {
         log("[CotSL] Loading install state...");
-        File stateFile = getInstallStateFile();
-        InstallState state = InstallState.load(stateFile);
+        InstallState.Options state = InstallState.get();
         log("[CotSL] Resolving Minecraft directory...");
         File mcDir = resolveMcDir(state);
         log("[CotSL] mcDir=" + mcDir);
@@ -230,7 +227,7 @@ public class LaunchAgent {
             state.inSelfVer = reqSelfVer;
         }
         state.mcDir = mcDir.getAbsolutePath();
-        state.save(stateFile);
+        state.save();
     }
 
     private static void installNeoForge(String version, File mcDir) throws Exception {
@@ -277,7 +274,7 @@ public class LaunchAgent {
         }
     }
 
-    private static File resolveMcDir(InstallState state) {
+    private static File resolveMcDir(InstallState.Options state) {
         if (state.mcDir != null) {
             File saved = new File(state.mcDir);
             if (saved.isDirectory()) return saved;
@@ -286,7 +283,7 @@ public class LaunchAgent {
         if (detected.isDirectory() && launcherProfilesExist(detected)) return detected;
         System.setProperty("cotsl.install.needsMcDir", "true");
         try {
-            LauncherWindow.create(LAUNCH_LATCH);
+            // LauncherWindow.create(LAUNCH_LATCH);
         } catch (Throwable e) {
             log("[CotSL] Could not show directory picker (" + e.getMessage() + "), using default");
         }
@@ -311,20 +308,11 @@ public class LaunchAgent {
         if (!c.exists() && os.contains("linux")) {
             File flatpak = new File(home, ".var/app/com.mojang.Minecraft/.minecraft");
             if (flatpak.exists()) return flatpak;
+            if (flatpak.exists()) return flatpak;
         }
         return c;
     }
 
-    static File getInstallStateFile() {
-        String os = System.getProperty("os.name", "").toLowerCase();
-        String home = System.getProperty("user.home", ".");
-        File dir;
-        if (os.contains("win") && System.getenv("APPDATA") != null) dir = new File(System.getenv("APPDATA"), ".cotsl");
-        else if (os.contains("mac")) dir = new File(home, "Library/Application Support/.cotsl");
-        else dir = new File(home, ".cotsl");
-        dir.mkdirs();
-        return new File(dir, INSTALL_STATE_FILE);
-    }
 
     /**
      * after the agent overrides launch, it grabs the arguments from when it tried to launch as Minecraft, and relaunches the game with proper JVM arguments

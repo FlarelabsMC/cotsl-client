@@ -88,6 +88,21 @@ public class LauncherWindow {
         public final Signal2<String, String> authCodeReady = new Signal2<>();
         public final Signal0 authDone = new Signal0();
         public final Signal1<String> authError = new Signal1<>();
+        public final Signal0 startLaunch = new Signal0();
+
+        @QtInvokable
+        public void beginLaunch() {
+            Thread.ofVirtual().start(() -> {
+                try {
+                    LaunchAgent.runInstallIfNeeded();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                try { Thread.sleep(5000); }
+                catch (InterruptedException e) {}
+                startLaunch.emit();
+            });
+        }
 
         @QtInvokable
         public void launch() {
@@ -97,7 +112,7 @@ public class LauncherWindow {
         @QtInvokable
         public boolean needsAuth() {
             try {
-                InstallState state = InstallState.load(LaunchAgent.getInstallStateFile());
+                InstallState.Options state = InstallState.get();
                 if (state.authToken == null) return true;
                 return System.currentTimeMillis() >= state.authExpiry;
             } catch (Exception e) {
@@ -117,13 +132,14 @@ public class LauncherWindow {
                             )
                     );
                     StepMCProfile.MCProfile profile = session.getMcProfile();
-                    File stateFile = LaunchAgent.getInstallStateFile();
-                    InstallState state = InstallState.load(stateFile);
+
+                    InstallState.Options state = InstallState.get();
                     state.authToken = profile.getMcToken().getAccessToken();
                     state.playerName = profile.getName();
                     state.playerUuid = profile.getId().toString();
                     state.authExpiry = profile.getMcToken().getExpireTimeMs();
-                    state.save(stateFile);
+                    state.save();
+
                     authDone.emit();
                 } catch (Exception e) {
                     authError.emit(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
