@@ -90,7 +90,7 @@ public class LauncherWindow {
         public void beginLaunch() {
             Thread.ofVirtual().start(() -> {
                 try {
-                    LaunchAgent.runInstallIfNeeded();
+                    InstallManager.runInstallIfNeeded();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

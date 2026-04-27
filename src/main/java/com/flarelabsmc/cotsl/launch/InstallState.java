@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 
+import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+
 public class InstallState {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static InstallState.Options INSTANCE = null;
@@ -36,12 +38,14 @@ public class InstallState {
 
     private static InstallState.Options loadFromPath(File file) {
         if (file.exists()) {
+            log("[CotSL] Loading install state...");
             try {
                 return MAPPER.readValue(file, InstallState.Options.class);
             } catch (Exception e) {
                 System.err.println("[CotSL] Could not read install state. Starting again: " + e.getMessage());
             }
         }
+        log("[CotSL] Install state file nonexistent, creating new state...");
         return new InstallState.Options();
     }
 }

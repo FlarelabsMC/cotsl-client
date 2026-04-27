@@ -72,7 +72,7 @@ public class LaunchAgent {
             logErr("[CotSL] Qt6 runtime not found. Crashing.");
             System.exit(1);
         }
-        File self = findSelf();
+        File self = InstallManager.findSelf();
         if (self == null) {
             logErr("[CotSL] Cannot locate self JAR. Aborting.");
             System.exit(1);
@@ -126,7 +126,7 @@ public class LaunchAgent {
         initLog();
         if (System.getProperty(RELAUNCHED_PROP) != null) return;
         if (System.getProperty("cotsl.minecraft.launch") != null) {
-            File selfJar = findSelf();
+            File selfJar = InstallManager.findSelf();
             loadExtraJars(inst, selfJar);
             extractQtNatives(selfJar);
             return;
@@ -137,7 +137,7 @@ public class LaunchAgent {
             System.exit(1);
             return;
         }
-        File selfJar = findSelf();
+        File selfJar = InstallManager.findSelf();
         loadExtraJars(inst, selfJar);
         extractQtNatives(selfJar);
         try {
@@ -189,124 +189,8 @@ public class LaunchAgent {
             System.exit(1);
         }
         log("[CotSL] Launching Minecraft directly...");
-        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, getReqNeoVer(), findSelf());
+        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, InstallManager.getReqNeoVer(), InstallManager.findSelf());
         System.exit(0);
-    }
-
-    public static void runInstallIfNeeded() throws Exception {
-        log("[CotSL] Loading install state...");
-        InstallState.Options state = InstallState.get();
-        log("[CotSL] Resolving Minecraft directory...");
-        File mcDir = resolveMcDir(state);
-        log("[CotSL] mcDir=" + mcDir);
-        if (mcDir == null) {
-            logErr("[CotSL] Could not find Minecraft directory. Aborting install.");
-            System.exit(1);
-            return;
-        }
-        String reqNeoVer = getReqNeoVer();
-        String reqSelfVer = getReqSelfVer();
-        log("[CotSL] Required: NeoForge=" + reqNeoVer + "  self=" + reqSelfVer);
-        log("[CotSL] Installed: NeoForge=" + state.inNeoVer + "  self=" + state.inSelfVer);
-        boolean needsToInstallNeo = !reqNeoVer.equals(state.inNeoVer)
-                || !new File(mcDir, "versions/neoforge-" + reqNeoVer).isDirectory();
-        boolean selfNeedsUpdate = !reqSelfVer.equals(state.inSelfVer);
-        log("[CotSL] needsNeo=" + needsToInstallNeo + "  needsSelf=" + selfNeedsUpdate);
-        if (needsToInstallNeo) {
-            log("[CotSL] Installing NeoForge" + reqNeoVer);
-            installNeoForge(reqNeoVer, mcDir);
-            state.inNeoVer = reqNeoVer;
-        }
-        if (selfNeedsUpdate || needsToInstallNeo) {
-            log("[CotSL] Deploying mod JAR");
-            deploySelf(Paths.getInstanceDir());
-            state.inSelfVer = reqSelfVer;
-        }
-        state.mcDir = mcDir.getAbsolutePath();
-        state.save();
-    }
-
-    private static void installNeoForge(String version, File mcDir) throws Exception {
-//        String url = String.format("https://maven.neoforged.net/releases/net/neoforged/neoforge/%s/neoforge-%s-installer.jar", version, version);
-//        File installer = File.createTempFile("neoforge-installer-", ".jar");
-//        installer.deleteOnExit();
-//        log("[CotSL] Downloading NeoForge installer from: " + url);
-//        try (InputStream in = new URL(url).openStream(); FileOutputStream out = new FileOutputStream(installer)) {
-//            in.transferTo(out);
-//        }
-//        String java = ProcessHandle.current().info().command().orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
-//        int exit = new ProcessBuilder(java, "-jar", installer.getAbsolutePath(), "--installClient", mcDir.getAbsolutePath())
-//                .inheritIO()
-//                .start()
-//                .waitFor();
-//
-//        if (exit != 0) throw new RuntimeException("NeoForge installer failed with exit code: " + exit);
-        NeoForgeInstaller.install(version, mcDir, LaunchAgent::log);
-    }
-
-    private static void deploySelf(File mcDir) throws Exception {
-        File selfJar = findSelf();
-        if (selfJar == null) throw new IllegalStateException("Cannot find self to deploy into mods folder");
-        File modsDir = new File(mcDir, "mods");
-        modsDir.mkdirs();
-        File[] old = modsDir.listFiles(f -> f.getName().startsWith("cotsl-") && f.getName().endsWith(".jar"));
-        if (old != null) for (File f : old) f.delete();
-        File dest = new File(modsDir, selfJar.getName());
-        Files.copy(selfJar.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        log("[CotSL] Deployed self to:" + dest);
-    }
-
-    private static String getReqNeoVer() throws Exception {
-        try (var is = LaunchAgent.class.getResourceAsStream("/neo_version.txt")) {
-            if (is == null) throw new FileNotFoundException("neo_version.txt not found in JAR");
-            return new String(is.readAllBytes()).trim();
-        }
-    }
-
-    private static String getReqSelfVer() throws Exception {
-        try (var is = LaunchAgent.class.getResourceAsStream("/cotsl_version.txt")) {
-            if (is == null) throw new FileNotFoundException("cotsl_version.txt not found in JAR");
-            return new String(is.readAllBytes()).trim();
-        }
-    }
-
-    private static File resolveMcDir(InstallState.Options state) {
-        if (state.mcDir != null) {
-            File saved = new File(state.mcDir);
-            if (saved.isDirectory()) return saved;
-        }
-        File detected = getMcDir();
-        if (detected.isDirectory() && launcherProfilesExist(detected)) return detected;
-        System.setProperty("cotsl.install.needsMcDir", "true");
-        try {
-            // LauncherWindow.create(LAUNCH_LATCH);
-        } catch (Throwable e) {
-            log("[CotSL] Could not show directory picker (" + e.getMessage() + "), using default");
-        }
-        String chosen = System.getProperty("cotsl.install.chosenMcDir");
-        if (chosen != null) return new File(chosen);
-        detected.mkdirs();
-        return detected;
-    }
-
-    private static boolean launcherProfilesExist(File mcDir) {
-        return new File(mcDir, "launcher_profiles.json").exists() || new File(mcDir, "launcher_profiles_microsoft_store.json").exists();
-    }
-
-    private static File getMcDir() {
-        if (System.getenv("mcdir") != null) return new File(System.getenv("mcdir"));
-        String home = System.getProperty("user.home", ".");
-        String os = System.getProperty("os.name", "").toLowerCase();
-        if (os.contains("win") && System.getenv("APPDATA") != null)
-            return new File(System.getenv("APPDATA"), ".minecraft");
-        if (os.contains("mac")) return new File(home, "Library/Application Support/minecraft");
-        File c = new File(home, ".minecraft");
-        if (!c.exists() && os.contains("linux")) {
-            File flatpak = new File(home, ".var/app/com.mojang.Minecraft/.minecraft");
-            if (flatpak.exists()) return flatpak;
-            if (flatpak.exists()) return flatpak;
-        }
-        return c;
     }
 
 
@@ -513,37 +397,6 @@ public class LaunchAgent {
         }
     }
 
-    /**
-     * gets the agent/mod JAR itself
-     * @return this agent/mod JAR
-     */
-    private static File findSelf() {
-        for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-            if (!arg.startsWith("-javaagent:")) continue;
-            String path = arg.substring("-javaagent:".length());
-            int eq = path.indexOf('=');
-            if (eq >= 0) path = path.substring(0, eq);
-            File f = new File(path);
-            if (!f.isFile()) continue;
-            try (JarFile jf = new JarFile(f)) {
-                boolean hasThis = jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
-                boolean hasPath = jf.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
-                if (path.contains("Temp")) throw new Exception("Sus temp file found, skipping launcher");
-                if (hasThis && hasPath) return f;
-            } catch (Exception exc) {
-                logErr("[CotSL] Failed to find agent JAR, continuing: " + exc.getMessage());
-                StackTraceElement[] trace = exc.getStackTrace();
-                for (StackTraceElement s : trace) logErr("  at " + s);
-            }
-        }
-        try {
-            File protectionDomain = new File(
-                    LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-            );
-            if (protectionDomain.isFile()) return protectionDomain;
-        } catch (Exception ignored) {}
-        return null;
-    }
 
     enum LinuxQtState {
         HAS_QT,
@@ -611,7 +464,7 @@ public class LaunchAgent {
         args.add("-Xms512M");
         args.add("-Xmx" + maxHeapMB + "M");
         args.add("-D" + RELAUNCHED_PROP + "=true");
-        // apparently macos crashes without this
+        // apparently macOS crashes without this
         if (System.getProperty("os.name").toLowerCase().contains("mac")) args.add("-XstartOnFirstThread");
         File argFile = File.createTempFile("cotsl-jvmargs-", ".txt");
         argFile.deleteOnExit();
