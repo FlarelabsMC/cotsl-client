@@ -1,6 +1,6 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.client.entity.avatar;
+package com.flarelabsmc.cotsl.core.transform.mixin.client;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.flarelabsmc.cotsl.client.render.skin.layers.*;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
@@ -53,7 +53,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
             )
     )
     private void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci) {
-        UUID uuid = ((AvatarRenderStateExt) state).getUUID();
+        UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
         ClientPacketListener listener = Minecraft.getInstance().getConnection();
         if (listener == null) return;
         Connection connection = listener.getConnection();
@@ -93,6 +93,6 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
 
     @Inject(method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;", at = @At("RETURN"), cancellable = true)
     private void getTextureLocation(AvatarRenderState state, CallbackInfoReturnable<Identifier> cir) {
-        cir.setReturnValue(Identifier.parse("cotsl:avatars/" + ((AvatarRenderStateExt) state).getUUID()));
+        cir.setReturnValue(Identifier.parse("cotsl:avatars/" + ((AvatarRenderStateDuck) state).getUUID()));
     }
 }

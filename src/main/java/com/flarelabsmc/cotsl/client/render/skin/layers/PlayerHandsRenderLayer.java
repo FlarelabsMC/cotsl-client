@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.storage.player.CharData;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
@@ -38,7 +38,7 @@ public class PlayerHandsRenderLayer<S extends AvatarRenderState, M extends Playe
 
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
-        UUID uuid = ((AvatarRenderStateExt) state).getUUID();
+        UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
         PermanentUser user = NetworkHandler.getCachedUserData(uuid);
         if (user == null) return;
         CharData charData = user.getCharacterData();

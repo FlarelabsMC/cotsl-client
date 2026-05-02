@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.common.entity.player;
+package com.flarelabsmc.cotsl.core.transform.mixin.common;
 
 import com.flarelabsmc.cotsl.core.transform.MixinsCommon;
 import net.minecraft.sounds.SoundEvent;

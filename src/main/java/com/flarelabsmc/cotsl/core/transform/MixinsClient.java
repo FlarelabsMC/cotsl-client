@@ -1,6 +1,7 @@
 package com.flarelabsmc.cotsl.core.transform;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AbstractHorseDuck;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerHairRenderLayer;
 import com.flarelabsmc.cotsl.client.render.texture.CharacterSkinGenerator;
 import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
@@ -20,6 +21,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -54,9 +56,9 @@ public final class MixinsClient {
 
         public void extractRenderState(AvatarlikeEntity entity, AvatarRenderState state, float partialTick, CallbackInfo ci, UUID playerUUID, PlayerHairRenderLayer hairLayer) {
             playerUUID = entity.getUUID();
-            ((AvatarRenderStateExt) state).setUUID(playerUUID);
-            ((AvatarRenderStateExt) state).setHealth(entity.getHealth());
-            ((AvatarRenderStateExt) state).setMaxHealth(entity.getMaxHealth());
+            ((AvatarRenderStateDuck) state).setUUID(playerUUID);
+            ((AvatarRenderStateDuck) state).setHealth(entity.getHealth());
+            ((AvatarRenderStateDuck) state).setMaxHealth(entity.getMaxHealth());
             Identifier skinId = Identifier.parse("cotsl:avatars/" + entity.getUUID());
             Identifier hairId = Identifier.parse("cotsl:hair/" + entity.getUUID());
             if (!Frankenstein.isRegistered(skinId)) Frankenstein.registerPlaceholder(skinId);
@@ -79,6 +81,16 @@ public final class MixinsClient {
                 user.setCharacterData(newData);
                 Frankenstein.updateTexture(skinId, skin);
             }
+
+            AbstractHorse horse = entity.getVehicle() instanceof AbstractHorse ? (AbstractHorse) entity.getVehicle() : null;
+            if (horse != null)
+                ((AvatarRenderStateDuck) state).setMountInfo(
+                        ((AbstractHorseDuck) horse).getVel(),
+                        ((AbstractHorseDuck) horse).getTurnRate(),
+                        ((AbstractHorseDuck) horse).getXV(),
+                        ((AbstractHorseDuck) horse).getYV(),
+                        ((AbstractHorseDuck) horse).getZV()
+                );
         }
     }
 }

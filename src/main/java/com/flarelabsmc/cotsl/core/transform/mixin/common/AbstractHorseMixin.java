@@ -1,6 +1,7 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.common.entity.living;
+package com.flarelabsmc.cotsl.core.transform.mixin.common;
 
 import com.flarelabsmc.cotsl.core.transform.MixinsCommon;
+import com.flarelabsmc.cotsl.core.transform.duck.AbstractHorseDuck;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -22,9 +23,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 // based on the mod Immersive Horse Riding (MIT licensed), but I wanted to implement it my own way
 @Mixin(AbstractHorse.class)
-public abstract class AbstractHorseMixin extends Animal {
+public abstract class AbstractHorseMixin extends Animal implements AbstractHorseDuck {
     @Shadow private float standAnimO;
     @Unique private final MixinsCommon.AbstractHorseMixin self = new MixinsCommon.AbstractHorseMixin();
+    @Unique private float speed, turnRate;
+    @Unique private double xv, yv, zv;
 
     protected AbstractHorseMixin(EntityType<? extends Animal> type, Level level) {
         super(type, level);
@@ -53,5 +56,55 @@ public abstract class AbstractHorseMixin extends Animal {
     @Inject(method = "getPassengerAttachmentPoint", at = @At("RETURN"), cancellable = true)
     private void getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale, CallbackInfoReturnable<Vec3> cir) {
         self.getPassengerAttachmentPoint((AbstractHorse) (Object) this, standAnimO, passenger, dimensions, scale, cir);
+    }
+
+    @Override
+    public float getVel() {
+        return speed;
+    };
+
+    @Override
+    public float getTurnRate() {
+        return turnRate;
+    }
+
+    @Override
+    public double getXV() {
+        return xv;
+    }
+
+    @Override
+    public double getYV() {
+        return yv;
+    }
+
+    @Override
+    public double getZV() {
+        return zv;
+    }
+
+    @Override
+    public void setVel(float speed) {
+        this.speed = speed;
+    }
+
+    @Override
+    public void setTurnRate(float turnRate) {
+        this.turnRate = turnRate;
+    }
+
+    @Override
+    public void setXV(double xv) {
+        this.xv = xv;
+    }
+
+    @Override
+    public void setYV(double yv) {
+        this.yv = yv;
+    }
+
+    @Override
+    public void setZV(double zv) {
+        this.zv = zv;
     }
 }

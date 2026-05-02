@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.common.block;
+package com.flarelabsmc.cotsl.core.transform.mixin.common;
 
 import com.flarelabsmc.cotsl.client.particle.options.FireSparkParticleOptions;
 import net.minecraft.core.BlockPos;

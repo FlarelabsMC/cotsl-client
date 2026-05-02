@@ -1,8 +1,8 @@
-package com.flarelabsmc.cotsl.client.render.skin;
+package com.flarelabsmc.cotsl.core.transform.duck;
 
 import java.util.UUID;
 
-public interface AvatarRenderStateExt {
+public interface AvatarRenderStateDuck {
     UUID getUUID();
     void setUUID(UUID uuid);
     int getMouthPose();
