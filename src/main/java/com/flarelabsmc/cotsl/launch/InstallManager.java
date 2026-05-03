@@ -78,7 +78,7 @@ public class InstallManager {
         VersionJson mergedVersionJson = vanillaVersionJson.mergeWith(neoVersionJson);
 
         log("[CotSL-Installer] Verifying libraries...");
-        installLibraries(mcDir, mergedVersionJson.libraries);
+        downloadLibraries(mcDir, mergedVersionJson.libraries);
 
         log("[CotSL-Installer] Verifying assets...");
         MCAssetIndex assetIndex = getAssetIndex(mcDir, vanillaVersionJson.assetIndex.id);
@@ -107,9 +107,11 @@ public class InstallManager {
         state.save();
     }
 
-    public static void installLibraries(File mcDir, List<VersionJson.Library> libraries) throws IOException, InterruptedException {
+    public static void downloadLibraries(File mcDir, List<VersionJson.Library> libraries) throws IOException, InterruptedException {
         for (VersionJson.Library lib : libraries) {
-            // TODO: Rule check and native extraction
+            if (!MinecraftLauncher.appliesToOs(lib.rules)) continue;
+
+            // TODO: natives extraction?
             if (lib.downloads != null && lib.downloads.artifact != null) {
                 VersionJson.Library.Downloads.Artifact artifact = lib.downloads.artifact;
                 File path = Paths.resolveLibraryPath(mcDir, artifact.path);

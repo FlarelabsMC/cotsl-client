@@ -78,6 +78,11 @@ public class Paths {
         return new File(getLibraryDir(mcDir), libraryPath);
     }
 
+    /// Returns the absolute path of the library file of `identifier`
+    public static File resolveMavenLibrary(File mcDir, String identifier) {
+        return Paths.mavenIdentToFile(Paths.getLibraryDir(mcDir), identifier);
+    }
+
 
     /// Returns the default Minecraft install directory across platforms,
     /// creating it if it does not exist

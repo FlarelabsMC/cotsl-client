@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.jar.JarFile;
@@ -51,9 +50,11 @@ public class NeoForgeInstaller {
             progress.accept("Downloading Minecraft " + profile.minecraft + "...");
             File vanillaJar = downloadVanillaJar(profile.minecraft, mcDir, vanillaVersionJson, progress);
             progress.accept("Downloading NeoForge installer libraries...");
-            downloadLibraries(profile.libraries, mcDir, progress);
+            InstallManager.downloadLibraries(mcDir, profile.libraries);
+            progress.accept("Resolving required installer data...");
             Map<String, File> dataMap = resolveData(jar, profile, mcDir, progress);
             dataMap.put("MINECRAFT_JAR", vanillaJar);
+            progress.accept("Running installer processors...");
             runProcessors(profile, dataMap, mcDir, progress);
         }
         progress.accept("NeoForge installation complete.");
@@ -115,39 +116,13 @@ public class NeoForgeInstaller {
         return dest;
     }
 
-
-    static void downloadLibraries(List<VersionJson.Library> libs, File mcDir, Consumer<String> progress) throws Exception {
-        if (libs == null) return;
-        for (VersionJson.Library lib : libs) {
-            if (lib.downloads != null && lib.downloads.artifact != null) {
-                String path = lib.downloads.artifact.path;
-                String url = lib.downloads.artifact.url;
-                String sha1 = lib.downloads.artifact.sha1;
-                if (path == null || url == null) continue;
-                File dest = new File(mcDir, "libraries/" + path);
-                if (dest.exists() && sha1Matches(dest, sha1)) continue;
-                dest.getParentFile().mkdirs();
-                progress.accept("  lib: " + dest.getName());
-                downloadFile(url, dest, sha1);
-            } else if (lib.name != null) {
-                File dest = mavenFile(mcDir, lib.name, null);
-                if (dest.exists()) continue;
-                dest.getParentFile().mkdirs();
-                String url = mavenUrl(NEO_MAVEN, lib.name, null);
-                try { downloadFile(url, dest, null); }
-                catch (IOException e) {
-                    url = mavenUrl(CENTRAL, lib.name, null);
-                    downloadFile(url, dest, null);
-                }
-            }
-        }
-    }
-
     private static Map<String, File> resolveData(JarFile jar, InstallProfile profile, File mcDir, Consumer<String> progress) throws Exception {
         Map<String, File> dataMap = new HashMap<>();
         if (profile.data == null) return dataMap;
+
         File tempData = Files.createTempDirectory("neoforge-data-").toFile();
         tempData.deleteOnExit();
+
         for (Map.Entry<String, InstallProfile.DataValue> entry : profile.data.entrySet()) {
             String key = entry.getKey();
             String val = entry.getValue().client;
@@ -162,26 +137,26 @@ public class NeoForgeInstaller {
                 }
                 dataMap.put(key, out);
             } else if (val.startsWith("[") && val.endsWith("]")) {
-            String coords = val.substring(1, val.length() - 1);
-            File lib = mavenFile(mcDir, coords, null);
-            if (!lib.exists()) {
-                lib.getParentFile().mkdirs();
-                progress.accept("  data: " + lib.getName());
-                try {
-                    downloadFile(mavenUrl(NEO_MAVEN, coords, null), lib, null);
-                } catch (IOException e1) {
+                String coords = val.substring(1, val.length() - 1);
+                File libFile = Paths.resolveMavenLibrary(mcDir, coords);
+
+                if (!libFile.exists()) {
+                    libFile.getParentFile().mkdirs();
+                    progress.accept("Attempting download of " + coords);
                     try {
-                        downloadFile(mavenUrl(CENTRAL, coords, null), lib, null);
-                    } catch (IOException e2) {
-                        // not available on any repo
-                        // the processor will generate this file
+                        Networking.downloadFile(URI.create(NEO_MAVEN + Paths.mavenIdentToPath(coords)), libFile.toPath());
+                    } catch (IOException e1) {
+                        try {
+                            Networking.downloadFile(URI.create(CENTRAL + Paths.mavenIdentToPath(coords)), libFile.toPath());
+                        } catch (IOException e2) {
+                            // not available on any repo
+                            // the processor will generate this file
+                        }
                     }
                 }
+                dataMap.put(key, libFile);
             }
-            dataMap.put(key, lib);
         }
-
-    }
         return dataMap;
     }
 
@@ -191,21 +166,20 @@ public class NeoForgeInstaller {
     ) throws Exception {
         if (profile.processors == null) return;
 
-        System.out.println(profile.processors.size());
-
         for (InstallProfile.Processor proc : profile.processors) {
             if (proc.sides != null && !proc.sides.contains("client")) continue;
             if (outputsUpToDate(proc.outputs, dataMap, mcDir)) continue;
 
             progress.accept("Running processor: " + proc.jar);
             List<URL> cpUrls = new ArrayList<>();
-            cpUrls.add(mavenFile(mcDir, proc.jar, null).toURI().toURL());
+            cpUrls.add(Paths.resolveMavenLibrary(mcDir, proc.jar).toURI().toURL());
             if (proc.classpath != null) {
                 for (String dep : proc.classpath)
-                    cpUrls.add(mavenFile(mcDir, dep, null).toURI().toURL());
+                    cpUrls.add(Paths.resolveMavenLibrary(mcDir, dep).toURI().toURL());
             }
             String[] args = resolveArgs(proc.args, dataMap, mcDir);
-            File procJar = mavenFile(mcDir, proc.jar, null);
+            File procJar = Paths.resolveMavenLibrary(mcDir, proc.jar);
+
             String mainClass;
             try (JarFile jf = new JarFile(procJar)) {
                 mainClass = jf.getManifest().getMainAttributes().getValue("Main-Class");
@@ -245,7 +219,7 @@ public class NeoForgeInstaller {
                 return f != null ? f.getAbsolutePath() : arg;
             }
             if (arg.startsWith("[") && arg.endsWith("]")) {
-                return mavenFile(mcDir, arg.substring(1, arg.length() - 1), null).getAbsolutePath();
+                return Paths.resolveMavenLibrary(mcDir, arg.substring(1, arg.length() - 1)).getAbsolutePath();
             }
             return arg;
         }).toArray(String[]::new);
@@ -263,64 +237,8 @@ public class NeoForgeInstaller {
                     ? dataMap.get(pathRaw.substring(1, pathRaw.length() - 1))
                     : new File(pathRaw);
             if (f == null || !f.exists()) return false;
-            if (expectedSha1 != null && !expectedSha1.equals("'") && !sha1Matches(f, expectedSha1)) return false;
+            if (expectedSha1 != null && !expectedSha1.equals("'") && !Paths.sha1Matches(f, expectedSha1)) return false;
         }
         return true;
-    }
-
-    static File mavenFile(File mcDir, String coords, String baseDir) {
-        String[] p = coords.split(":");
-        String group = p[0].replace('.', '/');
-        String artifact = p[1];
-        String version = p[2];
-        String classifier = p.length > 3 ? p[3] : null;
-        String ext = "jar";
-        if (classifier != null && classifier.contains("@")) {
-            ext = classifier.substring(classifier.indexOf('@') + 1);
-            classifier = classifier.substring(0, classifier.indexOf('@'));
-        }
-        String fileName = artifact + "-" + version + (classifier != null ? "-" + classifier : "") + "." + ext;
-        File base = baseDir != null ? new File(baseDir) : new File(mcDir, "libraries");
-        return new File(base, group + "/" + artifact + "/" + version + "/" + fileName);
-    }
-
-    static String mavenUrl(String repoBase, String coords, String ignored) {
-        String[] p = coords.split(":");
-        String group = p[0].replace('.', '/');
-        String artifact = p[1];
-        String version = p[2];
-        String classifier = p.length > 3 ? p[3] : null;
-        String ext = "jar";
-        if (classifier != null && classifier.contains("@")) {
-            ext = classifier.substring(classifier.indexOf('@') + 1);
-            classifier = classifier.substring(0, classifier.indexOf('@'));
-        }
-        String fileName = artifact + "-" + version + (classifier != null ? "-" + classifier : "") + "." + ext;
-        return repoBase + group + "/" + artifact + "/" + version + "/" + fileName;
-    }
-
-    static void downloadFile(String url, File dest, String expectedSha1) throws IOException {
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestProperty("User-Agent", "CotSL-Launcher/1.0");
-        conn.connect();
-        if (conn.getResponseCode() != 200)
-            throw new IOException("HTTP " + conn.getResponseCode() + " for " + url);
-        try (InputStream in = conn.getInputStream()) {
-            Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-        if (expectedSha1 != null && !sha1Matches(dest, expectedSha1))
-            throw new IOException("SHA-1 mismatch for " + dest.getName() + " (expected " + expectedSha1 + ")");
-    }
-
-    static boolean sha1Matches(File file, String expected) {
-        if (expected == null) return true;
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] bytes = Files.readAllBytes(file.toPath());
-            byte[] digest = md.digest(bytes);
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString().equalsIgnoreCase(expected);
-        } catch (Exception e) { return false; }
     }
 }
