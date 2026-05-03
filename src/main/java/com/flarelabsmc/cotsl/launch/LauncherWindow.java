@@ -94,8 +94,6 @@ public class LauncherWindow {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                try { Thread.sleep(5000); }
-                catch (InterruptedException e) {}
                 startLaunch.emit();
             });
         }

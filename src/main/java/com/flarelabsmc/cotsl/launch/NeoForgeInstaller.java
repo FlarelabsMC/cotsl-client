@@ -1,6 +1,5 @@
 package com.flarelabsmc.cotsl.launch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.net.*;
@@ -11,33 +10,47 @@ import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
+import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+
 public class NeoForgeInstaller {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String NEO_MAVEN = "https://maven.neoforged.net/releases/";
     private static final String MC_MAVEN = "https://libraries.minecraft.net/";
     private static final String CENTRAL = "https://repo1.maven.org/maven2/";
 
-    public static void install(String version, File mcDir, Consumer<String> progress) throws Exception {
-        String installerUrl = String.format(
-                "https://maven.neoforged.net/releases/net/neoforged/neoforge/%s/neoforge-%s-installer.jar",
-                version, version);
 
-        progress.accept("Downloading NeoForge installer...");
-        File installerJar = File.createTempFile("neoforge-installer-", ".jar");
-        installerJar.deleteOnExit();
-        downloadFile(installerUrl, installerJar, null);
+    public static void verifyInstallation(File neoInstaller, String neoVersion, File mcDir, VersionJson vanillaVersionJson) throws Exception {
+        File neoClientJar = Paths.getLibraryDir(mcDir).toPath()
+                .resolve("net", "neoforged", "neoforge", neoVersion)
+                .resolve("neoforge-" + neoVersion + "-universal.jar").toFile();
 
-        try (JarFile jar = new JarFile(installerJar)) {
+        if (neoClientJar.exists() && neoClientJar.length() > 0) {
+            return;
+        }
+
+        install(neoInstaller, neoVersion, mcDir, vanillaVersionJson, progress -> {
+            log("[CotSL-NeoForge] " + progress);
+        });
+    }
+
+    public static void install(File neoInstaller, String neoVersion, File mcDir, VersionJson vanillaVersionJson, Consumer<String> progress) throws Exception {
+        if (neoInstaller == null) {
+            neoInstaller = downloadInstaller(neoVersion);
+        }
+
+
+        try (JarFile jar = new JarFile(neoInstaller)) {
             progress.accept("Reading install profile...");
             InstallProfile profile = MAPPER.readValue(
                     jar.getInputStream(jar.getEntry("install_profile.json")),
                     InstallProfile.class
             );
+
             progress.accept("Installing version profile...");
-            placeVersionJson(jar, profile.json, version, mcDir);
+            placeNeoVersionJson(jar, profile.json, neoVersion, mcDir);
             progress.accept("Downloading Minecraft " + profile.minecraft + "...");
-            File vanillaJar = downloadVanillaJar(profile.minecraft, mcDir, progress);
-            progress.accept("Downloading NeoForge libraries...");
+            File vanillaJar = downloadVanillaJar(profile.minecraft, mcDir, vanillaVersionJson, progress);
+            progress.accept("Downloading NeoForge installer libraries...");
             downloadLibraries(profile.libraries, mcDir, progress);
             Map<String, File> dataMap = resolveData(jar, profile, mcDir, progress);
             dataMap.put("MINECRAFT_JAR", vanillaJar);
@@ -46,38 +59,59 @@ public class NeoForgeInstaller {
         progress.accept("NeoForge installation complete.");
     }
 
-    private static void placeVersionJson(JarFile jar, String jsonPath, String neoVer, File mcDir) throws Exception {
+    /// Downloads the NeoForge installer jar for the corresponding `neoVersion` (for example `26.1.2.19-beta`) and
+    /// returns the temp file it was saved to
+    public static File downloadInstaller(String neoVersion) throws IOException, InterruptedException {
+        String installerUrl = String.format(
+                "https://maven.neoforged.net/releases/net/neoforged/neoforge/%s/neoforge-%s-installer.jar",
+                neoVersion, neoVersion);
+
+        File installerJar = File.createTempFile("neoforge-installer-", ".jar");
+        installerJar.deleteOnExit();
+
+        log("[CotSL-NeoForge] Downloading NeoForge " + neoVersion + " installer...");
+        Networking.downloadFile(URI.create(installerUrl), installerJar.toPath());
+
+        return installerJar;
+    }
+
+    public static VersionJson getNeoVersionJson(String neoVersion, File mcDir) {
+        File expectedPath = Paths.getNeoVersionJsonPath(mcDir, neoVersion);
+
+        if (!expectedPath.exists()) return null;
+
+        try {
+            return MAPPER.readValue(expectedPath, VersionJson.class);
+        } catch (Exception e) {
+            log("[CotSL-NeoForge] Failed to read NeoForge version.json: " + e);
+            return null;
+        }
+    }
+
+    public static void placeNeoVersionJson(JarFile jar, String jsonPath, String neoVer, File mcDir) throws IOException {
         String entryName = jsonPath.startsWith("/") ? jsonPath.substring(1) : jsonPath;
         ZipEntry entry = jar.getEntry(entryName);
+
         if (entry == null) throw new FileNotFoundException("version.json not found in installer at: " + entryName);
-        File versionDir = new File(mcDir, "versions/neoforge-" + neoVer);
-        versionDir.mkdirs();
-        File dest = new File(versionDir, "neoforge-" + neoVer + ".json");
+        File dest = Paths.getNeoVersionJsonPath(mcDir, neoVer);
+        dest.getParentFile().mkdirs();
         try (InputStream in = jar.getInputStream(entry)) {
             Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
-    private static File downloadVanillaJar(String mcVersion, File mcDir, Consumer<String> progress) throws Exception {
-        File dest = new File(mcDir, "versions/" + mcVersion + "/" + mcVersion + ".jar");
-        File jsonDest = new File(mcDir, "versions/" + mcVersion + "/" + mcVersion + ".json");
-        if (dest.exists() && jsonDest.exists()) return dest;
+    private static File downloadVanillaJar(String mcVersion, File mcDir, VersionJson vanillaVersionJson, Consumer<String> progress) throws Exception {
+        File dest = new File(Paths.getVersionDir(mcDir), mcVersion + "/" + mcVersion + ".jar");
+        if (dest.exists()) return dest;
 
-        MCVersionManifest manifest = MCVersionManifest.getManifest();
-        MCVersionManifest.Entry version = manifest.getVersion(mcVersion);
-
-        if (version == null || version.url == null) throw new IllegalArgumentException("Minecraft version not found in manifest: " + mcVersion);
-        JsonNode versionMeta = MAPPER.readTree(new URL(version.url));
-        String jarUrl = versionMeta.at("/downloads/client/url").asText();
-        String jarSha1 = versionMeta.at("/downloads/client/sha1").asText();
+        String jarUrl = vanillaVersionJson.downloads.client.url;
+        String jarSha1 = vanillaVersionJson.downloads.client.sha1;
         dest.getParentFile().mkdirs();
-        if (!jsonDest.exists()) {
-            MAPPER.writeValue(jsonDest, versionMeta);
-        }
-        progress.accept("Downloading minecraft-" + mcVersion + ".jar...");
-        downloadFile(jarUrl, dest, jarSha1);
-        VersionJson vanillaVersion = MAPPER.readValue(jsonDest, VersionJson.class);
-        downloadLibraries(vanillaVersion.libraries, mcDir, progress);
+
+        progress.accept("Downloading client jar from " + jarUrl);
+        Networking.downloadFile(URI.create(jarUrl), dest.toPath());
+        Paths.sha1Matches(dest, jarSha1);
+
         return dest;
     }
 
@@ -156,9 +190,13 @@ public class NeoForgeInstaller {
             File mcDir, Consumer<String> progress
     ) throws Exception {
         if (profile.processors == null) return;
+
+        System.out.println(profile.processors.size());
+
         for (InstallProfile.Processor proc : profile.processors) {
             if (proc.sides != null && !proc.sides.contains("client")) continue;
             if (outputsUpToDate(proc.outputs, dataMap, mcDir)) continue;
+
             progress.accept("Running processor: " + proc.jar);
             List<URL> cpUrls = new ArrayList<>();
             cpUrls.add(mavenFile(mcDir, proc.jar, null).toURI().toURL());
@@ -174,20 +212,21 @@ public class NeoForgeInstaller {
             }
             if (mainClass == null)
                 throw new IllegalStateException("Processor JAR has no Main-Class: " + proc.jar);
+
             ClassLoader parent = ClassLoader.getPlatformClassLoader();
-            try (var cl = new URLClassLoader(cpUrls.toArray(new URL[0]), parent)) {
+            try (var processorClassLoader = new URLClassLoader(cpUrls.toArray(new URL[0]), parent)) {
                 Thread t = new Thread(() -> {
                     try {
                         ClassLoader old = Thread.currentThread().getContextClassLoader();
-                        Thread.currentThread().setContextClassLoader(cl);
-                        Class<?> clazz = Class.forName(mainClass, true, cl);
+                        Thread.currentThread().setContextClassLoader(processorClassLoader);
+                        Class<?> clazz = Class.forName(mainClass, true, processorClassLoader);
                         clazz.getMethod("main", String[].class).invoke(null, (Object) args);
                         Thread.currentThread().setContextClassLoader(old);
                     } catch (Exception e) {
                         throw new RuntimeException("Processor " + proc.jar + " failed", e);
                     }
                 });
-                t.setContextClassLoader(cl);
+                t.setContextClassLoader(processorClassLoader);
                 t.start();
                 t.join();
                 if (t.getState() == Thread.State.TERMINATED) {

@@ -72,7 +72,7 @@ public class LaunchAgent {
             logErr("[CotSL] Qt6 runtime not found. Crashing.");
             System.exit(1);
         }
-        File self = InstallManager.findSelf();
+        File self = findSelf();
         if (self == null) {
             logErr("[CotSL] Cannot locate self JAR. Aborting.");
             System.exit(1);
@@ -126,7 +126,7 @@ public class LaunchAgent {
         initLog();
         if (System.getProperty(RELAUNCHED_PROP) != null) return;
         if (System.getProperty("cotsl.minecraft.launch") != null) {
-            File selfJar = InstallManager.findSelf();
+            File selfJar = findSelf();
             loadExtraJars(inst, selfJar);
             extractQtNatives(selfJar);
             return;
@@ -137,7 +137,7 @@ public class LaunchAgent {
             System.exit(1);
             return;
         }
-        File selfJar = InstallManager.findSelf();
+        File selfJar = findSelf();
         loadExtraJars(inst, selfJar);
         extractQtNatives(selfJar);
         try {
@@ -182,6 +182,38 @@ public class LaunchAgent {
     }
 
 
+    /**
+     * gets the agent/mod JAR itself
+     * @return this agent/mod JAR
+     */
+    public static File findSelf() {
+        for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+            if (!arg.startsWith("-javaagent:")) continue;
+            String path = arg.substring("-javaagent:".length());
+            int eq = path.indexOf('=');
+            if (eq >= 0) path = path.substring(0, eq);
+            File f = new File(path);
+            if (!f.isFile()) continue;
+            try (JarFile jf = new JarFile(f)) {
+                boolean hasThis = jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
+                boolean hasPath = jf.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
+                if (path.contains("Temp")) throw new Exception("Sus temp file found, skipping launcher");
+                if (hasThis && hasPath) return f;
+            } catch (Exception exc) {
+                logErr("[CotSL] Failed to find agent JAR, continuing: " + exc.getMessage());
+                StackTraceElement[] trace = exc.getStackTrace();
+                for (StackTraceElement s : trace) logErr("  at " + s);
+            }
+        }
+        try {
+            File protectionDomain = new File(
+                    LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            );
+            if (protectionDomain.isFile()) return protectionDomain;
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     private static void launchMinecraft() throws Exception {
         InstallState.Options state = InstallState.get();
         if (state.mcDir == null) {
@@ -189,7 +221,7 @@ public class LaunchAgent {
             System.exit(1);
         }
         log("[CotSL] Launching Minecraft directly...");
-        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, InstallManager.getReqNeoVer(), InstallManager.findSelf());
+        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, InstallManager.getReqNeoVer(), findSelf());
         System.exit(0);
     }
 
