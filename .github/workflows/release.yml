@@ -25,7 +25,7 @@ jobs:
             --base https://download.qt.io `
             windows desktop 6.11.0 win64_msvc2022_64 `
             --outputdir C:\Qt `
-            --modules qtdeclarative qtshadertools
+            --modules qtshadertools
         shell: pwsh
 
       - name: Set QTDIR
