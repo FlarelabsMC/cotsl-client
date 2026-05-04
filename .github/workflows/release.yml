@@ -20,9 +20,9 @@ jobs:
 
       - name: Install Qt 6.11.0
         run: |
-          pip install aqtinstall
+          pip install git+https://github.com/miurahr/aqtinstall.git
           aqt install-qt `
-            --base https://ftp.jaist.ac.jp/pub/qtproject/ `
+            --base https://download.qt.io `
             windows desktop 6.11.0 win64_msvc2022_64 `
             --outputdir C:\Qt `
             --modules qtdeclarative qtshadertools
@@ -61,12 +61,12 @@ jobs:
 
       - name: Install Qt 6.11.0
         run: |
-          pip3 install --break-system-packages aqtinstall
+          pip3 install --break-system-packages git+https://github.com/miurahr/aqtinstall.git
           aqt install-qt \
-            --base https://ftp.jaist.ac.jp/pub/qtproject/ \
+            --base https://download.qt.io \
             mac desktop 6.11.0 \
             --outputdir $HOME/Qt \
-            --modules qtdeclarative qtshadertools
+            --modules qtshadertools
 
       - name: Set QTDIR
         run: echo "QTDIR=$HOME/Qt/6.11.0/macos" >> $GITHUB_ENV
@@ -99,7 +99,7 @@ jobs:
           go-version-file: bootstrap/go.mod
 
       - name: Build Linux JAR + bootstrap
-        run: ./gradlew buildBootstrapLinux
+        run: ./gradlew buildBootstrapLinux --info
 
       - uses: actions/upload-artifact@v4
         with:
