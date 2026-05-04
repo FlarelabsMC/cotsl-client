@@ -107,18 +107,6 @@ jobs:
         with:
           go-version-file: bootstrap/go.mod
 
-      - name: Install Qt 6.11.0
-        run: |
-          pip3 install --break-system-packages git+https://github.com/miurahr/aqtinstall.git
-          aqt install-qt \
-            --base https://download.qt.io \
-            linux desktop 6.11.0 linux_gcc_64 \
-            --outputdir $HOME/Qt \
-            --modules qtshadertools
-
-      - name: Set QTDIR
-        run: echo "QTDIR=$HOME/Qt/6.11.0/gcc_64" >> $GITHUB_ENV
-
       - name: Build Linux JAR + bootstrap
         run: ./gradlew buildBootstrapLinux
 
