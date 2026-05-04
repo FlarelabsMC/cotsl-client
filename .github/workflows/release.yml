@@ -18,15 +18,25 @@ jobs:
         with:
           go-version-file: bootstrap/go.mod
 
+      - name: Debug available Qt versions
+        run: |
+          pip install aqtinstall
+          aqt list-qt windows desktop
+        shell: pwsh
+
       - name: Install Qt 6.11.0
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.11.0'
-          host: windows
-          target: desktop
-          arch: win64_msvc2022_64
-          modules: 'qtdeclarative qtshadertools'
-          cache: true
+        run: |
+          pip install aqtinstall
+          aqt install-qt `
+            --base https://download.qt.io `
+            windows desktop 6.11.0 win64_msvc2022_64 `
+            --outputdir C:\Qt `
+            --modules qtdeclarative qtshadertools
+        shell: pwsh
+
+      - name: Set QTDIR
+        run: echo "QTDIR=C:\Qt\6.11.0\msvc2022_64" >> $env:GITHUB_ENV
+        shell: pwsh
 
       - name: Build Windows JAR + bootstrap
         run: ./gradlew buildBootstrapWindows
@@ -55,13 +65,17 @@ jobs:
           go-version-file: bootstrap/go.mod
 
       - name: Install Qt 6.11.0
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.11.0'
-          host: mac
-          target: desktop
-          modules: 'qtdeclarative qtshadertools'
-          cache: true
+        run: |
+          pip3 install aqtinstall
+          aqt install-qt \
+            --base https://download.qt.io \
+            mac desktop 6.11.0 \
+            --outputdir $HOME/Qt \
+            --modules qtdeclarative qtshadertools
+
+      - name: Set QTDIR
+        run: echo "QTDIR=$HOME/Qt/6.11.0/macos" >> $GITHUB_ENV
+
 
       - name: Build macOS JAR + bootstrap
         run: ./gradlew buildBootstrapMacOS
@@ -79,6 +93,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - uses: actions/setup-java@v4
         with:
