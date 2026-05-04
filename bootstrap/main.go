@@ -5,7 +5,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
-	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,34 +15,47 @@ import (
 	"strings"
 )
 
-//go:embed payload/cotsl.jar
-var embeddedJar []byte
+var (
+	appVersion = "1.0.0-alpha"
+	repoOwner = "sentwayfarer"
+	repoName = "cotsl-client"
+)
 
 const javaVersion = "25"
 const adoptiumURL = "https://api.adoptium.net/v3/binary/latest/%s/ga/%s/%s/jre/hotspot/normal/eclipse"
 
+func jarDownloadURL() string {
+	// e.g. https://github.com/FlarelabsMC/cotsl-client/releases/download/v1.0.0/cotsl-1.0.0-windows-x64.jar
+	osTag := map[string]string{
+		"windows": "windows-x64",
+		"linux":   "linux-x64",
+		"darwin":  "macos",
+	}[runtime.GOOS]
+	return fmt.Sprintf("https://github.com/%s/%s/releases/download/v%s/cotsl-%s-%s.jar",
+		repoOwner, repoName, appVersion, appVersion, osTag)
+}
+
 func main() {
 	installDir := resolveInstallDir()
+	os.MkdirAll(installDir, 0755)
 	logFile, _ := os.OpenFile(filepath.Join(installDir, "bootstrap.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 
 	jarPath := filepath.Join(installDir, "cotsl.jar")
+	versionPath := filepath.Join(installDir, "version.txt")
 	runtimeDir := filepath.Join(installDir, "runtime", "jdk-"+javaVersion)
 	javaExe := filepath.Join(runtimeDir, "bin", "java")
 	if runtime.GOOS == "windows" {
 		javaExe += "w.exe"
 	}
 
-	if needsJarUpdate(jarPath) {
-		if err := os.MkdirAll(installDir, 0755); err != nil {
-			fatalf(logFile, "Failed to create install dir: %v", err)
-		}
-		if err := os.WriteFile(jarPath, embeddedJar, 0644); err != nil {
-			fatalf(logFile, "Failed to write cotsl.jar: %v", err)
+	if needsJarUpdate(jarPath, versionPath) {
+		if err := downloadJar(jarPath, versionPath, logFile); err != nil {
+			fatalf(logFile, "Failed to download launcher: %v", err)
 		}
 	}
 
 	if _, err := os.Stat(javaExe); os.IsNotExist(err) {
-		if err := downloadJre(runtimeDir); err != nil {
+		if err := downloadJre(runtimeDir, logFile); err != nil {
 			fatalf(logFile, "JRE download failed: %v", err)
 		}
 	}
@@ -65,15 +77,50 @@ func main() {
 	}
 }
 
-func needsJarUpdate(jarPath string) bool {
-	info, err := os.Stat(jarPath)
-	if os.IsNotExist(err) {
+func needsJarUpdate(jarPath, versionPath string) bool {
+	if _, err := os.Stat(jarPath); os.IsNotExist(err) {
 		return true
 	}
-	return info.Size() != int64(len(embeddedJar))
+	data, err := os.ReadFile(versionPath)
+	if err != nil {
+		return true
+	}
+	return strings.TrimSpace(string(data)) != appVersion
 }
 
-func downloadJre(destDir string) error {
+func downloadJar(jarPath, versionPath string, logFile *os.File) error {
+	url := jarDownloadURL()
+	logWrite(logFile, "[CotSL] Downloading launcher v"+appVersion+" from: "+url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("GitHub returned HTTP %d for JAR download", resp.StatusCode)
+	}
+
+	tmp, err := os.CreateTemp(filepath.Dir(jarPath), "cotsl-jar-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+
+	if _, err := io.Copy(tmp, resp.Body); err != nil {
+		tmp.Close()
+		return err
+	}
+	tmp.Close()
+
+	if err := os.Rename(tmpName, jarPath); err != nil {
+		return err
+	}
+	return os.WriteFile(versionPath, []byte(appVersion), 0644)
+}
+
+func downloadJre(destDir string, logFile *os.File) error {
 	osName := map[string]string{
 		"windows": "windows",
 		"linux":   "linux",
@@ -85,7 +132,7 @@ func downloadJre(destDir string) error {
 	}
 
 	url := fmt.Sprintf(adoptiumURL, javaVersion, osName, arch)
-	fmt.Println("[CotSL] Downloading JRE from:", url)
+	logWrite(logFile, "[CotSL] Downloading JRE from: "+url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -106,15 +153,19 @@ func downloadJre(destDir string) error {
 	}
 	tmp.Close()
 
-	fmt.Println("[CotSL] Download complete, extracting...")
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return err
 	}
-
 	if runtime.GOOS == "windows" {
 		return extractZip(tmp.Name(), destDir)
 	}
 	return extractTarGz(tmp.Name(), destDir)
+}
+
+func logWrite(f *os.File, msg string) {
+	if f != nil {
+		f.WriteString(msg + "\n")
+	}
 }
 
 func extractZip(src, dest string) error {

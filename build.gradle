@@ -593,8 +593,13 @@ tasks.register('buildBootstrapWindows', Exec) {
     environment 'GOOS', 'windows'
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
-    commandLine goBin, 'build', '-ldflags=-s -w -H windowsgui', '-o',
-            "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
+    commandLine goBin, 'build',
+            '-ldflags=-s -w -H windowsgui' +
+            ' -X main.appVersion=' + project.version +
+            ' -X main.repoOwner=FlarelabsMC' +
+            ' -X main.repoName=cotsl-client',
+            '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
+
 
 
     def jarFile = tasks.named('jar_windows_x64', Jar).flatMap { it.archiveFile }
@@ -616,8 +621,11 @@ tasks.register('buildBootstrapLinux', Exec) {
     environment 'GOOS', 'linux'
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
-    commandLine goBin, 'build', '-ldflags=-s -w', '-o',
-            "${buildDir}/bootstrap/build/cotsl-linux", '.'
+    commandLine goBin, 'build', '-ldflags=-s -w' +
+            ' -X main.appVersion=' + project.version +
+            ' -X main.repoOwner=FlarelabsMC' +
+            ' -X main.repoName=cotsl-client',
+            '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
 
     def jarFile = tasks.named('jar_linux_x64', Jar).flatMap { it.archiveFile }
     def payloadDir = file("${bootstrapDir}/payload")
@@ -638,8 +646,11 @@ tasks.register('buildBootstrapMacOS', Exec) {
     environment 'GOOS', 'darwin'
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
-    commandLine goBin, 'build', '-ldflags=-s -w', '-o',
-            "${buildDir}/bootstrap/build/cotsl-macos", '.'
+    commandLine goBin, 'build', '-ldflags=-s -w' +
+            ' -X main.appVersion=' + project.version +
+            ' -X main.repoOwner=FlarelabsMC' +
+            ' -X main.repoName=cotsl-client',
+            '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'
 
     def jarFile = tasks.named('jar_macos', Jar).flatMap { it.archiveFile }
     def payloadDir = file("${bootstrapDir}/payload")
