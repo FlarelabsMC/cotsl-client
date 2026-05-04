@@ -134,6 +134,8 @@ Window {
     property string authErrorMsg: ""
     property string username: ""
 
+    property string launchState: "ready"
+
     Component.onCompleted: bridge.startLogin()
 
     Connections {
@@ -146,6 +148,7 @@ Window {
         function onAuthDone() { root.authState = "launch" }
         function onAuthError(msg)  { root.authErrorMsg = msg; root.authState = "auth-error" }
         function onStartLaunch() {
+            launchState = "launching"
             root.fadeActive = true
             sceneCapture.live = false
             fadeAnim.start()
@@ -294,9 +297,13 @@ Window {
         GlowButton {
             anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 28 }
             width: 220; height: 72
-            label: "Launch"
+            label: launchState === "ready" ? "Launch" :
+                launchState === "installing" ? "Installing..." :
+                launchState === "launching" ? "Launching..." : "Loading..."
             visible: authState === "launch"
+            active: launchState === "ready"
             onClicked: {
+                launchState = "installing"
                 bridge.beginLaunch();
             }
         }

@@ -4,10 +4,10 @@ package com.flarelabsmc.cotsl.launch;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,18 +23,22 @@ public class MCVersionManifest {
         public String type;
         public String url;
         public String sha1;
+
+
+        public VersionJson requestVersionJson() throws IOException, InterruptedException {
+            HttpResponse<InputStream> response = Networking.requestStream(URI.create(this.url));
+
+            return MAPPER.readValue(response.body(), VersionJson.class);
+        }
     }
 
-    public static MCVersionManifest getManifest() throws IOException {
-        HttpsURLConnection connection = (HttpsURLConnection) MANIFEST_URL.toURL().openConnection();
-        connection.setRequestProperty("User-Agent", "CotSL-Launcher/1.0");
-        connection.connect();
+    public static MCVersionManifest getManifest() throws IOException, InterruptedException {
+        HttpResponse<InputStream> response = Networking.requestStream(MANIFEST_URL);
 
-        if (connection.getResponseCode() != 200)
-            throw new IOException("HTTP " + connection.getResponseCode() + " for " + MANIFEST_URL);
-        try (InputStream in = connection.getInputStream()) {
-            return MAPPER.readValue(in, MCVersionManifest.class);
-        }
+        if (response.statusCode() != 200)
+            throw new IOException("HTTP " + response.statusCode() + " for " + MANIFEST_URL);
+
+        return MAPPER.readValue(response.body(), MCVersionManifest.class);
     }
 
     public Entry getVersion(String id) {

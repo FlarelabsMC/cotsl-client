@@ -10,14 +10,8 @@ public class MinecraftLauncher {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static Process launch(File mcDir, File gameDir, InstallState.Options state, String neoVer, File agentJar) throws Exception {
-        VersionJson neo = MAPPER.readValue(
-                new File(mcDir, "versions/neoforge-" + neoVer + "/neoforge-" + neoVer + ".json"),
-                VersionJson.class
-        );
-        VersionJson vanilla = MAPPER.readValue(
-                new File(mcDir, "versions/" + neo.inheritsFrom + "/" + neo.inheritsFrom + ".json"),
-                VersionJson.class
-        );
+        VersionJson neo = NeoForgeInstaller.getNeoVersionJson(neoVer, mcDir);
+        VersionJson vanilla = InstallManager.getVanillaVersionJson(mcDir, neo.inheritsFrom);
 
         AuthManager.AuthParameters authParams = AuthManager.getAuthParams();
 
@@ -30,9 +24,9 @@ public class MinecraftLauncher {
             if (jar != null && jar.exists()) classpath.add(jar.getAbsolutePath());
         }
 
-        File vanillaJar = new File(mcDir, "versions/" + neo.inheritsFrom + "/" + neo.inheritsFrom + ".jar");
+        File vanillaJar = new File(Paths.getVersionDir(mcDir), neo.inheritsFrom + "/" + neo.inheritsFrom + ".jar");
         if (vanillaJar.exists()) classpath.add(vanillaJar.getAbsolutePath());
-        File nativesDir = new File(mcDir, "versions/" + neo.inheritsFrom + "/natives");
+        File nativesDir = new File(Paths.getVersionDir(mcDir), neo.inheritsFrom + "/natives");
         nativesDir.mkdirs();
         String assetIndex = vanilla.assetIndex != null ? vanilla.assetIndex.id
                 : (vanilla.assets != null ? vanilla.assets : neo.inheritsFrom);
@@ -77,17 +71,13 @@ public class MinecraftLauncher {
 
     private static File resolveLibraryPath(File mcDir, VersionJson.Library lib) {
         if (lib.downloads != null && lib.downloads.artifact != null && lib.downloads.artifact.path != null)
-            return new File(mcDir, "libraries/" + lib.downloads.artifact.path);
-        if (lib.name == null) return null;
-        String[] parts = lib.name.split(":");
-        if (parts.length < 3) return null;
-        String group = parts[0].replace('.', '/');
-        String classifier = parts.length > 3 ? "-" + parts[3] : "";
-        return new File(mcDir, "libraries/" + group + "/" + parts[1] + "/" + parts[2]
-                + "/" + parts[1] + "-" + parts[2] + classifier + ".jar");
+            return Paths.resolveLibraryPath(mcDir, lib.downloads.artifact.path);
+        if (lib.name != null)
+            return Paths.resolveMavenLibrary(mcDir, lib.name);
+        return null;
     }
 
-    private static boolean appliesToOs(List<VersionJson.Rule> rules) {
+    public static boolean appliesToOs(List<VersionJson.Rule> rules) {
         if (rules == null || rules.isEmpty()) return true;
         String os = System.getProperty("os.name", "").toLowerCase();
         String osName = os.contains("win") ? "windows" : os.contains("mac") ? "osx" : "linux";
