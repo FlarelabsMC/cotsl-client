@@ -140,13 +140,6 @@ public class LaunchAgent {
         File selfJar = findSelf();
         loadExtraJars(inst, selfJar);
         extractQtNatives(selfJar);
-        try {
-            LauncherWindow.create(LAUNCH_LATCH);
-            if (LAUNCH_LATCH.getCount() > 0) System.exit(0);
-        } catch (Throwable t) {
-            logErr("[CotSL] Launcher unavailable (" + t.getMessage() + "), launching directly");
-            return;
-        }
         tryRelaunch();
     }
 
@@ -481,37 +474,28 @@ public class LaunchAgent {
         String javaExecutable = ProcessHandle.current().info().command()
                 .orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
         List<String> args = new ArrayList<>();
-        boolean hasClassPath = false;
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) continue;
             args.add(arg);
         }
-        if (!hasClassPath) {
-            String cp = System.getProperty("java.class.path");
-            if (cp != null && !cp.isEmpty()) {
-                args.add("-classpath");
-                args.add(cp);
-            }
+        String classpath = System.getProperty("java.class.path");
+        if (classpath != null && !classpath.isEmpty()) {
+            args.add("-classpath");
+            args.add(classpath);
         }
         args.add("-Xms512M");
         args.add("-Xmx" + maxHeapMB + "M");
         args.add("-D" + RELAUNCHED_PROP + "=true");
-        // apparently macOS crashes without this
         if (System.getProperty("os.name").toLowerCase().contains("mac")) args.add("-XstartOnFirstThread");
         File argFile = File.createTempFile("cotsl-jvmargs-", ".txt");
         argFile.deleteOnExit();
         try (PrintWriter pw = new PrintWriter(new FileWriter(argFile))) {
             for (String arg : args) pw.println(quoteForArgFile(arg));
         }
-        List<String> programArgs = ProcessHandle.current().info().arguments()
-                .map(LaunchAgent::extractProgramArgs)
-                .filter(l -> !l.isEmpty())
-                .orElseGet(() -> Arrays.asList(System.getProperty("sun.java.command", "").split(" ")));
-        if (programArgs.isEmpty()) throw new IllegalStateException("Could not determine program arguments for relaunch");
         List<String> command = new ArrayList<>();
         command.add(javaExecutable);
         command.add("@" + argFile.getAbsolutePath());
-        command.addAll(programArgs);
+        command.add(LaunchAgent.class.getName());
         int exitCode = new ProcessBuilder(command)
                 .inheritIO()
                 .start()

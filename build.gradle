@@ -141,7 +141,7 @@ configurations {
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    jarJar(implementation('org.xerial:sqlite-jdbc:3.51.2.0'))
+    jarJar(implementation('org.xerial:sqlite-jdbc:3.53.0.0'))
     jarJar(implementation('com.j256.ormlite:ormlite-core:6.1'))
     jarJar(implementation('com.j256.ormlite:ormlite-jdbc:6.1'))
     jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-core:2.15.0')))
@@ -581,6 +581,82 @@ tasks.register('jarAllPlatforms') {
     group = 'build'
     description = 'Assembles mod JARs for all three platforms'
     dependsOn allPlatforms.collect { "jar_${it.replace('-', '_')}" }
+}
+
+def goBin = project.findProperty('goBin') ?: 'go'
+def bootstrapDir = file('bootstrap')
+
+tasks.register('buildBootstrapWindows', Exec) {
+    group = 'build'
+    dependsOn 'jar_windows_x64'
+    workingDir bootstrapDir
+    environment 'GOOS', 'windows'
+    environment 'GOARCH', 'amd64'
+    environment 'CGO_ENABLED', '0'
+    commandLine goBin, 'build', '-ldflags=-s -w -H windowsgui', '-o',
+            "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
+
+
+    def jarFile = tasks.named('jar_windows_x64', Jar).flatMap { it.archiveFile }
+    def payloadDir = file("${bootstrapDir}/payload")
+    doFirst {
+        def fs = services.get(FileSystemOperations)
+        fs.copy {
+            from jarFile
+            into payloadDir
+            rename { 'cotsl.jar' }
+        }
+    }
+}
+
+tasks.register('buildBootstrapLinux', Exec) {
+    group = 'build'
+    dependsOn 'jar_linux_x64'
+    workingDir bootstrapDir
+    environment 'GOOS', 'linux'
+    environment 'GOARCH', 'amd64'
+    environment 'CGO_ENABLED', '0'
+    commandLine goBin, 'build', '-ldflags=-s -w', '-o',
+            "${buildDir}/bootstrap/build/cotsl-linux", '.'
+
+    def jarFile = tasks.named('jar_linux_x64', Jar).flatMap { it.archiveFile }
+    def payloadDir = file("${bootstrapDir}/payload")
+    doFirst {
+        def fs = services.get(FileSystemOperations)
+        fs.copy {
+            from jarFile
+            into payloadDir
+            rename { 'cotsl.jar' }
+        }
+    }
+}
+
+tasks.register('buildBootstrapMacOS', Exec) {
+    group = 'build'
+    dependsOn 'jar_macos'
+    workingDir bootstrapDir
+    environment 'GOOS', 'darwin'
+    environment 'GOARCH', 'amd64'
+    environment 'CGO_ENABLED', '0'
+    commandLine goBin, 'build', '-ldflags=-s -w', '-o',
+            "${buildDir}/bootstrap/build/cotsl-macos", '.'
+
+    def jarFile = tasks.named('jar_macos', Jar).flatMap { it.archiveFile }
+    def payloadDir = file("${bootstrapDir}/payload")
+    doFirst {
+        def fs = services.get(FileSystemOperations)
+        fs.copy {
+            from jarFile
+            into payloadDir
+            rename { 'cotsl.jar' }
+        }
+    }
+}
+
+tasks.register('buildBootstrapAll') {
+    group = 'build'
+    description = 'Builds bootstrap binaries for all platforms'
+    dependsOn 'buildBootstrapWindows', 'buildBootstrapLinux', 'buildBootstrapMacOS'
 }
 
 tasks.configureEach {
