@@ -96,16 +96,31 @@
 					]
 				},
 				{
+					"name": "mane_chin",
+					"parent": "head",
+					"pivot": [0, 28, -12],
+					"cubes": [
+						{
+							"origin": [0, 20, -15],
+							"size": [0, 8, 4],
+							"uv": {
+								"east": {"uv": [64, 16], "uv_size": [4, 8]},
+								"west": {"uv": [68, 16], "uv_size": [4, 8]}
+							}
+						}
+					]
+				},
+				{
 					"name": "mane_head",
 					"parent": "head",
 					"pivot": [-0.5, 28, -9],
 					"cubes": [
 						{
-							"origin": [0, 27, -15],
-							"size": [0, 9, 15],
+							"origin": [0, 28, -14],
+							"size": [0, 9, 14],
 							"uv": {
-								"east": {"uv": [69, 0], "uv_size": [15, 9]},
-								"west": {"uv": [84, 0], "uv_size": [15, 9]}
+								"east": {"uv": [69, 0], "uv_size": [14, 9]},
+								"west": {"uv": [83, 0], "uv_size": [14, 9]}
 							}
 						}
 					]
@@ -151,14 +166,14 @@
 				{
 					"name": "mane_neck",
 					"parent": "neck",
-					"pivot": [-0.5, 22, -9],
+					"pivot": [-0.5, 26, -4],
 					"cubes": [
 						{
-							"origin": [0, 20, -15],
-							"size": [0, 9, 15],
+							"origin": [0, 21, -5],
+							"size": [0, 9, 5],
 							"uv": {
-								"east": {"uv": [69, 7], "uv_size": [15, 9]},
-								"west": {"uv": [84, 7], "uv_size": [15, 9]}
+								"east": {"uv": [69, 7], "uv_size": [5, 9]},
+								"west": {"uv": [74, 7], "uv_size": [5, 9]}
 							}
 						}
 					]

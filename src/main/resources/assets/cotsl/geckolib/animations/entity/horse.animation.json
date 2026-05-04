@@ -716,6 +716,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"mane_chin": {
+					"rotation": {
+						"vector": ["-30-math.sin(query.anim_time * 720) * 10", "-math.sin(query.anim_time * 720) * 20", 0]
+					}
 				}
 			}
 		},
