@@ -35,12 +35,17 @@ jobs:
       - name: Build Windows JAR + bootstrap
         run: ./gradlew buildBootstrapWindows
 
+      - name: Stage artifacts
+        run: |
+          New-Item -ItemType Directory -Force -Path staging | Out-Null
+          Copy-Item (Get-ChildItem build/libs/cotsl-*-windows-x64.jar) staging/
+          Copy-Item build/bootstrap/build/cotsl-windows.exe staging/
+        shell: pwsh
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
-          path: |
-            build/libs/cotsl-*-windows-x64.jar
-            build/bootstrap/build/cotsl-windows.exe
+          path: staging/
 
   build-macos:
     runs-on: macos-latest
@@ -74,12 +79,16 @@ jobs:
       - name: Build macOS JAR + bootstrap
         run: ./gradlew buildBootstrapMacOS
 
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build/libs/cotsl-*-macos.jar staging/
+          cp build/bootstrap/build/cotsl-macos staging/
+
       - uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
-          path: |
-            build/libs/cotsl-*-macos.jar
-            build/bootstrap/build/cotsl-macos
+          path: staging/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -98,15 +107,31 @@ jobs:
         with:
           go-version-file: bootstrap/go.mod
 
+      - name: Install Qt 6.11.0
+        run: |
+          pip3 install --break-system-packages git+https://github.com/miurahr/aqtinstall.git
+          aqt install-qt \
+            --base https://download.qt.io \
+            linux desktop 6.11.0 linux_gcc_64 \
+            --outputdir $HOME/Qt \
+            --modules qtshadertools
+
+      - name: Set QTDIR
+        run: echo "QTDIR=$HOME/Qt/6.11.0/gcc_64" >> $GITHUB_ENV
+
       - name: Build Linux JAR + bootstrap
-        run: ./gradlew buildBootstrapLinux --info
+        run: ./gradlew buildBootstrapLinux
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build/libs/cotsl-*-linux-x64.jar staging/
+          cp build/bootstrap/build/cotsl-linux staging/
 
       - uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: |
-            build/libs/cotsl-*-linux-x64.jar
-            build/bootstrap/build/cotsl-linux
+          path: staging/
 
   release:
     needs: [build-windows, build-macos, build-linux]
