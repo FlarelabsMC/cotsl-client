@@ -81,16 +81,6 @@ public final class MixinsClient {
                 user.setCharacterData(newData);
                 Frankenstein.updateTexture(skinId, skin);
             }
-
-            AbstractHorse horse = entity.getVehicle() instanceof AbstractHorse ? (AbstractHorse) entity.getVehicle() : null;
-            if (horse != null)
-                ((AvatarRenderStateDuck) state).setMountInfo(
-                        ((AbstractHorseDuck) horse).getVel(),
-                        ((AbstractHorseDuck) horse).getTurnRate(),
-                        ((AbstractHorseDuck) horse).getXV(),
-                        ((AbstractHorseDuck) horse).getYV(),
-                        ((AbstractHorseDuck) horse).getZV()
-                );
         }
     }
 }
