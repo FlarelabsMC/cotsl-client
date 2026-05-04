@@ -18,17 +18,11 @@ jobs:
         with:
           go-version-file: bootstrap/go.mod
 
-      - name: Debug available Qt versions
-        run: |
-          pip install aqtinstall
-          aqt list-qt windows desktop
-        shell: pwsh
-
       - name: Install Qt 6.11.0
         run: |
           pip install aqtinstall
           aqt install-qt `
-            --base https://download.qt.io `
+            --base https://ftp.jaist.ac.jp/pub/qtproject/ `
             windows desktop 6.11.0 win64_msvc2022_64 `
             --outputdir C:\Qt `
             --modules qtdeclarative qtshadertools
@@ -40,8 +34,6 @@ jobs:
 
       - name: Build Windows JAR + bootstrap
         run: ./gradlew buildBootstrapWindows
-        env:
-          QTDIR: ${{ env.QT_ROOT_DIR }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -55,6 +47,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -66,9 +61,9 @@ jobs:
 
       - name: Install Qt 6.11.0
         run: |
-          pip3 install aqtinstall
+          pip3 install --break-system-packages aqtinstall
           aqt install-qt \
-            --base https://download.qt.io \
+            --base https://ftp.jaist.ac.jp/pub/qtproject/ \
             mac desktop 6.11.0 \
             --outputdir $HOME/Qt \
             --modules qtdeclarative qtshadertools
@@ -76,11 +71,8 @@ jobs:
       - name: Set QTDIR
         run: echo "QTDIR=$HOME/Qt/6.11.0/macos" >> $GITHUB_ENV
 
-
       - name: Build macOS JAR + bootstrap
         run: ./gradlew buildBootstrapMacOS
-        env:
-          QTDIR: ${{ env.QT_ROOT_DIR }}
 
       - uses: actions/upload-artifact@v4
         with:
