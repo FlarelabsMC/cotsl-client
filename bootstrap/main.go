@@ -17,7 +17,7 @@ import (
 
 var (
 	appVersion = "1.0.0-alpha"
-	repoOwner = "sentwayfarer"
+	repoOwner = "FlarelabsMC"
 	repoName = "cotsl-client"
 )
 

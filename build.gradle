@@ -596,7 +596,7 @@ tasks.register('buildBootstrapWindows', Exec) {
     commandLine goBin, 'build',
             '-ldflags=-s -w -H windowsgui' +
             ' -X main.appVersion=' + project.version +
-            ' -X main.repoOwner=sentwayfarer' +
+            ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
 }
@@ -610,7 +610,7 @@ tasks.register('buildBootstrapLinux', Exec) {
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', '-ldflags=-s -w' +
             ' -X main.appVersion=' + project.version +
-            ' -X main.repoOwner=sentwayfarer' +
+            ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
 }
@@ -624,7 +624,7 @@ tasks.register('buildBootstrapMacOS', Exec) {
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', '-ldflags=-s -w' +
             ' -X main.appVersion=' + project.version +
-            ' -X main.repoOwner=sentwayfarer' +
+            ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'
 }
