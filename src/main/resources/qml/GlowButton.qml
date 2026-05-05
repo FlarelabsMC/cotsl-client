@@ -10,6 +10,7 @@ Item {
     property color borderColor: "#3c3c3c"
     property color glowColor: "#ffffff"
     property int glowRadius: 10
+    property bool active: true
 
     property real _glow: 0.0
     Behavior on _glow { NumberAnimation { duration: 150 } }
@@ -46,6 +47,8 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
+        enabled: active
+        cursorShape: active ? Qt.PointingHandCursor : Qt.ArrowCursor
         onEntered: btn._glow = 1.0
         onExited: btn._glow = 0.0
         onClicked: btn.clicked()

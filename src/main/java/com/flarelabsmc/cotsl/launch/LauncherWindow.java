@@ -2,15 +2,9 @@ package com.flarelabsmc.cotsl.launch;
 
 import io.qt.QtInvokable;
 import io.qt.core.*;
-import io.qt.gui.*;
 import io.qt.qml.*;
 import io.qt.quick.*;
 import io.qt.widgets.QApplication;
-import net.lenni0451.commons.httpclient.HttpClient;
-import net.raphimc.minecraftauth.MinecraftAuth;
-import net.raphimc.minecraftauth.step.java.StepMCProfile;
-import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
-import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 
 import java.io.*;
 import java.net.URL;
@@ -88,6 +82,21 @@ public class LauncherWindow {
         public final Signal2<String, String> authCodeReady = new Signal2<>();
         public final Signal0 authDone = new Signal0();
         public final Signal1<String> authError = new Signal1<>();
+        public final Signal0 startLaunch = new Signal0();
+        public final Signal0 authNeedsLogin = new Signal0();
+        public final Signal1<String> setUsername = new Signal1<>();
+
+        @QtInvokable
+        public void beginLaunch() {
+            Thread.ofVirtual().start(() -> {
+                try {
+                    InstallManager.runInstallIfNeeded();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                startLaunch.emit();
+            });
+        }
 
         @QtInvokable
         public void launch() {
@@ -95,35 +104,47 @@ public class LauncherWindow {
         }
 
         @QtInvokable
-        public boolean needsAuth() {
-            try {
-                InstallState state = InstallState.load(LaunchAgent.getInstallStateFile());
-                if (state.authToken == null) return true;
-                return System.currentTimeMillis() >= state.authExpiry;
-            } catch (Exception e) {
-                return true;
-            }
+        public void startLogin() {
+            Thread.ofVirtual().start(() -> {
+                if (!AuthManager.isSavedAuthStateValid()) {
+                    authNeedsLogin.emit();
+                } else {
+                    try {
+                        // Calling this to ensure the player is logged in and the tokens are refreshed
+                        AuthManager.AuthParameters params = AuthManager.getAuthParams();
+                        authDone.emit();
+                        setUsername.emit(params.playerName());
+                    } catch (Exception e) {
+                        System.err.println("[CotSL] Logging in with saved auth state unsuccessful: " + e);
+                        authNeedsLogin.emit();
+                    }
+                }
+            });
         }
 
         @QtInvokable
-        public void startAuth() {
+        public void startNewLogin() {
             Thread.ofVirtual().start(() -> {
                 try {
-                    HttpClient httpClient = new HttpClient();
-                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(
-                            httpClient,
-                            new StepMsaDeviceCode.MsaDeviceCodeCallback(code ->
-                                    authCodeReady.emit(code.getDirectVerificationUri(), code.getUserCode())
-                            )
-                    );
-                    StepMCProfile.MCProfile profile = session.getMcProfile();
-                    File stateFile = LaunchAgent.getInstallStateFile();
-                    InstallState state = InstallState.load(stateFile);
-                    state.authToken = profile.getMcToken().getAccessToken();
-                    state.playerName = profile.getName();
-                    state.playerUuid = profile.getId().toString();
-                    state.authExpiry = profile.getMcToken().getExpireTimeMs();
-                    state.save(stateFile);
+                    AuthManager.logIn((code) -> {
+                        authCodeReady.emit(code.getDirectVerificationUri(), code.getUserCode());
+                    });
+
+//                    HttpClient httpClient = new HttpClient();
+//                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(
+//                            httpClient,
+//                            new StepMsaDeviceCode.MsaDeviceCodeCallback(code ->
+//                            )
+//                    );
+//                    StepMCProfile.MCProfile profile = session.getMcProfile();
+//
+//                    InstallState.Options state = InstallState.get();
+//                    state.minecraftToken = profile.getMcToken().getAccessToken();
+//                    state.playerName = profile.getName();
+//                    state.playerUuid = profile.getId().toString();
+//                    state.minecraftTokenExpiry = profile.getMcToken().getExpireTimeMs();
+//                    state.save();
+
                     authDone.emit();
                 } catch (Exception e) {
                     authError.emit(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());

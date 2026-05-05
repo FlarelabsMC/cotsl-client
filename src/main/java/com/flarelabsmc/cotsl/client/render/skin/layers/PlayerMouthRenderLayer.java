@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.flarelabsmc.cotsl.client.speech.SpeechData;
 import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
@@ -40,7 +40,7 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
-        AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
+        AvatarRenderStateDuck ext = (AvatarRenderStateDuck) state;
 
         if (currentSound == null) {
             if (Minecraft.getInstance().player.getMainHandItem().getItem() instanceof DebugStickItem) {
@@ -109,7 +109,7 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
 
         @Override
         public void setupAnim(AvatarRenderState state) {
-            AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
+            AvatarRenderStateDuck ext = (AvatarRenderStateDuck) state;
             for (ModelPart mouthPose : mouthPoses) mouthPose.visible = false;
             mouthPoses[ext.getMouthPose()].visible = true;
         }

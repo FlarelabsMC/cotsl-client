@@ -1,6 +1,7 @@
 package com.flarelabsmc.cotsl.core.transform;
 
 import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
+import com.flarelabsmc.cotsl.core.transform.duck.AbstractHorseDuck;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -32,25 +33,22 @@ public class MixinsCommon {
     }
 
     public static class AbstractHorseMixin {
-        public boolean wasBeingRidden = false;
-        public float speed = 0.0f;
-        private float angularVelocity = 0.0f;
-        private float lastFInput = 0.0f;
-        private float lastSInput = 0.0f;
-        private float deltaYRot = 0.0f;
-        private float horseLastYRot = 0.0f;
+        private boolean wasBeingRidden = false;
+        private float speed, turnVel,
+                lastFInput, lastSInput,
+                deltaYRot, horseLastYRot;
 
         public void getRiddenRotation(AbstractHorse horse, LivingEntity controller, CallbackInfoReturnable<Vec2> cir) {
             if (!(controller instanceof Player player)) return;
             if (!wasBeingRidden) {
-                angularVelocity = 0.0f;
+                turnVel = 0.0f;
                 wasBeingRidden = true;
             }
             boolean isMoving = horse.walkAnimation.isMoving() || lastFInput != 0;
             float targetAngVel = -lastSInput * 5.0f * (isMoving ? 1.0f : 1.25f);
-            angularVelocity += (targetAngVel - angularVelocity) * 0.25f;
-            if (Math.abs(angularVelocity) < 0.05f) angularVelocity = 0.0f;
-            float newYRot = Mth.wrapDegrees(horse.getYRot() + angularVelocity);
+            turnVel += (targetAngVel - turnVel) * 0.25f;
+            if (Math.abs(turnVel) < 0.05f) turnVel = 0.0f;
+            float newYRot = Mth.wrapDegrees(horse.getYRot() + turnVel);
             cir.setReturnValue(new Vec2(player.getXRot() * 0.5f, newYRot));
         }
 
@@ -59,8 +57,14 @@ public class MixinsCommon {
             if (wasBeingRidden && horse.getControllingPassenger() == null) {
                 wasBeingRidden = false;
                 speed = 0.0f;
-                angularVelocity = 0.0f;
+                turnVel = 0.0f;
             }
+            AbstractHorseDuck duck = (AbstractHorseDuck) horse;
+            duck.setXV(horse.getDeltaMovement().x);
+            duck.setYV(horse.getDeltaMovement().y);
+            duck.setZV(horse.getDeltaMovement().z);
+            duck.setVel(speed);
+            duck.setTurnRate(turnVel);
         }
 
         public Vec3 getRiddenInput(AbstractHorse horse, Vec3 original, Player player, Vec3 selfInput) {
@@ -90,7 +94,7 @@ public class MixinsCommon {
             float wap = horse.walkAnimation.position(partialTicks);
             float yOffset = (float) (Math.abs(Math.sin(wap / 2)) * 0.14f) - 0.07f;
             float zOffset = (float) (Math.cos(wap / 2) * 0.05f);
-            Vec3 pos = new Vec3(0, yOffset + 1.44, passengerOffset + zOffset).add((new Vec3(0.0F, 0.15 * standAnimO * scale, -0.7 * standAnimO * scale)));
+            Vec3 pos = new Vec3(0, /*yOffset + */1.40, passengerOffset + zOffset).add((new Vec3(0.0F, 0.15 * standAnimO * scale, -0.7 * standAnimO * scale)));
             cir.setReturnValue(pos.yRot(-horse.getYRot() * ((float) Math.PI / 180f)));
         }
 

@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -34,7 +34,7 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
-        UUID uuid = ((AvatarRenderStateExt) state).getUUID();
+        UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
         collector.submitModel(eyebrowModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();
     }
@@ -75,7 +75,7 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
         @Override
         public void setupAnim(AvatarRenderState state) {
             boolean canBlink = state.ageInTicks % 100 < ((state.ageInTicks / 100) % 3 * 2);
-            AvatarRenderStateExt ext = (AvatarRenderStateExt) state;
+            AvatarRenderStateDuck ext = (AvatarRenderStateDuck) state;
             if (canBlink) {
                 leftEyebrow.y = 1.25F;
                 rightEyebrow.y = 1.25F;

@@ -1,8 +1,7 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -104,7 +103,7 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
-        UUID uuid = ((AvatarRenderStateExt) state).getUUID();
+        UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
         collector.submitModel(eyeModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         stack.popPose();
     }

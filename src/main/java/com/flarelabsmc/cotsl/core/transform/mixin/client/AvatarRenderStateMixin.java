@@ -1,13 +1,13 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.client.entity.avatar;
+package com.flarelabsmc.cotsl.core.transform.mixin.client;
 
-import com.flarelabsmc.cotsl.client.render.skin.AvatarRenderStateExt;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.UUID;
 
 @Mixin(AvatarRenderState.class)
-public class AvatarRenderStateMixin implements AvatarRenderStateExt {
+public class AvatarRenderStateMixin implements AvatarRenderStateDuck {
     private UUID uuid;
     private int mouthPose;
     private float health;

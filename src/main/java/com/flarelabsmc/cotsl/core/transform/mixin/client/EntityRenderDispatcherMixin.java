@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.core.transform.mixin.client.render.entity;
+package com.flarelabsmc.cotsl.core.transform.mixin.client;
 
 import com.flarelabsmc.cotsl.core.transform.MixinsClient;
 import com.mojang.blaze3d.vertex.PoseStack;

@@ -1,5 +1,6 @@
 package com.flarelabsmc.cotsl.client;
 
+import com.flarelabsmc.cotsl.client.animation.PlayerDefaultAnimationHandler;
 import com.flarelabsmc.cotsl.client.particle.FireFlameParticle;
 import com.flarelabsmc.cotsl.client.particle.FireSparkParticle;
 import com.flarelabsmc.cotsl.client.particle.FireSparkParticleGroup;
@@ -12,10 +13,19 @@ import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.client.speech.SpeechData;
 import com.flarelabsmc.cotsl.common.CotSL;
 import com.flarelabsmc.cotsl.common.registry.ParticleRegistry;
-import com.flarelabsmc.cotsl.launch.LauncherWindow;
+import com.flarelabsmc.cotsl.core.transform.duck.AbstractHorseDuck;
+import com.zigythebird.playeranim.animation.PlayerAnimResources;
+import com.zigythebird.playeranim.animation.PlayerAnimationController;
+import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.animation.Animation;
+import com.zigythebird.playeranimcore.animation.RawAnimation;
+import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier;
+import com.zigythebird.playeranimcore.easing.EasingType;
+import com.zigythebird.playeranimcore.enums.PlayState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -27,11 +37,14 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
+import static com.zigythebird.playeranim.PlayerAnimLibMod.ANIMATION_LAYER_ID;
+
 @Mod(value = CotSL.MOD_ID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = CotSL.MOD_ID, value = Dist.CLIENT)
 public class CotSLClient {
     public CotSLClient(ModContainer container) {
         CotSLEntityRenderers.init();
+        PlayerDefaultAnimationHandler.init();
     }
 
     @SubscribeEvent
@@ -62,5 +75,17 @@ public class CotSLClient {
     @SubscribeEvent
     public static void registerParticleGroups(RegisterParticleGroupsEvent event) {
         event.register(FireSparkParticle.FIRE_SPARK_RENDER_TYPE, FireSparkParticleGroup::new);
+    }
+
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(
+                () -> {
+                    PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
+                            ANIMATION_LAYER_ID, 1000,
+                            (a) -> new PlayerAnimationController(a, (_,_,_) -> PlayState.STOP)
+                    );
+                }
+        );
     }
 }

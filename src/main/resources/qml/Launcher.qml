@@ -29,7 +29,7 @@ Window {
         width: 240; height: 240
         flags: Qt.FramelessWindowHint | Qt.Window | Qt.WindowStaysOnTopHint
         color: "#0f0d0b"
-        visible: authState === "auth-needed" || authState === "auth-waiting" || authState === "auth-error"
+        visible: authState === "auth-needed" || authState === "auth-waiting" || authState === "auth-error" || authState === "auth-checking"
 
         onClosing: (close) => { close.accepted = false }
 
@@ -82,12 +82,20 @@ Window {
         Item {
             anchors { top: authTitleBar.bottom; bottom: parent.bottom; left: parent.left; right: parent.right }
 
+            BitmapText {
+                anchors.centerIn: parent
+                text: "Signing in..."
+                textColor: "#b4a58c"
+                visible: authState === "auth-checking"
+                charScale: 2
+            }
+
             GlowButton {
                 anchors.centerIn: parent
                 width: 220; height: 60
                 label: "Sign in"
                 visible: authState === "auth-needed"
-                onClicked: bridge.startAuth()
+                onClicked: bridge.startNewLogin()
             }
 
             GlowButton {
@@ -120,12 +128,15 @@ Window {
         }
     }
 
-    property string authState: "checking"
+    property string authState: "auth-checking"
     property string authUrl: ""
     property string authCode: ""
     property string authErrorMsg: ""
+    property string username: ""
 
-    Component.onCompleted: authState = bridge.needsAuth() ? "auth-needed" : "launch"
+    property string launchState: "ready"
+
+    Component.onCompleted: bridge.startLogin()
 
     Connections {
         target: bridge
@@ -136,6 +147,18 @@ Window {
         }
         function onAuthDone() { root.authState = "launch" }
         function onAuthError(msg)  { root.authErrorMsg = msg; root.authState = "auth-error" }
+        function onStartLaunch() {
+            launchState = "launching"
+            root.fadeActive = true
+            sceneCapture.live = false
+            fadeAnim.start()
+        }
+        function onAuthNeedsLogin() {
+            root.authState = "auth-needed"
+        }
+        function onSetUsername(name) {
+            root.username = name
+        }
     }
 
     Item {
@@ -264,15 +287,24 @@ Window {
             charScale: 2
         }
 
+        BitmapText {
+            anchors { left: parent.left; bottom: parent.bottom; leftMargin: 12; bottomMargin: 12 }
+            text: username
+            textColor: "#b4a58c"
+            charScale: 2
+        }
+
         GlowButton {
             anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 28 }
             width: 220; height: 72
-            label: "Launch"
+            label: launchState === "ready" ? "Launch" :
+                launchState === "installing" ? "Installing..." :
+                launchState === "launching" ? "Launching..." : "Loading..."
             visible: authState === "launch"
+            active: launchState === "ready"
             onClicked: {
-                root.fadeActive = true
-                sceneCapture.live = false
-                fadeAnim.start()
+                launchState = "installing"
+                bridge.beginLaunch();
             }
         }
     }

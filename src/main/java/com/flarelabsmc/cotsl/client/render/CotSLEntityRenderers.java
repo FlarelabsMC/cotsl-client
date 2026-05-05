@@ -1,12 +1,14 @@
 package com.flarelabsmc.cotsl.client.render;
 
 import com.flarelabsmc.cotsl.client.render.geo.WayfinderBeamEntityRenderer;
+import com.flarelabsmc.cotsl.client.render.geo.replaced.ReplacedHorseEntityRenderer;
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.world.entity.EntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -20,6 +22,7 @@ public class CotSLEntityRenderers {
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new WayfinderBeamEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
+        event.registerEntityRenderer(EntityType.HORSE, ReplacedHorseEntityRenderer::new);
     }
 
     public static final RenderPipeline.Snippet ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET;

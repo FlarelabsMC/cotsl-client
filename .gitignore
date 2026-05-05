@@ -34,3 +34,5 @@ deps.txt
 deps_out.txt
 build_errors.txt
 sheet.aseprite
+bootstrap/payload/
+bootstrap/build/

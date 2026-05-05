@@ -1,0 +1,154 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bootstrap/go.mod
+
+      - name: Install Qt 6.11.0
+        run: |
+          pip install git+https://github.com/miurahr/aqtinstall.git
+          aqt install-qt `
+            --base https://download.qt.io `
+            windows desktop 6.11.0 win64_msvc2022_64 `
+            --outputdir C:\Qt `
+            --modules qtshadertools
+        shell: pwsh
+
+      - name: Set QTDIR
+        run: echo "QTDIR=C:\Qt\6.11.0\msvc2022_64" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Build Windows JAR + bootstrap
+        run: ./gradlew buildBootstrapWindows
+
+      - name: Stage artifacts
+        run: |
+          New-Item -ItemType Directory -Force -Path staging | Out-Null
+          Copy-Item (Get-ChildItem build/libs/cotsl-*-windows-x64.jar) staging/
+          Copy-Item build/bootstrap/build/cotsl-windows.exe staging/
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: staging/
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bootstrap/go.mod
+
+      - name: Install Qt 6.11.0
+        run: |
+          pip3 install --break-system-packages git+https://github.com/miurahr/aqtinstall.git
+          aqt install-qt \
+            --base https://download.qt.io \
+            mac desktop 6.11.0 \
+            --outputdir $HOME/Qt \
+            --modules qtshadertools
+
+      - name: Set QTDIR
+        run: echo "QTDIR=$HOME/Qt/6.11.0/macos" >> $GITHUB_ENV
+
+      - name: Build macOS JAR + bootstrap
+        run: ./gradlew buildBootstrapMacOS
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build/libs/cotsl-*-macos.jar staging/
+          cp build/bootstrap/build/cotsl-macos staging/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: staging/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bootstrap/go.mod
+
+      - name: Build Linux JAR + bootstrap
+        run: ./gradlew buildBootstrapLinux
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build/libs/cotsl-*-linux-x64.jar staging/
+          cp build/bootstrap/build/cotsl-linux staging/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: staging/
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Show staged assets
+        run: ls -lh release-assets/
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: CotSL ${{ steps.version.outputs.version }}
+          overwrite: true
+          fail_on_unmatched_files: true
+          prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
+          files: release-assets/*
