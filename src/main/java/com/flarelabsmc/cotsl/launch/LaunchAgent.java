@@ -5,9 +5,12 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -24,11 +27,12 @@ public class LaunchAgent {
     private static PrintWriter logWriter = null;
 
     private static void initLog() {
+        if (logWriter != null) return;
+        File dir = Paths.getInstallStatePath().getParentFile();
+        File logFile = new File(dir, "cotsl-launch.log");
+        logFile.mkdirs();
         try {
-            File dir = Paths.getInstallStatePath().getParentFile();
-            dir.mkdirs();
-            File logFile = new File(dir, "cotsl-launch.log");
-            logWriter = new PrintWriter(new FileWriter(logFile, true), true);
+            logWriter = new PrintWriter(logFile);
             String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
                     : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
                     : "first-run";

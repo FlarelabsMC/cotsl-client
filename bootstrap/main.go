@@ -38,7 +38,7 @@ func jarDownloadURL() string {
 func main() {
 	installDir := resolveInstallDir()
 	os.MkdirAll(installDir, 0755)
-	logFile, _ := os.OpenFile(filepath.Join(installDir, "bootstrap.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	logFile, _ := os.OpenFile(filepath.Join(installDir, "bootstrap.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_TRUNC, 0644)
 
 	jarPath := filepath.Join(installDir, "cotsl.jar")
 	versionPath := filepath.Join(installDir, "version.txt")
