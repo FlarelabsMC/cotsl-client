@@ -91,10 +91,10 @@ public class MixinsCommon {
             float partialTicks = 0.0f;
             if (horse.level().isClientSide()) partialTicks = Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
 
-            float wap = horse.walkAnimation.position(partialTicks);
-            float yOffset = (float) (Math.abs(Math.sin(wap / 2)) * 0.14f) - 0.07f;
-            float zOffset = (float) (Math.cos(wap / 2) * 0.05f);
-            Vec3 pos = new Vec3(0, /*yOffset + */1.40, passengerOffset + zOffset).add((new Vec3(0.0F, 0.15 * standAnimO * scale, -0.7 * standAnimO * scale)));
+//            float wap = horse.walkAnimation.position(partialTicks);
+//            float yOffset = (float) (Math.abs(Math.sin(wap / 2)) * 0.14f) - 0.07f;
+//            float zOffset = (float) (Math.cos(wap / 2) * 0.05f);
+            Vec3 pos = new Vec3(0, /*yOffset + */1.40, passengerOffset/* + zOffset*/).add((new Vec3(0.0F, 0.15 * standAnimO * scale, -0.7 * standAnimO * scale)));
             cir.setReturnValue(pos.yRot(-horse.getYRot() * ((float) Math.PI / 180f)));
         }
 
