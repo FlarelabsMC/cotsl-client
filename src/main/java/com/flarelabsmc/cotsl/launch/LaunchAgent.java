@@ -24,40 +24,27 @@ public class LaunchAgent {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
     private static final String RELAUNCHED_PROP = "cotsl.relaunched";
     private static final String MAIN_RELAUNCHED_PROP = "cotsl.mainRelaunched";
-    private static PrintWriter logWriter = null;
 
     private static void initLog() {
-        if (logWriter != null) return;
-        File dir = Paths.getInstallStatePath().getParentFile();
-        File logFile = new File(dir, "cotsl-launch.log");
-        logFile.mkdirs();
-        try {
-            logWriter = new PrintWriter(logFile);
-            String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
-                    : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
-                    : "first-run";
-            log("CotSL LaunchAgent [" + phase + "] started at " + new java.util.Date());
-            log("    os=" + System.getProperty("os.name")
-                    + "  java=" + System.getProperty("java.version")
-                    + "  java.home=" + System.getProperty("java.home"));
-        } catch (IOException e) {
-            System.err.println("[CotSL] Could not open log file: " + e.getMessage());
-        }
+        String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
+                : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
+                : "first-run";
+        log("CotSL LaunchAgent [" + phase + "] started at " + new java.util.Date());
+        log("    os=" + System.getProperty("os.name")
+                + "  java=" + System.getProperty("java.version")
+                + "  java.home=" + System.getProperty("java.home"));
     }
 
     static void log(String msg) {
         System.out.println(msg);
-        if (logWriter != null) logWriter.println(msg);
     }
 
     static void logErr(String msg) {
         System.err.println(msg);
-        if (logWriter != null) logWriter.println("[ERROR] " + msg);
     }
 
     static void logErr(String msg, Throwable t) {
         logErr(msg);
-        if (logWriter != null) t.printStackTrace(logWriter);
         t.printStackTrace(System.err);
     }
 
@@ -65,7 +52,6 @@ public class LaunchAgent {
         initLog();
         Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
             logErr("[CotSL] Unhandled exception on thread " + thread.getName(), ex);
-            if (logWriter != null) logWriter.flush();
         });
         if (System.getProperty(MAIN_RELAUNCHED_PROP) != null) {
             mainAfterBootstrap();
