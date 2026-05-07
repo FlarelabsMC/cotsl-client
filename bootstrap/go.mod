@@ -1,3 +1,3 @@
-module github.com/sentwayfarer/cotsl-client
+module github.com/FlarelabsMC/cotsl-client
 
 go 1.22

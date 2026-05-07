@@ -1,15 +1,19 @@
 # CotSL Client
 The client and dedicated server mod source code for Crypt of the Second Lord, a Minecraft mod(pack).
 
-# Running
-To run the mod, you will currently need to build it from source. The releases are outdated and broken.
+## Community
+Have suggestions? Need to contact us? Want to help? Consider joining our [Discord server](https://discord.gg/X9XfzfTDqH).
 
-You can simply just double-click the JAR and it should launch. It should ask for authentication with your Minecraft account, and then clicking Launch will start the game.
+# Running
+Alpha/beta builds are usually available in the Releases tab. Download the executable for your platform and run it. It should do the process for you, besides authentication.
+
+Need to use Prism Launcher? Download the JAR instead, put it in the mods folder, and add the same mod JAR as an agent in the Versions tab.
 
 # Setup and Building
 To build from source, you will need:
 - Java 25
 - **IntelliJ IDEA**, **Eclipse**, or **Visual Studio Code** (with the [Qt Qml plugin](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.qt-qml) for editing QML)
+- [A Go installation](https://go.dev/)
 - **Qt 6.11.0** and a verified Qt.io account.
 
 If you don't see syntax highlighting for QML files in IntelliJ IDEA Community, you can use Visual Studio Code with the previously mentioned plugin.
@@ -43,6 +47,11 @@ To build the project, first, run the `./gradlew generateDialogueMetadata` task, 
 - `./gradlew jar_linux_x64`
 - `./gradlew jar_windows_x64`
 - `./gradlew jar_macos`
+
+OR if you need to build the executables:
+- `./gradlew buildBootstrapLinux`
+- `./gradlew buildBootstrapWindows`
+- `./gradlew buildBootstrapMacOS`
 
 **You can only build for the OS you're currently using. Except Linux. That works always.**<br>
 If you want to build for Windows *and* macOS, currently, you will need to set up a virtual machine.

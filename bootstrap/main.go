@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,10 +17,11 @@ import (
 )
 
 var (
-	appVersion = "1.0.0-alpha"
+	appVersion = "devtest"
 	repoOwner = "FlarelabsMC"
 	repoName = "cotsl-client"
 )
+
 
 const javaVersion = "25"
 const adoptiumURL = "https://api.adoptium.net/v3/binary/latest/%s/ga/%s/%s/jre/hotspot/normal/eclipse"
@@ -36,6 +38,7 @@ func jarDownloadURL() string {
 }
 
 func main() {
+    log.Print(appVersion)
 	installDir := resolveInstallDir()
 	os.MkdirAll(installDir, 0755)
 	logFile, _ := os.OpenFile(filepath.Join(installDir, "bootstrap.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_TRUNC, 0644)
