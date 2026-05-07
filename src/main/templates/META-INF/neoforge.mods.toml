@@ -2,7 +2,7 @@ license="${mod_license}"
 #issueTrackerURL=
 [[mods]]
 modId="${mod_id}"
-version="${mod_version}"
+version="${release}"
 displayName="${mod_name}"
 #updateJSONURL=
 #displayURL=
