@@ -36,17 +36,17 @@ jobs:
         id: version
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG=v$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Get short commit SHA
         id: get_commit
-        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Build Windows JAR + bootstrap
-        run: ./gradlew buildBootstrapWindows -Pmod_version=$VERSION.$SHORT_SHA
+        run: ./gradlew buildBootstrapWindows -Pmod_version=${{ steps.version.outputs.version }}+{{ steps.get_commit.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
@@ -93,16 +93,15 @@ jobs:
         id: version
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG=v$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get short commit SHA
         id: get_commit
-        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
-        shell: bash
+        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Build macOS JAR + bootstrap
-        run: ./gradlew buildBootstrapMacOS -Pmod_version=$VERSION.$SHORT_SHA
+        run: ./gradlew buildBootstrapMacOS -Pmod_version=${{ steps.version.outputs.version }}+{{ steps.get_commit.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
@@ -136,16 +135,15 @@ jobs:
         id: version
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG=v$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get short commit SHA
         id: get_commit
-        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
-        shell: bash
+        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Build Linux JAR + bootstrap
-        run: ./gradlew buildBootstrapLinux -Pmod_version=$VERSION.$SHORT_SHA
+        run: ./gradlew buildBootstrapLinux -Pmod_version=${{ steps.version.outputs.version }}+{{ steps.get_commit.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
