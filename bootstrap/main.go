@@ -33,7 +33,7 @@ func jarDownloadURL() string {
 		"linux":   "linux-x64",
 		"darwin":  "macos",
 	}[runtime.GOOS]
-	return fmt.Sprintf("https://github.com/%s/%s/releases/download/v%s/cotsl-%s-%s.jar",
+	return fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/cotsl-%s-%s.jar",
 		repoOwner, repoName, appVersion, appVersion, osTag)
 }
 
