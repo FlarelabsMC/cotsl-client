@@ -37,16 +37,12 @@ jobs:
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Get short commit SHA
-        id: get_commit
-        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Build Windows JAR + bootstrap
-        run: ./gradlew buildBootstrapWindows -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.get_commit.outputs.short_sha }}
+        run: ./gradlew buildBootstrapWindows -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.version.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
@@ -94,14 +90,11 @@ jobs:
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Get short commit SHA
-        id: get_commit
-        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
-
       - name: Build macOS JAR + bootstrap
-        run: ./gradlew buildBootstrapMacOS -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.get_commit.outputs.short_sha }}
+        run: ./gradlew buildBootstrapMacOS -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.version.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
@@ -136,14 +129,11 @@ jobs:
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Get short commit SHA
-        id: get_commit
-        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
-
       - name: Build Linux JAR + bootstrap
-        run: ./gradlew buildBootstrapLinux -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.get_commit.outputs.short_sha }}
+        run: ./gradlew buildBootstrapLinux -Pmod_version=${{ steps.version.outputs.version }}+${{ steps.version.outputs.short_sha }}
 
       - name: Stage artifacts
         run: |
@@ -169,6 +159,7 @@ jobs:
         run: |
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - uses: actions/download-artifact@v4
@@ -181,8 +172,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Crypt of the Second Lord ${{ steps.version.outputs.version }}+${{ github.sha }}
+          tag_name: ${{ steps.version.outputs.version }}+${{ steps.version.outputs.short_sha }}
+          name: Crypt of the Second Lord ${{ steps.version.outputs.version }}+${{ steps.version.outputs.short_sha }}
           fail_on_unmatched_files: true
           prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
           files: release-assets/*
