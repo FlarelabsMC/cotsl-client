@@ -140,9 +140,23 @@
 					"cubes": [
 						{
 							"origin": [3.1, 28.5, -13.5],
-							"size": [0, 3, 16],
+							"size": [0, 3, 8],
 							"uv": {
-								"west": {"uv": [48, 18], "uv_size": [16, 3]}
+								"west": {"uv": [48, 18], "uv_size": [8, 3]}
+							}
+						}
+					]
+				},
+				{
+					"name": "left_saddle_line_part",
+					"parent": "left_saddle_line",
+					"pivot": [3, 29, -5.5],
+					"cubes": [
+						{
+							"origin": [3.1, 28.5, -5.5],
+							"size": [0, 3, 8],
+							"uv": {
+								"west": {"uv": [56, 18], "uv_size": [8, 3]}
 							}
 						}
 					]
@@ -154,9 +168,23 @@
 					"cubes": [
 						{
 							"origin": [-3.1, 28.5, -13.5],
-							"size": [0, 3, 16],
+							"size": [0, 3, 8],
 							"uv": {
-								"east": {"uv": [32, 18], "uv_size": [16, 3]}
+								"east": {"uv": [40, 18], "uv_size": [8, 3]}
+							}
+						}
+					]
+				},
+				{
+					"name": "right_saddle_line_part",
+					"parent": "right_saddle_line",
+					"pivot": [-3, 29, -5],
+					"cubes": [
+						{
+							"origin": [-3.1, 28.5, -5.5],
+							"size": [0, 3, 8],
+							"uv": {
+								"east": {"uv": [32, 18], "uv_size": [8, 3]}
 							}
 						}
 					]

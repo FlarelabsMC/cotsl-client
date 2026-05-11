@@ -32,11 +32,8 @@ public class InstallManager {
         }
         String reqNeoVer = getReqNeoVer();
         String reqSelfVer = getReqSelfVer();
-        boolean selfNeedsUpdate = !reqSelfVer.equals(state.inSelfVer);
         log("[CotSL-Installer] Required versions: NeoForge=" + reqNeoVer + ",  self=" + reqSelfVer);
         log("[CotSL-Installer] Installed versions: NeoForge=" + state.inNeoVer + ",  self=" + state.inSelfVer);
-
-        if (selfNeedsUpdate) deploySelf(mcDir);
 
         VersionJson neoVersionJson = NeoForgeInstaller.getNeoVersionJson(reqNeoVer, mcDir);
         File neoInstaller = null;
