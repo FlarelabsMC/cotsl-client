@@ -257,7 +257,7 @@ func stripTopLevel(p string) string {
 
 func resolveInstallDir() string {
 	home, _ := os.UserHomeDir()
-	datahome, _ := os.Getenv("XDG_DATA_HOME")
+	datahome := os.Getenv("XDG_DATA_HOME")
 	switch runtime.GOOS {
 	case "windows":
 		if appdata := os.Getenv("APPDATA"); appdata != "" {
