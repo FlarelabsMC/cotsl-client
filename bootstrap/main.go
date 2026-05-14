@@ -266,7 +266,7 @@ func resolveInstallDir() string {
 	case "darwin":
 		return filepath.Join(home, "Library", "Application Support", ".cotsl")
 	}
-	if datahome != nil {
+	if datahome != "" {
 	    return filepath.Join(datahome, "cotsl")
 	}
 	return filepath.Join(home + "/.local/share/", "cotsl")
