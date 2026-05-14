@@ -57,6 +57,10 @@ public class MinecraftLauncher {
         cmd.add(java);
         if (agentJar != null && agentJar.exists()) cmd.add("-javaagent:" + agentJar.getAbsolutePath());
         cmd.add("-Dcotsl.minecraft.launch=true");
+        if (LaunchAgent.isWayland()) {
+            cmd.add("-DMC_DEBUG_ENABLED");
+            cmd.add("-DMC_DEBUG_PREFER_WAYLAND");
+        }
 
         if (vanilla.arguments != null) addArgs(cmd, vanilla.arguments.jvm, vars);
         if (neo.arguments != null) addArgs(cmd, neo.arguments.jvm, vars);

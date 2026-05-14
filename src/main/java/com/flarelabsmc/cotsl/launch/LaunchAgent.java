@@ -164,6 +164,9 @@ public class LaunchAgent {
         launchMinecraft();
     }
 
+    public static boolean isWayland() {
+        return System.getenv("XDG_SESSION_TYPE").equals("wayland");
+    }
 
     /**
      * gets the agent/mod JAR itself
