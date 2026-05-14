@@ -257,6 +257,7 @@ func stripTopLevel(p string) string {
 
 func resolveInstallDir() string {
 	home, _ := os.UserHomeDir()
+	datahome, _ := os.Getenv("XDG_DATA_HOME")
 	switch runtime.GOOS {
 	case "windows":
 		if appdata := os.Getenv("APPDATA"); appdata != "" {
@@ -265,7 +266,8 @@ func resolveInstallDir() string {
 	case "darwin":
 		return filepath.Join(home, "Library", "Application Support", ".cotsl")
 	}
-	return filepath.Join(home, ".cotsl")
+	if (datahome != null) return filepath.Join(datahome, "cotsl")
+	return filepath.Join(home + "/.local/share/", "cotsl")
 }
 
 func fatalf(log *os.File, format string, args ...any) {
