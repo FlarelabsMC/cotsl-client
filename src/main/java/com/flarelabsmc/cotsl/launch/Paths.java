@@ -19,7 +19,7 @@ public class Paths {
         File dir;
         if (os.contains("win") && System.getenv("APPDATA") != null) dir = new File(System.getenv("APPDATA"), ".cotsl");
         else if (os.contains("mac")) dir = new File(home, "Library/Application Support/.cotsl");
-        else dir = new File(home, ".cotsl");
+        else dir = new File(home + "/.local/share/", "cotsl");
         dir.mkdirs();
         return dir;
     }
