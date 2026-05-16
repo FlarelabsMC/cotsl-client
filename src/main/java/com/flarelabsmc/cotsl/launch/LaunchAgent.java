@@ -5,12 +5,9 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
-import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -496,25 +493,7 @@ public class LaunchAgent {
         System.exit(exitCode);
     }
 
-    /**
-     * gets all the necessary arguments for relaunch
-     * @param allArgs
-     * @return proper program arguments for relaunch
-     */
-    private static List<String> extractProgramArgs(String[] allArgs) {
-        Set<String> jvmArgSet = new HashSet<>(ManagementFactory.getRuntimeMXBean().getInputArguments());
-        for (int i = 0; i < allArgs.length; i++) {
-            String a = allArgs[i];
-            if (jvmArgSet.contains(a)) continue;
-            if (a.startsWith("-X") || a.startsWith("-D") || a.startsWith("-ea") || a.startsWith("-da")) continue;
-            if (a.startsWith("--add-") || a.startsWith("--enable-") || a.startsWith("--sun-")) continue;
-            if (a.startsWith("@")) continue;
-            return Arrays.asList(Arrays.copyOfRange(allArgs, i, allArgs.length));
-        }
-        return Collections.emptyList();
-    }
-
-    private static long getTotalSystemRamMB() {
+    public static long getTotalSystemRamMB() {
         try {
             OperatingSystemMXBean os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             return os.getTotalMemorySize() / (1024 * 1024);
@@ -527,7 +506,7 @@ public class LaunchAgent {
      * @return
      * @throws IOException
      */
-    private static long computeMaxHeap(long totalRamMB) throws IOException {
+    public static long computeMaxHeap(long totalRamMB) throws IOException {
         InputStream is = LaunchAgent.class.getResourceAsStream("/rec_mem_values.txt");
         if (is == null) throw new FileNotFoundException("rec_mem_values.txt not found in classpath");
 

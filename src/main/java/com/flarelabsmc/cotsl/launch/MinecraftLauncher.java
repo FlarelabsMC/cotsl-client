@@ -57,10 +57,20 @@ public class MinecraftLauncher {
         cmd.add(java);
         if (agentJar != null && agentJar.exists()) cmd.add("-javaagent:" + agentJar.getAbsolutePath());
         cmd.add("-Dcotsl.minecraft.launch=true");
-        if (LaunchAgent.isWayland()) {
+
+        String nvidiaBS = System.getenv("__GL_THREADED_OPTIMIZATIONS");
+        boolean validWaylandSystem = nvidiaBS == null || nvidiaBS.equals("0");
+        if (LaunchAgent.isWayland() && validWaylandSystem) {
             cmd.add("-DMC_DEBUG_ENABLED");
             cmd.add("-DMC_DEBUG_PREFER_WAYLAND");
         }
+
+        long totalRamMB = LaunchAgent.getTotalSystemRamMB();
+        long recommended = totalRamMB > 0 ? LaunchAgent.computeMaxHeap(totalRamMB) : Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        cmd.add("-Xms512M");
+        cmd.add("-Xmx" + recommended + "M");
+
+        cmd.add("-XX:+UseZGC");
 
         if (vanilla.arguments != null) addArgs(cmd, vanilla.arguments.jvm, vars);
         if (neo.arguments != null) addArgs(cmd, neo.arguments.jvm, vars);
