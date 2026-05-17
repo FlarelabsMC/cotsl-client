@@ -177,7 +177,19 @@ public class CharacterSkinGenerator {
         return snip;
     }
 
-    private static NativeImage createSkin(int gender, int headShape, int jawShape, int hairType, int facialHairType, int bodyType, int legType, int shoesType, int skinColor, int eyeColor, int shirtColor, int pantsColor, int hairColor) {
+    private static NativeImage createSkin(int gender,
+                                          int headShape,
+                                          int jawShape,
+                                          int hairType,
+                                          int facialHairType,
+                                          int bodyType,
+                                          int legType,
+                                          int shoesType,
+                                          int skinColor,
+                                          int eyeColor,
+                                          int shirtColor,
+                                          int pantsColor,
+                                          int hairColor) {
         Frankenstein.Monster builder = new Frankenstein.Monster(64, 64);
         NativeImage headTexture = getHeadShape(headShape, skinColor);
         NativeImage hairUnderlayTexture = getHair(hairType);
@@ -197,27 +209,92 @@ public class CharacterSkinGenerator {
         NativeImage rightLegTexture = getLegs(skinColor, false);
         NativeImage leftPantsTexture = getPants(legType, true);
         NativeImage rightPantsTexture = getPants(legType, false);
-        builder.addTexture(headTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(hairUnderlayTexture, 0x2f211a), new Frankenstein.UVLocation(0, 0, 32, 16, 1, false));
-        builder.addTexture(jawTexture, new Frankenstein.UVLocation(0, 0, 32, 16, 1, true));
-        builder.addTexture(eyesTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 0, false));
-        builder.addTexture(eyebrowsTexture, new Frankenstein.UVLocation(0, 0, 8, 8, 1, false));
-        builder.addTexture(bodyTexture, new Frankenstein.UVLocation(16, 16, 24, 16, 0, false));
-        builder.addTexture(leftArmTexture, new Frankenstein.UVLocation(32, 48, 14, 16, 0, false));
-        builder.addTexture(rightArmTexture, new Frankenstein.UVLocation(40, 16, 14, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(shirtTexture, shirtColor), new Frankenstein.UVLocation(16, 16, 24, 16, 1, true));
-        builder.addTexture(Frankenstein.tint(leftSleeveTexture, shirtColor), new Frankenstein.UVLocation(32, 48, 14, 16, 1, false));
-        builder.addTexture(Frankenstein.tint(rightSleeveTexture, shirtColor), new Frankenstein.UVLocation(40, 16, 14, 16, 1, false));
-        builder.addTexture(Frankenstein.tint(leftSleeveOverlayTexture, shirtColor), new Frankenstein.UVLocation(48, 48, 14, 16, 1, true));
-        builder.addTexture(Frankenstein.tint(rightSleeveOverlayTexture, shirtColor), new Frankenstein.UVLocation(40, 32, 14, 16, 1, true));
-        builder.addTexture(Frankenstein.tint(shirtOverlayTexture, shirtColor), new Frankenstein.UVLocation(16, 32, 24, 16, 1, true));
-        builder.addTexture(leftLegTexture, new Frankenstein.UVLocation(16, 48, 16, 16, 0, false));
-        builder.addTexture(rightLegTexture, new Frankenstein.UVLocation(0, 16, 16, 16, 0, false));
-        builder.addTexture(Frankenstein.tint(leftPantsTexture, pantsColor), new Frankenstein.UVLocation(16, 48, 16, 16, 1, false));
-        builder.addTexture(Frankenstein.tint(rightPantsTexture, pantsColor), new Frankenstein.UVLocation(0, 16, 16, 16, 1, false));
-        builder.addTexture(getShoes(shoesType, true), new Frankenstein.UVLocation(0, 48, 16, 16, 1, false));
-        builder.addTexture(getShoes(shoesType, false), new Frankenstein.UVLocation(0, 32, 16, 16, 1, false));
+
+        builder.addTexture(
+                headTexture,
+                new Frankenstein.UVLocation(0, 0, 32, 16, 0, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(
+                        hairUnderlayTexture, 0x2f211a
+                ),
+                new Frankenstein.UVLocation(0, 0, 32, 16, 1, false)
+        );
+        builder.addTexture(
+                jawTexture,
+                new Frankenstein.UVLocation(0, 0, 32, 16, 1, true)
+        );
+        builder.addTexture(
+                eyesTexture,
+                new Frankenstein.UVLocation(0, 0, 8, 8, 0, false)
+        );
+        builder.addTexture(
+                eyebrowsTexture,
+                new Frankenstein.UVLocation(0, 0, 8, 8, 1, false)
+        );
+        builder.addTexture(
+                bodyTexture,
+                new Frankenstein.UVLocation(16, 16, 24, 16, 0, false)
+        );
+        builder.addTexture(
+                leftArmTexture,
+                new Frankenstein.UVLocation(32, 48, 14, 16, 0, false)
+        );
+        builder.addTexture(
+                rightArmTexture,
+                new Frankenstein.UVLocation(40, 16, 14, 16, 0, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(shirtTexture, shirtColor),
+                new Frankenstein.UVLocation(16, 16, 24, 16, 1, true)
+        );
+        builder.addTexture(
+                Frankenstein.tint(leftSleeveTexture, shirtColor),
+                new Frankenstein.UVLocation(32, 48, 14, 16, 1, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(rightSleeveTexture, shirtColor),
+                new Frankenstein.UVLocation(40, 16, 14, 16, 1, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(leftSleeveOverlayTexture, shirtColor),
+                new Frankenstein.UVLocation(48, 48, 14, 16, 1, true)
+        );
+        builder.addTexture(
+                Frankenstein.tint(rightSleeveOverlayTexture, shirtColor),
+                new Frankenstein.UVLocation(40, 32, 14, 16, 1, true)
+        );
+        builder.addTexture(
+                Frankenstein.tint(shirtOverlayTexture, shirtColor),
+                new Frankenstein.UVLocation(16, 32, 24, 16, 1, true)
+        );
+        builder.addTexture(
+                leftLegTexture,
+                new Frankenstein.UVLocation(16, 48, 16, 16, 0, false)
+        );
+        builder.addTexture(
+                rightLegTexture,
+                new Frankenstein.UVLocation(0, 16, 16, 16, 0, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(leftPantsTexture, pantsColor),
+                new Frankenstein.UVLocation(16, 48, 16, 16, 1, false)
+        );
+        builder.addTexture(
+                Frankenstein.tint(rightPantsTexture, pantsColor),
+                new Frankenstein.UVLocation(0, 16, 16, 16, 1, false)
+        );
+        builder.addTexture(
+                getShoes(shoesType, true),
+                new Frankenstein.UVLocation(0, 48, 16, 16, 1, false)
+        );
+        builder.addTexture(
+                getShoes(shoesType, false),
+                new Frankenstein.UVLocation(0, 32, 16, 16, 1, false)
+        );
+
         NativeImage result = builder.build();
+
         headTexture.close();
         hairUnderlayTexture.close();
         jawTexture.close();
@@ -241,6 +318,20 @@ public class CharacterSkinGenerator {
     }
 
     public static NativeImage createSkin(CharData data) {
-        return createSkin(data.gender(), data.headShape(), data.jawShape(), data.hair(), data.facialHair(), data.bodyType(), data.legType(), data.shoesType(), data.skinColor(), data.eyesColor(), data.shirtColor(), data.pantsColor(), data.hairColor());
+        return createSkin(
+                data.gender(),
+                data.headShape(),
+                data.jawShape(),
+                data.hair(),
+                data.facialHair(),
+                data.bodyType(),
+                data.legType(),
+                data.shoesType(),
+                data.skinColor(),
+                data.eyesColor(),
+                data.shirtColor(),
+                data.pantsColor(),
+                data.hairColor()
+        );
     }
 }

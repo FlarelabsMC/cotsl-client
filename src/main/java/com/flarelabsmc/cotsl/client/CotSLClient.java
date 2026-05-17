@@ -5,7 +5,6 @@ import com.flarelabsmc.cotsl.client.particle.FireFlameParticle;
 import com.flarelabsmc.cotsl.client.particle.FireSparkParticle;
 import com.flarelabsmc.cotsl.client.particle.FireSparkParticleGroup;
 import com.flarelabsmc.cotsl.client.render.CotSLEntityRenderers;
-import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerHandsRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyebrowRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerMouthRenderLayer;
@@ -42,16 +41,26 @@ public class CotSLClient {
 
     @SubscribeEvent
     public static void registerModelLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(PlayerEyeRenderLayer.PlayerEyeModel.MODEL_LAYER, PlayerEyeRenderLayer.PlayerEyeModel::createLayer);
-        event.registerLayerDefinition(PlayerEyebrowRenderLayer.PlayerEyebrowModel.MODEL_LAYER, PlayerEyebrowRenderLayer.PlayerEyebrowModel::createLayer);
-        event.registerLayerDefinition(PlayerMouthRenderLayer.PlayerMouthModel.MODEL_LAYER, PlayerMouthRenderLayer.PlayerMouthModel::createLayer);
-        event.registerLayerDefinition(PlayerHandsRenderLayer.LeftHandModel.MODEL_LAYER, PlayerHandsRenderLayer.LeftHandModel::createLayer);
-        event.registerLayerDefinition(PlayerHandsRenderLayer.RightHandModel.MODEL_LAYER, PlayerHandsRenderLayer.RightHandModel::createLayer);
+        event.registerLayerDefinition(
+                PlayerEyeRenderLayer.PlayerEyeModel.MODEL_LAYER,
+                PlayerEyeRenderLayer.PlayerEyeModel::createLayer
+        );
+        event.registerLayerDefinition(
+                PlayerEyebrowRenderLayer.PlayerEyebrowModel.MODEL_LAYER,
+                PlayerEyebrowRenderLayer.PlayerEyebrowModel::createLayer
+        );
+        event.registerLayerDefinition(
+                PlayerMouthRenderLayer.PlayerMouthModel.MODEL_LAYER,
+                PlayerMouthRenderLayer.PlayerMouthModel::createLayer
+        );
     }
 
     @SubscribeEvent
     public static void registerReloadListeners(AddClientReloadListenersEvent event) {
-        event.addListener(Identifier.parse("cotsl:client_resources"), (ResourceManagerReloadListener) CotSLClient::resourceReload);
+        event.addListener(
+                Identifier.parse("cotsl:client_resources"),
+                (ResourceManagerReloadListener) CotSLClient::resourceReload
+        );
     }
 
     private static void resourceReload(ResourceManager manager) {
@@ -76,7 +85,11 @@ public class CotSLClient {
                 () -> {
                     PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
                             ANIMATION_LAYER_ID, 1000,
-                            (a) -> new PlayerAnimationController(a, (_,_,_) -> PlayState.STOP)
+                            (a) -> new PlayerAnimationController(
+                                    a,
+                                    (_,_,_) ->
+                                            PlayState.STOP
+                            )
                     );
                 }
         );

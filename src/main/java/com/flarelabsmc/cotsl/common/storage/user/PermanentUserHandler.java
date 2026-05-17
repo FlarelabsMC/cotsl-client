@@ -31,9 +31,18 @@ public class PermanentUserHandler {
     public static void playerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.getEntity().level().isClientSide()) try {
             UUID uuid = event.getEntity().getUUID();
-            if (PermanentUserStorage.getUserData(uuid) != null) LOGGER.debug("Player data already exists for {}, with {}", uuid, PermanentUserStorage.getUserData(uuid).getCharacterData());
+
+            if (PermanentUserStorage.getUserData(uuid) != null)
+                LOGGER.debug(
+                        "Player data already exists for {}, with {}",
+                        uuid, PermanentUserStorage.getUserData(uuid).getCharacterData()
+                );
+
             PermanentUserStorage.registerPlayer(uuid);
-            PacketDistributor.sendToPlayer((ServerPlayer) event.getEntity(), new SendUserDataPacket(PermanentUserStorage.getUserData(uuid)));
+            PacketDistributor.sendToPlayer(
+                    (ServerPlayer) event.getEntity(),
+                    new SendUserDataPacket(PermanentUserStorage.getUserData(uuid))
+            );
         } catch (SQLException e) {
             LOGGER.error("Failed to register player data", e);
         }

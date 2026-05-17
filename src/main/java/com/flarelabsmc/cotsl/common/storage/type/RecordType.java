@@ -4,6 +4,7 @@ import java.sql.SQLException;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.j256.ormlite.field.FieldType;
 import com.j256.ormlite.field.SqlType;
 import com.j256.ormlite.field.types.BaseDataType;
@@ -17,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RecordType extends BaseDataType {
     private static final RecordType INSTANCE = new RecordType();
     private static final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new com.fasterxml.jackson.module.paramnames.ParameterNamesModule())
+            .registerModule(new ParameterNamesModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)

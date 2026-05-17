@@ -63,7 +63,15 @@ public class FireFlameParticle extends SingleQuadParticle {
         }
 
         @Override
-        public Particle createParticle(SimpleParticleType options, ClientLevel level, double x, double y, double z, double xAux, double yAux, double zAux, RandomSource random) {
+        public Particle createParticle(SimpleParticleType options,
+                                       ClientLevel level,
+                                       double x,
+                                       double y,
+                                       double z,
+                                       double xAux,
+                                       double yAux,
+                                       double zAux,
+                                       RandomSource random) {
             FireFlameParticle particle = new FireFlameParticle(level, x, y, z, xAux, yAux, zAux, this.sprites);
             particle.scale(1.5F);
             return particle;

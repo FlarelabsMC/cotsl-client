@@ -25,6 +25,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -34,25 +35,43 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.UUID;
 
 @Mixin(AvatarRenderer.class)
-public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity> extends LivingEntityRenderer<AvatarlikeEntity, AvatarRenderState, PlayerModel> {
-    private PlayerHairRenderLayer hairLayer;
-    private Identifier hairTexture = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
-    private Identifier hairModel = Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
-    private UUID playerUUID = UUID.randomUUID();
-    private final MixinsClient.AvatarRendererMixin<AvatarlikeEntity> self = new MixinsClient.AvatarRendererMixin<>();
+public abstract class AvatarRendererMixin<
+        AvatarlikeEntity extends Avatar & ClientAvatarEntity
+> extends LivingEntityRenderer<
+        AvatarlikeEntity, AvatarRenderState, PlayerModel
+> {
+    @Unique private PlayerHairRenderLayer hairLayer;
 
-    public AvatarRendererMixin(EntityRendererProvider.Context context, PlayerModel model, float shadowRadius, AvatarRenderState state) {
+    @Unique private Identifier hairTexture =
+            Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
+    @Unique private Identifier hairModel =
+            Identifier.fromNamespaceAndPath("cotsl", "skin/hair/hair_0");
+
+    @Unique private UUID playerUUID = UUID.randomUUID();
+
+    private final MixinsClient.AvatarRendererMixin<AvatarlikeEntity> self =
+            new MixinsClient.AvatarRendererMixin<>();
+
+    public AvatarRendererMixin(EntityRendererProvider.Context context,
+                               PlayerModel model,
+                               float shadowRadius,
+                               AvatarRenderState state) {
         super(context, model, shadowRadius);
     }
 
-    @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
+    @Inject(
+            method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
                     shift = At.Shift.BEFORE
             )
     )
-    private void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci) {
+    private void submit(AvatarRenderState state,
+                        PoseStack poseStack,
+                        SubmitNodeCollector submitNodeCollector,
+                        CameraRenderState camera,
+                        CallbackInfo ci) {
         UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
         ClientPacketListener listener = Minecraft.getInstance().getConnection();
         if (listener == null) return;
@@ -65,23 +84,49 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         }
     }
 
-    @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V", at = @At("HEAD"))
-    private void submit2(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci) {
+    @Inject(
+            method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
+            at = @At("HEAD")
+    )
+    private void submit2(AvatarRenderState state,
+                         PoseStack poseStack,
+                         SubmitNodeCollector submitNodeCollector,
+                         CameraRenderState camera,
+                         CallbackInfo ci) {
         self.submit(state, poseStack, submitNodeCollector, camera, ci);
     }
 
-    @Inject(method = "<init>", at = @At("RETURN"))
+    @Inject(
+            method = "<init>",
+            at = @At("RETURN")
+    )
     private void init(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
-        PlayerHairRenderLayer hairLayer = new PlayerHairRenderLayer((AvatarRenderer<?>) (Object) this, new HairModel(hairTexture, hairModel));
-        PlayerEyebrowRenderLayer<AvatarRenderState, PlayerModel> eyebrowLayer = new PlayerEyebrowRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet());
+        PlayerHairRenderLayer hairLayer =
+                new PlayerHairRenderLayer(
+                        (AvatarRenderer<?>) (Object) this,
+                        new HairModel(hairTexture, hairModel)
+                );
+        PlayerEyebrowRenderLayer<AvatarRenderState, PlayerModel> eyebrowLayer =
+                new PlayerEyebrowRenderLayer<>(
+                        (AvatarRenderer<?>) (Object) this,
+                        context.getModelSet()
+                );
+
         this.addLayer(new PlayerEyeRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(new PlayerMouthRenderLayer<>((AvatarRenderer<?>) (Object) this, context.getModelSet()));
         this.addLayer(hairLayer);
         this.addLayer(eyebrowLayer);
+
         this.hairLayer = hairLayer;
     }
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;bakeLayer(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;"))
+    @Redirect(
+            method = "<init>",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;bakeLayer(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;"
+            )
+    )
     private static ModelPart setSlim(EntityRendererProvider.Context instance, ModelLayerLocation layer) {
         return instance.bakeLayer(ModelLayers.PLAYER_SLIM);
     }
@@ -91,7 +136,11 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
         self.extractRenderState(entity, state, partialTick, ci, playerUUID, hairLayer);
     }
 
-    @Inject(method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;", at = @At("RETURN"), cancellable = true)
+    @Inject(
+            method = "getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;",
+            at = @At("RETURN"),
+            cancellable = true
+    )
     private void getTextureLocation(AvatarRenderState state, CallbackInfoReturnable<Identifier> cir) {
         cir.setReturnValue(Identifier.parse("cotsl:avatars/" + ((AvatarRenderStateDuck) state).getUUID()));
     }

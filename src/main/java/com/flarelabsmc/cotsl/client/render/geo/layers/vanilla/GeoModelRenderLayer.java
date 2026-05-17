@@ -15,7 +15,10 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 
-public abstract class GeoModelRenderLayer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends RenderLayer<S, M> implements GeoAnimatable {
+public abstract class GeoModelRenderLayer<
+        S extends HumanoidRenderState,
+        M extends HumanoidModel<S>
+> extends RenderLayer<S, M> implements GeoAnimatable {
     private final GeoObjectRenderer<GeoAnimatable, GeoModel<?>, GeoRenderState> renderer;
     private final GeoModel<GeoAnimatable> model;
 
@@ -23,7 +26,8 @@ public abstract class GeoModelRenderLayer<S extends HumanoidRenderState, M exten
         super(renderer);
         this.renderer = new GeoObjectRenderer<>(model) {
             @Override
-            public void adjustModelBonesForRender(RenderPassInfo<GeoRenderState> renderPassInfo, BoneSnapshots snapshots) {
+            public void adjustModelBonesForRender(RenderPassInfo<GeoRenderState> renderPassInfo,
+                                                  BoneSnapshots snapshots) {
                 adjustBones(renderPassInfo, snapshots);
             }
         };
@@ -33,12 +37,20 @@ public abstract class GeoModelRenderLayer<S extends HumanoidRenderState, M exten
     /**
      * note: do NOT push or pop the pose stack within this method
      */
-    public abstract PoseStack modifyPose(PoseStack poseStack, S renderState, float yRot, float xRot);
+    public abstract PoseStack modifyPose(PoseStack poseStack,
+                                         S renderState,
+                                         float yRot,
+                                         float xRot);
 
     public void adjustBones(RenderPassInfo<GeoRenderState> renderPassInfo, BoneSnapshots snapshots) {};
 
     @Override
-    public void submit(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, S s, float yRot, float xRot) {
+    public void submit(PoseStack poseStack,
+                       SubmitNodeCollector submitNodeCollector,
+                       int i,
+                       S s,
+                       float yRot,
+                       float xRot) {
         CameraRenderState cstate = Minecraft.getInstance().gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
         poseStack.pushPose();
 

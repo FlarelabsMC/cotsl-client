@@ -29,7 +29,12 @@ public class TrackableSoundInstance extends AbstractSoundInstance implements Tic
     private long timePaused = 0;
     private long pausedSince = 0;
 
-    public TrackableSoundInstance(Holder<SoundEvent> sound, SoundSource source, @Nullable Entity entity, double fallbackX, double fallbackY, double fallbackZ) {
+    public TrackableSoundInstance(Holder<SoundEvent> sound,
+                                  SoundSource source,
+                                  @Nullable Entity entity,
+                                  double fallbackX,
+                                  double fallbackY,
+                                  double fallbackZ) {
         super(sound.value(), source, SoundInstance.createUnseededRandom());
         this.startTime = System.currentTimeMillis();
         this.trackingEntity = entity;
@@ -59,7 +64,9 @@ public class TrackableSoundInstance extends AbstractSoundInstance implements Tic
      * */
     public double getDuration() throws NoSuchElementException {
         Identifier originalId = this.sound.getLocation();
-        Identifier id = Identifier.fromNamespaceAndPath(originalId.getNamespace(), "sounds/" + originalId.getPath() + ".ogg");
+        Identifier id =
+                Identifier.fromNamespaceAndPath(originalId.getNamespace(), "sounds/" + originalId.getPath() + ".ogg");
+
         try {
             InputStream stream = Minecraft.getInstance().getResourceManager().getResource(id).get().open();
             int rate = -1;
@@ -137,7 +144,10 @@ public class TrackableSoundInstance extends AbstractSoundInstance implements Tic
         try {
             return elapsed > getDuration() * 1000f;
         } catch (NoSuchElementException e) {
-            CotSL.LOGGER.warn("Could not determine duration of sound {}, assuming it is not stopped.", this.sound.getLocation(), e);
+            CotSL.LOGGER.warn(
+                    "Could not determine duration of sound {}, assuming it is not stopped.",
+                    this.sound.getLocation(), e
+            );
             return false;
         }
     }

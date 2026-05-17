@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class LivingEntityMixin {
     private final MixinsCommon.LivingEntityMixin self = new MixinsCommon.LivingEntityMixin();
 
-    @Redirect(method = "handleDamageEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;playSound(Lnet/minecraft/sounds/SoundEvent;FF)V"))
+    @Redirect(method = "handleDamageEvent", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/LivingEntity;playSound(Lnet/minecraft/sounds/SoundEvent;FF)V"
+    ))
     private void handleDamageEvent(LivingEntity instance, SoundEvent soundEvent, float volume, float pitch) {
         self.handleDamageEvent(instance, soundEvent, volume, pitch);
     }

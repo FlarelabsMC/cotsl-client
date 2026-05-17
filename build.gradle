@@ -15,6 +15,16 @@ tasks.named('wrapper', Wrapper).configure {
 
 version = mod_version
 group = mod_group_id
+def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
+def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
+    def os = System.getProperty('os.name').toLowerCase()
+    if (os.contains('win')) return 'windows-x64'
+    if (os.contains('mac')) return 'macos'
+    return 'linux-x64'
+}()
+def qtNativesGenDirWindows = layout.buildDirectory.dir('generated/qt-natives-windows')
+def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos')
+
 
 repositories {
     mavenCentral()
@@ -48,15 +58,6 @@ base {
     archivesName = mod_id
 }
 
-def qtVersion = '6.11.0'
-def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
-def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
-    def os = System.getProperty('os.name').toLowerCase()
-    if (os.contains('win')) return 'windows-x64'
-    if (os.contains('mac')) return 'macos'
-    return 'linux-x64'
-}()
-
 allPlatforms.each { platform ->
     configurations.create("embedNative_${platform.replace('-', '_')}") {
         canBeResolved = true
@@ -81,10 +82,8 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-//            jvmArgument '-javaagent:spark-1.10.169-standalone-agent.jar'
             jvmArgument '-XX:+UnlockExperimentalVMOptions'
             jvmArgument '-XX:+UseZGC'
-//            jvmArgument "-javaagent:cotsl-1.0.0-windows-x64.jar"
 
             def qtDir = System.getenv('QTDIR')
             if (qtDir) environment 'PATH', (System.getenv('PATH') ?: '') + File.pathSeparator + new File(qtDir, 'bin').absolutePath
@@ -151,14 +150,14 @@ dependencies {
     jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
 
     // qtjambi for launcher ui
-    embed "io.qtjambi:qtjambi:${qtVersion}"
-    embed "io.qtjambi:qtjambi-qml:${qtVersion}"
-    embed "io.qtjambi:qtjambi-quick:${qtVersion}"
+    embed "io.qtjambi:qtjambi:${qt_version}"
+    embed "io.qtjambi:qtjambi-qml:${qt_version}"
+    embed "io.qtjambi:qtjambi-quick:${qt_version}"
     allPlatforms.each { platform ->
         def cfg = "embedNative_${platform.replace('-', '_')}"
-        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qt_version}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qt_version}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qt_version}")
     }
 
     // launcher auth
@@ -173,8 +172,6 @@ dependencies {
 }
 
 tasks.register('downloadRhubarb') {
-//    group = 'setup'
-
     def rhubarbDir = file('rhubarb')
     def rhubarbExe = new File(rhubarbDir, 'rhubarb')
     def buildDir = layout.buildDirectory.asFile.get()
@@ -316,9 +313,6 @@ tasks.register('compileShaders') {
         }
     }
 }
-
-def qtNativesGenDirWindows = layout.buildDirectory.dir('generated/qt-natives-windows')
-def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos')
 
 tasks.register('bundleQtRuntimeWindows') {
     group = 'build'
@@ -492,10 +486,6 @@ tasks.register('bundleQtRuntimeMacOS') {
 
 processResources.dependsOn compileShaders
 
-processResources {
-//    dependsOn generateDialogueMetadata
-}
-
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
@@ -576,12 +566,6 @@ allPlatforms.each { platform ->
             attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
         }
     }
-}
-
-tasks.register('jarAllPlatforms') {
-    group = 'build'
-    description = 'Assembles mod JARs for all three platforms'
-    dependsOn allPlatforms.collect { "jar_${it.replace('-', '_')}" }
 }
 
 def goBin = project.findProperty('goBin') ?: 'go'

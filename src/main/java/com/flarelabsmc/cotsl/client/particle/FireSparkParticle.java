@@ -17,10 +17,14 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 
 public class FireSparkParticle extends SingleQuadParticle {
-    public static final ParticleRenderType FIRE_SPARK_RENDER_TYPE = new ParticleRenderType("cotsl:fire_spark");
+    public static final ParticleRenderType FIRE_SPARK_RENDER_TYPE =
+            new ParticleRenderType("cotsl:fire_spark");
     private static final float LOD_DIVISOR = 500.0f;
+
     private static final int TRAIL_LENGTH = 12;
-    private static final int fromR = 1, fromG = 1, fromB = 1, toR = 1, toG = 173 / 255, toB = 44 / 255;
+    private static final int
+            fromR = 1, fromG = 1, fromB = 1,
+            toR = 1, toG = 173 / 255, toB = 44 / 255;
 
     private float bounce;
     private boolean virgin = true;
@@ -28,8 +32,14 @@ public class FireSparkParticle extends SingleQuadParticle {
     private float prevSpeed, currentSpeed;
     private float brightness = 3.0f;
 
-    private final float[] trailX = new float[TRAIL_LENGTH], trailY  = new float[TRAIL_LENGTH], trailZ = new float[TRAIL_LENGTH];
-    private final float[] trailDX = new float[TRAIL_LENGTH], trailDY = new float[TRAIL_LENGTH], trailDZ = new float[TRAIL_LENGTH];
+    private final float[]
+            trailX = new float[TRAIL_LENGTH],
+            trailY = new float[TRAIL_LENGTH],
+            trailZ = new float[TRAIL_LENGTH];
+    private final float[]
+            trailDX = new float[TRAIL_LENGTH],
+            trailDY = new float[TRAIL_LENGTH],
+            trailDZ = new float[TRAIL_LENGTH];
     private int trailFill;
 
     private final Vector3f prevDir = new Vector3f();
@@ -122,7 +132,6 @@ public class FireSparkParticle extends SingleQuadParticle {
         if (sCurrDir.length() < 0.0001f) return;
         sCurrDir.normalize();
 
-        // i neeeeed thiiiiis
         float baseHalf = quadSize * (1.0f + Mth.lerp(partialTickTime, prevSpeed, currentSpeed)) * 0.5f;
         int light = getLightCoords(partialTickTime);
         float sv0 = sprite.getV0(), sv1 = sprite.getV1(), dv = sv0 - sv1;
@@ -203,7 +212,11 @@ public class FireSparkParticle extends SingleQuadParticle {
         }
     }
 
-    private static void rotFromDir(Vector3f dir, Vector3f camRight, Vector3f camUp, Camera camera, Quaternionf out) {
+    private static void rotFromDir(Vector3f dir,
+                                   Vector3f camRight,
+                                   Vector3f camUp,
+                                   Camera camera,
+                                   Quaternionf out) {
         out.set(camera.rotation()).rotateZ((float) Math.atan2(-dir.dot(camRight), dir.dot(camUp)));
     }
 

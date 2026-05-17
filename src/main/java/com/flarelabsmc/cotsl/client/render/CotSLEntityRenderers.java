@@ -21,33 +21,43 @@ public class CotSLEntityRenderers {
 
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(EntityRegistry.WAYFINDER_BEAM.get(), ctx -> new WayfinderBeamEntityRenderer<>(ctx, EntityRegistry.WAYFINDER_BEAM.get()));
-        event.registerEntityRenderer(EntityType.HORSE, ReplacedHorseEntityRenderer::new);
+        event.registerEntityRenderer(
+                EntityRegistry.WAYFINDER_BEAM.get(),
+                ctx ->
+                        new WayfinderBeamEntityRenderer<>(
+                                ctx, EntityRegistry.WAYFINDER_BEAM.get()
+                        )
+        );
+        event.registerEntityRenderer(
+                EntityType.HORSE, ReplacedHorseEntityRenderer::new
+        );
     }
 
     public static final RenderPipeline.Snippet ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET;
     public static final RenderPipeline ENTITY_CUTOUT_NO_CULL_EMISSIVE;
 
     static {
-        ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_LIGHT_DIR_SNIPPET)
-                .withVertexShader("core/entity")
-                .withFragmentShader("core/entity")
-                .withSampler("Sampler0")
-                .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
-                .withShaderDefine("EMISSIVE")
-                .withShaderDefine("NO_OVERLAY")
-                .withShaderDefine("NO_CARDINAL_LIGHTING")
-                .buildSnippet();
+        ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET =
+                RenderPipeline.builder(RenderPipelines.MATRICES_FOG_LIGHT_DIR_SNIPPET)
+                        .withVertexShader("core/entity")
+                        .withFragmentShader("core/entity")
+                        .withSampler("Sampler0")
+                        .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
+                        .withShaderDefine("EMISSIVE")
+                        .withShaderDefine("NO_OVERLAY")
+                        .withShaderDefine("NO_CARDINAL_LIGHTING")
+                        .buildSnippet();
 
-        ENTITY_CUTOUT_NO_CULL_EMISSIVE = RenderPipeline.builder(ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET)
-                .withLocation("pipeline/entity_cutout_no_cull_emissive")
-                .withShaderDefine("ALPHA_CUTOUT", 0.1f)
-                .withSampler("Sampler0")
-                .withSampler("Sampler2")
-                .withCull(false)
-                .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
-                .withDepthStencilState(DepthStencilState.DEFAULT)
-                .build();
+        ENTITY_CUTOUT_NO_CULL_EMISSIVE =
+                RenderPipeline.builder(ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET)
+                        .withLocation("pipeline/entity_cutout_no_cull_emissive")
+                        .withShaderDefine("ALPHA_CUTOUT", 0.1f)
+                        .withSampler("Sampler0")
+                        .withSampler("Sampler2")
+                        .withCull(false)
+                        .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
+                        .withDepthStencilState(DepthStencilState.DEFAULT)
+                        .build();
     }
 
     @SubscribeEvent

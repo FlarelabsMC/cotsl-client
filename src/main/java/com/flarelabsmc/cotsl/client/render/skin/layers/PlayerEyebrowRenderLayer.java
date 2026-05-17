@@ -22,7 +22,10 @@ import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 
-public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends PlayerModel> extends RenderLayer<S, M> {
+public class PlayerEyebrowRenderLayer<
+        S extends AvatarRenderState,
+        M extends PlayerModel
+> extends RenderLayer<S, M> {
     private final PlayerEyebrowModel eyebrowModel;
 
     public PlayerEyebrowRenderLayer(RenderLayerParent<S, M> renderer, EntityModelSet set) {
@@ -31,16 +34,37 @@ public class PlayerEyebrowRenderLayer<S extends AvatarRenderState, M extends Pla
     }
 
     @Override
-    public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
+    public void submit(PoseStack stack,
+                       SubmitNodeCollector collector,
+                       int packedLight,
+                       S state,
+                       float yRot,
+                       float xRot) {
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
-        collector.submitModel(eyebrowModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
+        collector.submitModel(
+                eyebrowModel,
+                state,
+                stack,
+                RenderTypes.entityTranslucent(
+                        Identifier.parse("cotsl:avatars/" + uuid)
+                ),
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                -1,
+                null,
+                state.outlineColor,
+                null
+        );
         stack.popPose();
     }
 
     public static class PlayerEyebrowModel extends EntityModel<AvatarRenderState> {
-        public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Identifier.parse("cotsl:eyebrows"), "main");
+        public static final ModelLayerLocation MODEL_LAYER =
+                new ModelLayerLocation(
+                        Identifier.parse("cotsl:eyebrows"), "main"
+                );
         private final ModelPart leftEyebrow, rightEyebrow;
 
         public PlayerEyebrowModel(ModelPart root) {

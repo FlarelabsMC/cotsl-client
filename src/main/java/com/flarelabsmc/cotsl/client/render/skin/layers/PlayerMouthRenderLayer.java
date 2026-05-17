@@ -37,7 +37,12 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
     }
 
     @Override
-    public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
+    public void submit(PoseStack stack,
+                       SubmitNodeCollector collector,
+                       int packedLight,
+                       S state,
+                       float yRot,
+                       float xRot) {
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         AvatarRenderStateDuck ext = (AvatarRenderStateDuck) state;
@@ -50,22 +55,27 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
                         Minecraft.getInstance().player, 0, 0, 0
                 );
                 Minecraft.getInstance().getSoundManager().play(sound);
+
                 currentSound = sound;
             }
         }
+
         int pose = 0;
+
         if (currentSound != null) {
             float soundProgress = currentSound.getProgress();
+
             pose = SpeechData.getMouthPoseAtTime("test_2", soundProgress);
             ext.setMouthPose(pose);
+
             if (currentSound.isStopped()) {
                 currentSound = null;
                 ext.setMouthPose(0);
             }
         }
-        if (state.hasRedOverlay) {
-            pose = 1;
-        }
+
+        if (state.hasRedOverlay) pose = 1;
+
         PermanentUser user = NetworkHandler.getCachedUserData(ext.getUUID());
         if (user == null) {
             stack.popPose();
@@ -80,21 +90,23 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
     }
 
     public static class PlayerMouthModel extends EntityModel<AvatarRenderState> {
-        public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Identifier.parse("cotsl:mouth"), "main");
+        public static final ModelLayerLocation MODEL_LAYER =
+                new ModelLayerLocation(
+                        Identifier.parse("cotsl:mouth"), "main"
+                );
         ModelPart[] mouthPoses;
 
         public PlayerMouthModel(ModelPart root) {
             super(root);
 
             this.mouthPoses = new ModelPart[9];
-            for (int i = 0; i < 9; i++) {
-                this.mouthPoses[i] = root.getChild("mouth_" + i);
-            }
+            for (int i = 0; i < 9; i++) this.mouthPoses[i] = root.getChild("mouth_" + i);
         }
 
         public static LayerDefinition createLayer() {
             MeshDefinition def = new MeshDefinition();
             PartDefinition root = def.getRoot();
+
             for (int i = 0; i < 9; i++) {
                 root.addOrReplaceChild(
                         "mouth_" + i,

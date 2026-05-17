@@ -54,8 +54,18 @@ public abstract class AbstractHorseMixin extends Animal implements AbstractHorse
     }
 
     @Inject(method = "getPassengerAttachmentPoint", at = @At("RETURN"), cancellable = true)
-    private void getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale, CallbackInfoReturnable<Vec3> cir) {
-        self.getPassengerAttachmentPoint((AbstractHorse) (Object) this, standAnimO, passenger, dimensions, scale, cir);
+    private void getPassengerAttachmentPoint(Entity passenger,
+                                             EntityDimensions dimensions,
+                                             float scale,
+                                             CallbackInfoReturnable<Vec3> cir) {
+        self.getPassengerAttachmentPoint(
+                (AbstractHorse) (Object) this,
+                standAnimO,
+                passenger,
+                dimensions,
+                scale,
+                cir
+        );
     }
 
     @Override

@@ -28,17 +28,8 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
     private float eyeTargetX;
     private float eyeCurrentX;
-//    private float eyeCurrentY;
     private int idleTimer;
     private int nextMoveTick;
-
-//    private float lookTargetX;
-//    private float lookCurrentX;
-//    private float lookTargetY;
-//    private float lookCurrentY;
-//    private int lookDuration;
-//    private int lookTimer;
-//    private int lookNext;
 
     private long then = System.currentTimeMillis();
 
@@ -56,8 +47,6 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
             idleTimer = 0;
             nextMoveTick = 0;
             eyeTargetX = 0;
-//            lookTargetX = 0;
-//            lookDuration = 0;
         } else idleTimer += (int)(now - then);
 
         then = now;
@@ -67,44 +56,30 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
                 eyeTargetX = (float)(Math.random() * 0.06f - 0.03f);
                 nextMoveTick = (idleTimer + 60 + (int)(Math.random() * 5000));
             }
-
-//            if (lookDuration == 0 && idleTimer >= lookNext) {
-//                if (Math.random() < 0.8f) {
-//                    lookTargetX = (float)(Math.random() < 0.5
-//                            ? 0.15f + Math.random() * 0.1f
-//                            : -(0.15f + Math.random() * 0.1f)
-//                    );
-//                    lookTargetY = (float)(Math.random() * 10f - 5f);
-//                    lookDuration = 80 + (int)(Math.random() * 60);
-//                    lookTimer = 0;
-//                }
-//                lookNext = idleTimer + 100 + (int)(Math.random() * 100);
-//            }
-
-//            if (lookDuration > 0) {
-//                lookTimer++;
-//                if (lookTimer >= lookDuration) {
-//                    lookTargetX = 0;
-//                    lookDuration = 0;
-//                    lookTimer = 0;
-//                }
-//            }
         }
 
 
-//        float headLerp = 1f - (float) Math.pow(1f - 0.5f, delta);
         float eyeLerp = 1f - (float) Math.pow(1f - 0.5f, delta);
-//        lookCurrentX = Mth.lerp(headLerp, lookCurrentX, lookTargetX);
-//        lookCurrentY = Mth.lerp(headLerp, lookCurrentY, lookTargetY);
         eyeCurrentX  = Mth.lerp(eyeLerp,  eyeCurrentX,  eyeTargetX);
-        eyeModel.setIdleOffset(eyeCurrentX); // + lookCurrentX);
-//        state.yRot = Mth.wrapDegrees(state.yRot + eyeCurrentX * 360);
-//        state.xRot = Mth.wrapDegrees(state.xRot + lookCurrentY);
+        eyeModel.setIdleOffset(eyeCurrentX);
 
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
-        collector.submitModel(eyeModel, state, stack, RenderTypes.entityTranslucent(Identifier.parse("cotsl:avatars/" + uuid)), packedLight, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
+        collector.submitModel(
+                eyeModel,
+                state,
+                stack,
+                RenderTypes.entityTranslucent(
+                        Identifier.parse("cotsl:avatars/" + uuid)
+                ),
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                -1,
+                null,
+                state.outlineColor,
+                null
+        );
         stack.popPose();
     }
 

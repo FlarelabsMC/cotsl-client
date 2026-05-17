@@ -20,10 +20,16 @@ public class SpeechData {
             Optional<Resource> resource = Minecraft.getInstance().getResourceManager()
                     .getResource(Identifier.parse("cotsl:speech.json"));
             if (resource.isEmpty()) return;
-            JsonObject root = JsonParser.parseReader(new InputStreamReader(resource.get().open())).getAsJsonObject();
+
+            JsonObject root =
+                    JsonParser.parseReader(
+                            new InputStreamReader(resource.get().open())
+                    ).getAsJsonObject();
+
             root.entrySet().forEach(entry -> {
                 JsonObject data = entry.getValue().getAsJsonObject();
                 List<Cue> cues = new ArrayList<>();
+
                 data.getAsJsonArray("mouthCues").forEach(cue -> {
                     JsonObject c = cue.getAsJsonObject();
                     cues.add(new Cue(
@@ -32,6 +38,7 @@ public class SpeechData {
                             CUES.getOrDefault(c.get("value").getAsString(), 8)
                     ));
                 });
+
                 DATA.put(entry.getKey(), new Speech(
                         data.get("sound").getAsString(),
                         data.get("duration").getAsFloat(),
@@ -46,11 +53,10 @@ public class SpeechData {
     public static int getMouthPoseAtTime(String key, float time) {
         Speech speech = DATA.get(key);
         if (speech == null) return 8;
-        for (Cue cue : speech.mouthCues) {
-            if (time >= cue.start && time < cue.end) {
-                return cue.pose;
-            }
-        }
+
+        for (Cue cue : speech.mouthCues)
+            if (time >= cue.start && time < cue.end) return cue.pose;
+
         return 8;
     }
 

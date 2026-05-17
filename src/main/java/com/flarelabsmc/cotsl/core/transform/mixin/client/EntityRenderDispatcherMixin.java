@@ -14,7 +14,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class EntityRenderDispatcherMixin {
     private final MixinsClient.EntityRenderDispatcherMixin self = new MixinsClient.EntityRenderDispatcherMixin();
 
-    @Redirect(method = "submit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitFlame(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lorg/joml/Quaternionf;)V"))
+    @Redirect(method = "submit", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitFlame(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lorg/joml/Quaternionf;)V"
+    ))
     private void submit(SubmitNodeCollector instance, PoseStack poseStack, EntityRenderState entityRenderState, Quaternionf quaternionf) {
         self.submit_submitFlame(poseStack, entityRenderState, quaternionf);
     }

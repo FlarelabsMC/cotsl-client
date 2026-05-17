@@ -15,19 +15,26 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
-public class WayfinderBeamEntityRenderer<T extends Entity & GeoAnimatable, R extends EntityRenderState & GeoRenderState> extends GeoEntityRenderer<WayfinderBeam, R> {
-    public WayfinderBeamEntityRenderer(EntityRendererProvider.Context context, EntityType<WayfinderBeam> entityType) {
+public class WayfinderBeamEntityRenderer<
+        T extends Entity & GeoAnimatable,
+        R extends EntityRenderState & GeoRenderState
+> extends GeoEntityRenderer<WayfinderBeam, R> {
+    public WayfinderBeamEntityRenderer(EntityRendererProvider.Context context,
+                                       EntityType<WayfinderBeam> entityType) {
         super(context, entityType);
     }
 
     public final Identifier TEXTURE = Identifier.fromNamespaceAndPath("cotsl", "textures/entity/wayfinder_beam.png");
 
-    public final RenderType RENDER_TYPE = RenderType.create("entity_cutout_no_cull_emissive", RenderSetup.builder(CotSLEntityRenderers.ENTITY_CUTOUT_NO_CULL_EMISSIVE)
-            .withTexture("Sampler0", TEXTURE)
-            .affectsCrumbling()
-            .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
-            .createRenderSetup()
-    );
+    public final RenderType RENDER_TYPE =
+            RenderType.create(
+                    "entity_cutout_no_cull_emissive",
+                    RenderSetup.builder(CotSLEntityRenderers.ENTITY_CUTOUT_NO_CULL_EMISSIVE)
+                            .withTexture("Sampler0", TEXTURE)
+                            .affectsCrumbling()
+                            .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                            .createRenderSetup()
+            );
 
     @Override
     public GeoModel<WayfinderBeam> getGeoModel() {

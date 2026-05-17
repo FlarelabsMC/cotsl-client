@@ -8,7 +8,10 @@ import net.minecraft.resources.Identifier;
 
 import java.util.function.Supplier;
 
-public class FireRenderLayer<S extends EntityRenderState, M extends EntityModel<S>> extends EnergySwirlLayer<S, M> {
+public class FireRenderLayer<
+        S extends EntityRenderState,
+        M extends EntityModel<S>
+> extends EnergySwirlLayer<S, M> {
     private final Supplier<M> model;
 
     public FireRenderLayer(RenderLayerParent<S, M> renderer, Supplier<M> model) {
@@ -36,7 +39,10 @@ public class FireRenderLayer<S extends EntityRenderState, M extends EntityModel<
         return model.get();
     }
 
-    public static <S extends EntityRenderState, M extends EntityModel<S>> FireRenderLayer<S, M> createFor(S state, M model) {
+    public static <
+            S extends EntityRenderState,
+            M extends EntityModel<S>
+    > FireRenderLayer<S, M> createFor(S state, M model) {
         return new FireRenderLayer<>(() -> model, () -> model);
     }
 }

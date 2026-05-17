@@ -33,7 +33,10 @@ public abstract class LivingEntityRendererMixin<
         addLayer(new FireRenderLayer<>(this, this::getModel));
     }
 
-    @Redirect(method = "getOverlayCoords", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/OverlayTexture;v(Z)I"))
+    @Redirect(method = "getOverlayCoords", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/texture/OverlayTexture;v(Z)I")
+    )
     private static int getOverlayCoords(boolean hurtOverlay) {
         return OverlayTexture.v(false);
     }

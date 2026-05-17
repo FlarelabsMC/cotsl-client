@@ -18,7 +18,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(GrindstoneBlock.class)
 public class GrindstoneBlockMixin {
     @Inject(method = "useWithoutItem", at = @At("HEAD"), cancellable = true)
-    private void useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
+    private void useWithoutItem(BlockState state,
+                                Level level,
+                                BlockPos pos,
+                                Player player,
+                                BlockHitResult hitResult,
+                                CallbackInfoReturnable<InteractionResult> cir) {
         for (int i = 0; i < 100; i++) {
             double fv = 0.04 + level.getRandom().nextDouble() * 0.04;
             if (hitResult instanceof BlockHitResult result) level.addParticle(
