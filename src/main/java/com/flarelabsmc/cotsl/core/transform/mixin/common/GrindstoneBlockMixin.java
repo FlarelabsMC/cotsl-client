@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.core.transform.mixin.common;
 
-import com.flarelabsmc.cotsl.client.particle.options.FireSparkParticleOptions;
+import com.flarelabsmc.cotsl.client.particle.options.SparkParticleOptions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -27,7 +27,7 @@ public class GrindstoneBlockMixin {
         for (int i = 0; i < 100; i++) {
             double fv = 0.04 + level.getRandom().nextDouble() * 0.04;
             if (hitResult instanceof BlockHitResult result) level.addParticle(
-                    new FireSparkParticleOptions(
+                    new SparkParticleOptions(
                             40 + level.getRandom().nextInt(80),
                             4f
                     ),

@@ -6,10 +6,10 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
 
-public class FireFlameParticle extends SingleQuadParticle {
+public class EmberParticle extends SingleQuadParticle {
     private final SpriteSet sprites;
 
-    public FireFlameParticle(
+    public EmberParticle(
             ClientLevel level,
             double x, double y, double z,
             double xd, double yd, double zd,
@@ -55,10 +55,10 @@ public class FireFlameParticle extends SingleQuadParticle {
         return Layer.TRANSLUCENT;
     }
 
-    public static class FireFlameProvider implements ParticleProvider<SimpleParticleType> {
+    public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
-        public FireFlameProvider(SpriteSet sprites) {
+        public Provider(SpriteSet sprites) {
             this.sprites = sprites;
         }
 
@@ -72,7 +72,7 @@ public class FireFlameParticle extends SingleQuadParticle {
                                        double yAux,
                                        double zAux,
                                        RandomSource random) {
-            FireFlameParticle particle = new FireFlameParticle(level, x, y, z, xAux, yAux, zAux, this.sprites);
+            EmberParticle particle = new EmberParticle(level, x, y, z, xAux, yAux, zAux, this.sprites);
             particle.scale(1.5F);
             return particle;
         }

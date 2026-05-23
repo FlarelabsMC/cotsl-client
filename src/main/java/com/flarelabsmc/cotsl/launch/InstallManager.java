@@ -25,11 +25,7 @@ public class InstallManager {
         log("[CotSL-Installer] Resolving Minecraft directory...");
         File mcDir = Paths.resolveMcDir(state);
         log("[CotSL-Installer] Using minecraft directory at " + mcDir);
-        if (mcDir == null) {
-            logErr("[CotSL] Could not find Minecraft directory. Aborting install.");
-            System.exit(1);
-            return;
-        }
+
         String reqNeoVer = getReqNeoVer();
         String reqSelfVer = getReqSelfVer();
         log("[CotSL-Installer] Required versions: NeoForge=" + reqNeoVer + ",  self=" + reqSelfVer);
@@ -50,7 +46,8 @@ public class InstallManager {
                 NeoForgeInstaller.placeNeoVersionJson(jarFile, profile.json, reqNeoVer, mcDir);
 
                 neoVersionJson = NeoForgeInstaller.getNeoVersionJson(reqNeoVer, mcDir);
-                if (neoVersionJson == null) throw new RuntimeException("Failed to read version.json from NeoForge installer");
+                if (neoVersionJson == null)
+                    throw new RuntimeException("Failed to read version.json from NeoForge installer");
             }
         }
 

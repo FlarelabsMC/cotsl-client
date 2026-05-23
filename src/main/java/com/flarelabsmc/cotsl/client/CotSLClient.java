@@ -1,9 +1,9 @@
 package com.flarelabsmc.cotsl.client;
 
 import com.flarelabsmc.cotsl.client.animation.PlayerDefaultAnimationHandler;
-import com.flarelabsmc.cotsl.client.particle.FireFlameParticle;
-import com.flarelabsmc.cotsl.client.particle.FireSparkParticle;
-import com.flarelabsmc.cotsl.client.particle.FireSparkParticleGroup;
+import com.flarelabsmc.cotsl.client.particle.EmberParticle;
+import com.flarelabsmc.cotsl.client.particle.SparkParticle;
+import com.flarelabsmc.cotsl.client.particle.SparkParticleGroup;
 import com.flarelabsmc.cotsl.client.render.CotSLEntityRenderers;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyeRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.PlayerEyebrowRenderLayer;
@@ -70,13 +70,13 @@ public class CotSLClient {
 
     @SubscribeEvent
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ParticleRegistry.FIRE_FLAME.get(), FireFlameParticle.FireFlameProvider::new);
-        event.registerSpriteSet(ParticleRegistry.FIRE_SPARK.get(), FireSparkParticle.FireSparkProvider::new);
+        event.registerSpriteSet(ParticleRegistry.EMBER.get(), EmberParticle.Provider::new);
+        event.registerSpriteSet(ParticleRegistry.SPARK.get(), SparkParticle.Provider::new);
     }
 
     @SubscribeEvent
     public static void registerParticleGroups(RegisterParticleGroupsEvent event) {
-        event.register(FireSparkParticle.FIRE_SPARK_RENDER_TYPE, FireSparkParticleGroup::new);
+        event.register(SparkParticle.RENDER_TYPE, SparkParticleGroup::new);
     }
 
     @SubscribeEvent

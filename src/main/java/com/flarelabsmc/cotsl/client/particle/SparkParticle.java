@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.particle;
 
-import com.flarelabsmc.cotsl.client.particle.options.FireSparkParticleOptions;
+import com.flarelabsmc.cotsl.client.particle.options.SparkParticleOptions;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -16,9 +16,9 @@ import org.joml.Vector3f;
 
 import java.util.Arrays;
 
-public class FireSparkParticle extends SingleQuadParticle {
-    public static final ParticleRenderType FIRE_SPARK_RENDER_TYPE =
-            new ParticleRenderType("cotsl:fire_spark");
+public class SparkParticle extends SingleQuadParticle {
+    public static final ParticleRenderType RENDER_TYPE =
+            new ParticleRenderType("cotsl:spark");
     private static final float LOD_DIVISOR = 500.0f;
 
     private static final int TRAIL_LENGTH = 12;
@@ -48,10 +48,10 @@ public class FireSparkParticle extends SingleQuadParticle {
     private final Vector3f sCurrDir = new Vector3f(), sDFrom = new Vector3f(), sDTo = new Vector3f();
     private final Quaternionf sQPrev = new Quaternionf(), sQCurr = new Quaternionf(), sQHead = new Quaternionf();
 
-    public FireSparkParticle(
+    public SparkParticle(
             ClientLevel level, double x, double y, double z,
             double xa, double ya, double za,
-            FireSparkParticleOptions options, TextureAtlasSprite sprite
+            SparkParticleOptions options, TextureAtlasSprite sprite
     ) {
         super(level, x, y, z, xa, ya, za, sprite);
         this.sprite = sprite;
@@ -122,7 +122,7 @@ public class FireSparkParticle extends SingleQuadParticle {
 
     @Override
     public void extract(QuadParticleRenderState state, Camera camera, float partialTickTime) {
-        if (!(state instanceof FireSparkRenderState s)) { super.extract(state, camera, partialTickTime); return; }
+        if (!(state instanceof RenderState s)) { super.extract(state, camera, partialTickTime); return; }
         if (alpha <= 0.004f || quadSize < 0.0001f || trailFill == 0) return;
 
         Vec3 camPos = camera.position();
@@ -222,7 +222,7 @@ public class FireSparkParticle extends SingleQuadParticle {
 
     @Override
     public ParticleRenderType getGroup() {
-        return FIRE_SPARK_RENDER_TYPE;
+        return RENDER_TYPE;
     }
 
     @Override
@@ -235,22 +235,22 @@ public class FireSparkParticle extends SingleQuadParticle {
         return Layer.TRANSLUCENT;
     }
 
-    public static class FireSparkProvider implements ParticleProvider<FireSparkParticleOptions> {
+    public static class Provider implements ParticleProvider<SparkParticleOptions> {
         private final SpriteSet sprites;
-        public FireSparkProvider(SpriteSet sprites) {
+        public Provider(SpriteSet sprites) {
             this.sprites = sprites;
         }
 
         @Override
         public Particle createParticle(
-                FireSparkParticleOptions options, ClientLevel level,
+                SparkParticleOptions options, ClientLevel level,
                 double x, double y, double z, double xa, double ya, double za, RandomSource random
         ) {
-            return new FireSparkParticle(level, x, y, z, xa, ya, za, options, sprites.get(random));
+            return new SparkParticle(level, x, y, z, xa, ya, za, options, sprites.get(random));
         }
     }
 
-    public static class FireSparkRenderState extends QuadParticleRenderState {
+    public static class RenderState extends QuadParticleRenderState {
         private float[] vCoords = new float[2048];
         private int[] storedColors = new int[2048];
         private boolean[] starts = new boolean[2048];

@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.common.registry;
 
-import com.flarelabsmc.cotsl.client.particle.options.FireSparkParticleOptions;
+import com.flarelabsmc.cotsl.client.particle.options.SparkParticleOptions;
 import com.flarelabsmc.cotsl.common.CotSL;
 import com.mojang.serialization.MapCodec;
 import io.netty.buffer.ByteBuf;
@@ -15,19 +15,19 @@ public class ParticleRegistry {
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
             DeferredRegister.create(Registries.PARTICLE_TYPE, CotSL.MOD_ID);
 
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FIRE_FLAME =
-            PARTICLE_TYPES.register("fire_flame", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EMBER =
+            PARTICLE_TYPES.register("ember", () -> new SimpleParticleType(false));
 
-    public static final DeferredHolder<ParticleType<?>, ParticleType<FireSparkParticleOptions>> FIRE_SPARK =
-            PARTICLE_TYPES.register("fire_spark", () -> new ParticleType<>(false) {
+    public static final DeferredHolder<ParticleType<?>, ParticleType<SparkParticleOptions>> SPARK =
+            PARTICLE_TYPES.register("spark", () -> new ParticleType<>(false) {
                 @Override
-                public MapCodec<FireSparkParticleOptions> codec() {
-                    return FireSparkParticleOptions.CODEC;
+                public MapCodec<SparkParticleOptions> codec() {
+                    return SparkParticleOptions.CODEC;
                 }
 
                 @Override
-                public StreamCodec<? super ByteBuf, FireSparkParticleOptions> streamCodec() {
-                    return FireSparkParticleOptions.STREAM_CODEC;
+                public StreamCodec<? super ByteBuf, SparkParticleOptions> streamCodec() {
+                    return SparkParticleOptions.STREAM_CODEC;
                 }
             });
 }

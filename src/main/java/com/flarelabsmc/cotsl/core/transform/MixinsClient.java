@@ -53,7 +53,7 @@ public final class MixinsClient {
 
                 if (random.nextFloat() > 0.05f) return;
                 level.addParticle(
-                        random.nextBoolean() ? ParticleRegistry.FIRE_FLAME.get()
+                        random.nextBoolean() ? ParticleRegistry.EMBER.get()
                                 : ParticleTypes.LARGE_SMOKE,
                         px, py, pz,
                         0.0, vy, 0.0

@@ -93,14 +93,17 @@ public class MinecraftLauncher {
 
     public static boolean appliesToOs(List<VersionJson.Rule> rules) {
         if (rules == null || rules.isEmpty()) return true;
+
         String os = System.getProperty("os.name", "").toLowerCase();
         String osName = os.contains("win") ? "windows" : os.contains("mac") ? "osx" : "linux";
         boolean result = false;
+
         for (VersionJson.Rule rule : rules) {
             if (rule.features != null && !rule.features.isEmpty()) continue;
             boolean matches = rule.os == null || osName.equals(rule.os.name);
             if (matches) result = "allow".equals(rule.action);
         }
+
         return result;
     }
 
@@ -117,9 +120,10 @@ public class MinecraftLauncher {
                         if (!appliesToOs(rules)) continue;
                     } catch (Exception ignored) {}
                 }
+
                 JsonNode value = node.get("value");
                 if (value == null) continue;
-                if (value.isTextual())    cmd.add(sub(value.asText(), vars));
+                if (value.isTextual()) cmd.add(sub(value.asText(), vars));
                 else if (value.isArray()) value.forEach(v -> cmd.add(sub(v.asText(), vars)));
             }
         }

@@ -1,6 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
-import com.flarelabsmc.cotsl.client.render.geo.layers.vanilla.GeoModelRenderLayer;
+import com.flarelabsmc.cotsl.client.render.geo.layers.GeoModelRenderLayer;
 import com.flarelabsmc.cotsl.client.render.skin.layers.model.HairModel;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;

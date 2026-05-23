@@ -8,11 +8,11 @@ import net.minecraft.client.particle.*;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.level.ParticleGroupRenderState;
 
-public class FireSparkParticleGroup extends QuadParticleGroup {
-    private final FireSparkParticle.FireSparkRenderState renderState = new FireSparkParticle.FireSparkRenderState();
+public class SparkParticleGroup extends QuadParticleGroup {
+    private final SparkParticle.RenderState renderState = new SparkParticle.RenderState();
 
-    public FireSparkParticleGroup(ParticleEngine engine) {
-        super(engine, FireSparkParticle.FIRE_SPARK_RENDER_TYPE);
+    public SparkParticleGroup(ParticleEngine engine) {
+        super(engine, SparkParticle.RENDER_TYPE);
     }
 
     @Override
@@ -23,7 +23,7 @@ public class FireSparkParticleGroup extends QuadParticleGroup {
                 try {
                     particle.extract(renderState, camera, partialTickTime);
                 } catch (Throwable t) {
-                    CrashReport crash = CrashReport.forThrowable(t, "Rendering Fire Spark Particle");
+                    CrashReport crash = CrashReport.forThrowable(t, "Rendering particle");
                     CrashReportCategory category = crash.addCategory("Particle being rendered");
                     category.setDetail("Particle", particle::toString);
                     throw new ReportedException(crash);

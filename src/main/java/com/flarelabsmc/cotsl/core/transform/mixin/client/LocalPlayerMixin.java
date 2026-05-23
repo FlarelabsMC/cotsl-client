@@ -20,12 +20,19 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @Inject(method = "shouldStopRunSprinting", at = @At("RETURN"), cancellable = true)
     private void shouldStopRunSprinting(CallbackInfoReturnable<Boolean> cir) {
         Options o = Minecraft.getInstance().options;
-        cir.setReturnValue(o.sprintWindow().get() > 0 ? cir.getReturnValueZ() : cir.getReturnValueZ() || !o.keySprint.isDown());
+        cir.setReturnValue(o.sprintWindow().get() > 0 ?
+                cir.getReturnValueZ() :
+                cir.getReturnValueZ() || !o.keySprint.isDown()
+        );
     }
 
     @Inject(method = "shouldStopSwimSprinting", at = @At("RETURN"), cancellable = true)
     private void shouldStopSwimSprinting(CallbackInfoReturnable<Boolean> cir) {
         Options o = Minecraft.getInstance().options;
-        cir.setReturnValue(o.sprintWindow().get() > 0 ? cir.getReturnValueZ() : cir.getReturnValueZ() || !o.keySprint.isDown() || this.horizontalCollision);
+        cir.setReturnValue(
+                o.sprintWindow().get() > 0 ?
+                        cir.getReturnValueZ() :
+                        cir.getReturnValueZ() || !o.keySprint.isDown() || this.horizontalCollision
+        );
     }
 }

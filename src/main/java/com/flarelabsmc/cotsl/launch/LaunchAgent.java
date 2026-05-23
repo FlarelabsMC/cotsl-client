@@ -26,7 +26,8 @@ public class LaunchAgent {
         String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
                 : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
                 : "first-run";
-        log("CotSL LaunchAgent [" + phase + "] started at " + new java.util.Date());
+
+        log("CotSL LaunchAgent [" + phase + "] started at " + new Date());
         log("    os=" + System.getProperty("os.name")
                 + "  java=" + System.getProperty("java.version")
                 + "  java.home=" + System.getProperty("java.home"));
@@ -45,51 +46,71 @@ public class LaunchAgent {
         t.printStackTrace(System.err);
     }
 
-    public static void main(String[] args) throws Exception {
+    static void main(String[] args) throws Exception {
         initLog();
+
         Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
             logErr("[CotSL] Unhandled exception on thread " + thread.getName(), ex);
         });
+
         if (System.getProperty(MAIN_RELAUNCHED_PROP) != null) {
             mainAfterBootstrap();
             return;
         }
+
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) {
             logErr("[CotSL] Qt6 runtime not found. Crashing.");
             System.exit(1);
         }
+
         File self = findSelf();
         if (self == null) {
             logErr("[CotSL] Cannot locate self JAR. Aborting.");
             System.exit(1);
         }
+
         List<Path> extJars = new ArrayList<>();
         try (JarFile jar = new JarFile(self)) {
             for (
                     JarEntry e : jar.stream()
-                    .filter(e -> e.getName().startsWith("META-INF/extjarjar/") && e.getName().endsWith(".jar"))
+                    .filter(e ->
+                            e.getName().startsWith("META-INF/extjarjar/")
+                                    && e.getName().endsWith(".jar")
+                    )
                     .toList()
             ) {
                 Path tmp = Files.createTempFile("cotsl-ext-", ".jar");
                 tmp.toFile().deleteOnExit();
+
                 try (InputStream in = jar.getInputStream(e)) {
                     Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
                 }
+
                 extJars.add(tmp);
             }
         }
+
         extractQtNatives(self);
+
         String nativesPath = System.getProperty("java.library.path", "");
         String platformPlugin = System.getProperty("cotsl.qt.platformPluginPath");
         String qmlImport = System.getProperty("cotsl.qt.qmlImportPath");
         String ldLibPath = System.getProperty("cotsl.qt.ldLibraryPath");
         boolean bundledQt = System.getProperty("cotsl.qt.bundled") != null;
+
         StringJoiner classpath = new StringJoiner(File.pathSeparator);
         classpath.add(self.getAbsolutePath());
+
         extJars.forEach(p -> classpath.add(p.toAbsolutePath().toString()));
+
         String java = ProcessHandle.current().info().command()
-                .orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+                .orElseGet(() ->
+                        System.getProperty("java.home")
+                                + File.separator
+                                + "bin"
+                                + File.separator + "java"
+                );
         List<String> cmd = new ArrayList<>(List.of(
                 java,
                 "-D" + MAIN_RELAUNCHED_PROP + "=true",
@@ -97,66 +118,75 @@ public class LaunchAgent {
                 "-classpath", classpath.toString(),
                 LaunchAgent.class.getName()
         ));
-        if (platformPlugin != null) cmd.add(1, "-Dcotsl.qt.platformPluginPath=" + platformPlugin);
-        if (qmlImport != null) cmd.add(1, "-Dcotsl.qt.qmlImportPath=" + qmlImport);
-        if (bundledQt) cmd.add(1, "-Dcotsl.qt.bundled=true");
+
+        if (platformPlugin != null)
+            cmd.add(1, "-Dcotsl.qt.platformPluginPath=" + platformPlugin);
+        if (qmlImport != null)
+            cmd.add(1, "-Dcotsl.qt.qmlImportPath=" + qmlImport);
+        if (bundledQt)
+            cmd.add(1, "-Dcotsl.qt.bundled=true");
+
         ProcessBuilder pb = new ProcessBuilder(cmd).inheritIO();
+
         if (ldLibPath != null) {
             String existing = pb.environment().getOrDefault("LD_LIBRARY_PATH", "");
-            pb.environment().put("LD_LIBRARY_PATH", existing.isEmpty() ? ldLibPath : ldLibPath + ":" + existing);
+            pb.environment().put(
+                    "LD_LIBRARY_PATH",
+                    existing.isEmpty() ?
+                            ldLibPath :
+                            ldLibPath + ":" + existing
+            );
         }
+
         int exit = pb.start().waitFor();
         System.exit(exit);
     }
 
     public static void premain(String agentArgs, Instrumentation inst) throws Exception {
         initLog();
+
         if (System.getProperty(RELAUNCHED_PROP) != null) return;
+
         if (System.getProperty("cotsl.minecraft.launch") != null) {
             File selfJar = findSelf();
             loadExtraJars(inst, selfJar);
             extractQtNatives(selfJar);
             return;
         }
+
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) {
             logErr("[CotSL] Qt6 runtime not found, cannot launch launcher window. Crashing.");
             System.exit(1);
             return;
         }
+
         File selfJar = findSelf();
         loadExtraJars(inst, selfJar);
+
         extractQtNatives(selfJar);
+
         tryRelaunch();
     }
 
     private static void mainAfterBootstrap() throws Exception {
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) System.exit(1);
-        // log("[CotSL] Running install check...");
-        try {
-            // runInstallIfNeeded();
-        } catch (Throwable t) {
-            logErr("[CotSL] runInstallIfNeeded() failed", t);
-            System.exit(1);
-        }
+
         log("[CotSL] Opening launcher window...");
+
         try {
             LauncherWindow.create(LAUNCH_LATCH);
+
             log("[CotSL] Window returned. Latch count=" + LAUNCH_LATCH.getCount());
+
             if (LAUNCH_LATCH.getCount() > 0) {
                 log("[CotSL] Window closed without launch. Exiting.");
                 System.exit(0);
             }
         } catch (Throwable t) {
-            logErr("[CotSL] Launcher unavailable (" + t.getMessage() + "), falling back to headless mode.", t);
-            try {
-                Class<?> authManager = Class.forName("com.flarelabsmc.cotsl.launch.AuthManager");
-                authManager.getMethod("authIfNeeded").invoke(null);
-            } catch (Exception e) {
-                logErr("[CotSL] Headless auth failed", e);
-                System.exit(1);
-            }
+            logErr("[CotSL] Launcher unavailable (" + t.getMessage() + ")", t);
+            System.exit(1);
         }
         launchMinecraft();
     }
@@ -172,18 +202,25 @@ public class LaunchAgent {
     public static File findSelf() {
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (!arg.startsWith("-javaagent:")) continue;
+
             String path = arg.substring("-javaagent:".length());
+
             int eq = path.indexOf('=');
             if (eq >= 0) path = path.substring(0, eq);
-            File f = new File(path);
-            if (!f.isFile()) continue;
-            try (JarFile jf = new JarFile(f)) {
-                boolean hasThis = jf.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
-                boolean hasPath = jf.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
+
+            File file = new File(path);
+            if (!file.isFile()) continue;
+
+            try (JarFile jar = new JarFile(file)) {
+                boolean hasThis = jar.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
+                boolean hasPath = jar.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
+
                 if (path.contains("Temp")) throw new Exception("Sus temp file found, skipping launcher");
-                if (hasThis && hasPath) return f;
+
+                if (hasThis && hasPath) return file;
             } catch (Exception exc) {
                 logErr("[CotSL] Failed to find agent JAR, continuing: " + exc.getMessage());
+
                 StackTraceElement[] trace = exc.getStackTrace();
                 for (StackTraceElement s : trace) logErr("  at " + s);
             }
@@ -203,8 +240,16 @@ public class LaunchAgent {
             logErr("[CotSL] No mcDir recorded, cannot launch.");
             System.exit(1);
         }
+
         log("[CotSL] Launching Minecraft directly...");
-        MinecraftLauncher.launch(new File(state.mcDir), Paths.getInstanceDir(), state, InstallManager.getReqNeoVer(), findSelf());
+
+        MinecraftLauncher.launch(
+                new File(state.mcDir),
+                Paths.getInstanceDir(),
+                state,
+                InstallManager.getReqNeoVer(),
+                findSelf()
+        );
         System.exit(0);
     }
 
@@ -215,9 +260,14 @@ public class LaunchAgent {
      */
     private static void tryRelaunch() throws IOException {
         long totalRamMB = getTotalSystemRamMB();
-        long recommended = totalRamMB > 0 ? computeMaxHeap(totalRamMB) : Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long recommended = totalRamMB > 0 ?
+                computeMaxHeap(totalRamMB) :
+                Runtime.getRuntime().maxMemory() / (1024 * 1024);
+
         try { doRelaunch(recommended); }
-        catch (Exception e) { logErr("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage()); }
+        catch (Exception e) {
+            logErr("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage());
+        }
     }
 
     /**
@@ -231,16 +281,22 @@ public class LaunchAgent {
             logErr("[CotSL] Could not locate own JAR, skipping extjarjar loading (this is fatal!)");
             return;
         }
+
         try (JarFile self = new JarFile(selfJar)) {
             List<JarEntry> entries = self.stream()
-                    .filter(e -> e.getName().startsWith("META-INF/extjarjar/") && e.getName().endsWith(".jar"))
+                    .filter(e ->
+                            e.getName().startsWith("META-INF/extjarjar/")
+                                    && e.getName().endsWith(".jar")
+                    )
                     .toList();
             for (JarEntry entry : entries) {
                 Path tmp = Files.createTempFile("cotsl-ext-", ".jar");
                 tmp.toFile().deleteOnExit();
+
                 try (InputStream in = self.getInputStream(entry)) {
                     Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
                 }
+
                 inst.appendToSystemClassLoaderSearch(new JarFile(tmp.toFile()));
             }
         }
@@ -252,9 +308,11 @@ public class LaunchAgent {
      */
     private static void extractQtNatives(File selfJar) {
         if (selfJar == null) return;
+
         String os = System.getProperty("os.name", "").toLowerCase();
         String platformTag;
         String nativeExt;
+
         if (os.contains("win")) {
             platformTag = "windows-x64";
             nativeExt = ".dll";
@@ -262,61 +320,100 @@ public class LaunchAgent {
             platformTag = "macos";
             nativeExt = ".dylib";
         } else return;
+
         try {
             // unique IDs for each natives folders
-            String nativesId = Long.toHexString(selfJar.length()) + Long.toHexString(selfJar.lastModified());
+            String nativesId = Long.toHexString(selfJar.length())
+                    + Long.toHexString(selfJar.lastModified());
             Path tempBase = Path.of(System.getProperty("java.io.tmpdir"));
             Path nativesDir = tempBase.resolve("cotsl-qt-" + nativesId);
             Path qmlDir = tempBase.resolve("cotsl-qt-qml-" + nativesId);
             Path sentinel = nativesDir.resolve(".cotsl-extracted");
+
             try (var listing = Files.list(tempBase)) {
                 listing.filter(p -> {
                     String n = p.getFileName().toString();
-                    return (n.startsWith("cotsl-qt-") && !n.startsWith("cotsl-qt-qml-") && !n.equals("cotsl-qt-" + nativesId))
-                            || (n.startsWith("cotsl-qt-qml-") && !n.equals("cotsl-qt-qml-" + nativesId));
+
+                    return (
+                            n.startsWith("cotsl-qt-")
+                                    && !n.startsWith("cotsl-qt-qml-")
+                                    && !n.equals("cotsl-qt-" + nativesId)
+                    ) || (
+                            n.startsWith("cotsl-qt-qml-")
+                                    && !n.equals("cotsl-qt-qml-" + nativesId)
+                    );
                 }).forEach(stale -> {
                     try (var walk = Files.walk(stale)) {
                         walk.sorted(Comparator.reverseOrder()).forEach(f -> f.toFile().delete());
                     } catch (IOException ignored) {}
                 });
             } catch (IOException ignored) {}
+
             if (Files.exists(sentinel)) {
                 // reusing natives from the temp directory if possible
                 String dir = nativesDir.toAbsolutePath().toString();
                 String current = System.getProperty("java.library.path", "");
-                System.setProperty("java.library.path", current.isEmpty() ? dir : dir + File.pathSeparator + current);
+                System.setProperty(
+                        "java.library.path",
+                        current.isEmpty() ?
+                                dir :
+                                dir + File.pathSeparator + current
+                );
+
                 log("[CotSL] Qt native libs reused from: " + dir);
+
                 Path platformsDir = nativesDir.resolve("platforms");
-                if (Files.isDirectory(platformsDir)) System.setProperty("cotsl.qt.platformPluginPath", platformsDir.toAbsolutePath().toString());
-                if (Files.isDirectory(qmlDir)) System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
+                if (Files.isDirectory(platformsDir))
+                    System.setProperty(
+                            "cotsl.qt.platformPluginPath",
+                            platformsDir.toAbsolutePath().toString()
+                    );
+                if (Files.isDirectory(qmlDir))
+                    System.setProperty(
+                            "cotsl.qt.qmlImportPath",
+                            qmlDir.toAbsolutePath().toString()
+                    );
+
                 if (os.contains("linux")) {
                     System.setProperty("cotsl.qt.bundled", "true");
                     System.setProperty("cotsl.qt.ldLibraryPath", dir);
                 }
+
                 return;
             }
+
             Files.createDirectories(nativesDir);
+
             int extracted = 0;
+
             try (JarFile self = new JarFile(selfJar)) {
                 List<JarEntry> innerJarEntries = self.stream()
                         .filter(e -> e.getName().startsWith("META-INF/extjarjar/")
                                 && e.getName().endsWith(".jar")
                                 && e.getName().contains("native-" + platformTag))
                         .toList();
-                if (innerJarEntries.isEmpty()) logErr("[CotSL] No bundled native JARs found for platform: " + platformTag);
+                if (innerJarEntries.isEmpty())
+                    logErr("[CotSL] No bundled native JARs found for platform: " + platformTag);
+
                 for (JarEntry innerJarEntry : innerJarEntries) {
                     Path tmpInner = Files.createTempFile("cotsl-native-inner-", ".jar");
                     tmpInner.toFile().deleteOnExit();
+
                     try (InputStream in = self.getInputStream(innerJarEntry)) {
                         Files.copy(in, tmpInner, StandardCopyOption.REPLACE_EXISTING);
                     }
+
                     try (JarFile innerJar = new JarFile(tmpInner.toFile())) {
                         for (JarEntry e : innerJar.stream()
-                                .filter(e -> !e.isDirectory() && isNativeFile(e.getName(), nativeExt))
+                                .filter(e ->
+                                        !e.isDirectory() && isNativeFile(e.getName(), nativeExt)
+                                )
                                 .toList()) {
                             String name = e.getName();
-                            String fileName = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
+                            String fileName = name.contains("/") ?
+                                    name.substring(name.lastIndexOf('/') + 1) : name;
                             Path dest = nativesDir.resolve(fileName);
+
                             if (!Files.exists(dest)) {
                                 try (InputStream in = innerJar.getInputStream(e)) {
                                     Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
@@ -326,6 +423,7 @@ public class LaunchAgent {
                         }
                     }
                 }
+
                 // this is where the Qt natives are located in the JAR when built
                 String resourcePrefix = "META-INF/qt-natives/" + platformTag + "/";
                 List<JarEntry> bundled = self.stream()
@@ -342,6 +440,7 @@ public class LaunchAgent {
                         }
                     }
                 }
+
                 // this is where the QML modules are stored
                 String qmlPrefix = "META-INF/qt-qml/" + platformTag + "/";
                 List<JarEntry> qmlEntries = self.stream()
@@ -349,6 +448,7 @@ public class LaunchAgent {
                         .toList();
                 if (!qmlEntries.isEmpty()) {
                     Files.createDirectories(qmlDir);
+
                     for (JarEntry e : qmlEntries) {
                         String relPath = e.getName().substring(qmlPrefix.length());
                         Path dest = qmlDir.resolve(relPath);
@@ -357,25 +457,44 @@ public class LaunchAgent {
                             Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
                         }
                     }
+
                     System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
+
                     log("[CotSL] Extracted " + qmlEntries.size() + " QML module files to: " + qmlDir);
                 }
-                if (!bundled.isEmpty()) log("[CotSL] Extracted " + bundled.size() + " bundled Qt runtime files");
+                if (!bundled.isEmpty())
+                    log("[CotSL] Extracted " + bundled.size() + " bundled Qt runtime files");
             }
             if (extracted > 0) {
                 if (os.contains("linux")) createLinuxSoSymlinks(nativesDir);
+
                 String dir = nativesDir.toAbsolutePath().toString();
                 String current = System.getProperty("java.library.path", "");
-                System.setProperty("java.library.path", current.isEmpty() ? dir : dir + File.pathSeparator + current);
+                System.setProperty(
+                        "java.library.path",
+                        current.isEmpty() ? dir : dir + File.pathSeparator + current
+                );
+
                 log("[CotSL] Qt native libs extracted to: " + dir);
+
                 Path platformsDir = nativesDir.resolve("platforms");
-                if (Files.isDirectory(platformsDir)) System.setProperty("cotsl.qt.platformPluginPath", platformsDir.toAbsolutePath().toString());
+                if (Files.isDirectory(platformsDir))
+                    System.setProperty(
+                            "cotsl.qt.platformPluginPath",
+                            platformsDir.toAbsolutePath().toString()
+                    );
+
                 if (os.contains("linux")) {
                     System.setProperty("cotsl.qt.bundled", "true");
                     System.setProperty("cotsl.qt.ldLibraryPath", dir);
                 }
+
                 Files.createFile(sentinel);
-            } else logErr("[CotSL] Warning: native JARs for " + platformTag + " were found but contained no native files.");
+            } else logErr(
+                    "[CotSL] Warning: native JARs for "
+                    + platformTag
+                    + " were found but contained no native files."
+            );
         } catch (Exception e) {
             logErr("[CotSL] Failed to extract Qt natives: " + e.getMessage());
         }
@@ -397,9 +516,11 @@ public class LaunchAgent {
                 String base = name.substring(0, soIdx);
                 String soVersion = name.substring(soIdx + 4);
                 String major = soVersion.split("\\.")[0];
+
                 try {
                     Path majorLink = dir.resolve(base + ".so." + major);
                     Path bareLink = dir.resolve(base + ".so");
+
                     if (!Files.exists(majorLink)) Files.createSymbolicLink(majorLink, p.getFileName());
                     if (!Files.exists(bareLink)) Files.createSymbolicLink(bareLink, p.getFileName());
                 } catch (IOException ignored) {}
@@ -424,31 +545,51 @@ public class LaunchAgent {
     private static LinuxQtState extendLibraryPathForQt() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("linux")) return LinuxQtState.NO_LINUX;
         if (System.getProperty("cotsl.qt.bundled") != null) return LinuxQtState.HAS_QT;
+
         String[] candidates = {
                 "/usr/lib",
                 "/usr/lib/x86_64-linux-gnu",
                 "/usr/lib64",
                 "/usr/local/lib",
         };
+
         String current = System.getProperty("java.library.path", "");
+
         for (String dir : candidates) {
             if (new File(dir, "libQt6Core.so.6").exists()) {
                 String[] versionedLibs = new File(dir).list((d, n) -> n.startsWith("libQt6Core.so.6."));
+
                 if (versionedLibs != null && versionedLibs.length > 0) {
                     String qtVer = versionedLibs[0].replace("libQt6Core.so.", "");
-                    if (!qtVer.startsWith("6.11.")) logErr("[CotSL] System Qt " + qtVer + " may not match QtJambi 6.11.x. Launcher UI may fail. Build the linux-x64 JAR with QTDIR set to bundle Qt 6.11.");
+                    if (!qtVer.startsWith("6.11."))
+                        logErr(
+                                "[CotSL] System Qt "
+                                + qtVer
+                                + " may not match QtJambi 6.11.x. Launcher UI may fail."
+                                + "Build the linux-x64 JAR with QTDIR set to bundle Qt 6.11."
+                        );
                 }
+
                 System.setProperty("java.library.path", current.isEmpty() ? dir : current + File.pathSeparator + dir);
+
                 return LinuxQtState.HAS_QT;
             }
         }
+
         logErr("[CotSL] Qt6 runtime not found. This is fatal.");
         logErr("[CotSL] To fix this, install Qt6:");
-        if (new File("/usr/bin/pacman").exists()) logErr("[CotSL] sudo pacman -S qt6-base qt6-declarative");
-        else if (new File("/usr/bin/apt").exists()) logErr("[CotSL] sudo apt install libqt6core6t64 libqt6quick6 libqt6qml6 libqt6widgets6t64");
-        else if (new File("/usr/bin/dnf").exists()) logErr("[CotSL] sudo dnf install qt6-qtbase qt6-qtdeclarative");
-        else if (new File("/usr/bin/zypper").exists()) logErr("[CotSL] sudo zypper install libQt6Core6 libQt6Quick6 libQt6Qml6");
-        else logErr("[CotSL] Install qt6-base and qt6-declarative via your package manager.");
+
+        if (new File("/usr/bin/pacman").exists())
+            logErr("[CotSL] sudo pacman -S qt6-base qt6-declarative");
+        else if (new File("/usr/bin/apt").exists())
+            logErr("[CotSL] sudo apt install libqt6core6t64 libqt6quick6 libqt6qml6 libqt6widgets6t64");
+        else if (new File("/usr/bin/dnf").exists())
+            logErr("[CotSL] sudo dnf install qt6-qtbase qt6-qtdeclarative");
+        else if (new File("/usr/bin/zypper").exists())
+            logErr("[CotSL] sudo zypper install libQt6Core6 libQt6Quick6 libQt6Qml6");
+        else
+            logErr("[CotSL] Install qt6-base and qt6-declarative via your package manager.");
+
         return LinuxQtState.NO_QT;
     }
 
@@ -460,29 +601,36 @@ public class LaunchAgent {
     private static void doRelaunch(long maxHeapMB) throws Exception {
         String javaExecutable = ProcessHandle.current().info().command()
                 .orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+
         List<String> args = new ArrayList<>();
         for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) continue;
             args.add(arg);
         }
+
         String classpath = System.getProperty("java.class.path");
         if (classpath != null && !classpath.isEmpty()) {
             args.add("-classpath");
             args.add(classpath);
         }
+
         args.add("-Xms512M");
         args.add("-Xmx" + maxHeapMB + "M");
         args.add("-D" + RELAUNCHED_PROP + "=true");
         if (System.getProperty("os.name").toLowerCase().contains("mac")) args.add("-XstartOnFirstThread");
+
         File argFile = File.createTempFile("cotsl-jvmargs-", ".txt");
         argFile.deleteOnExit();
+
         try (PrintWriter pw = new PrintWriter(new FileWriter(argFile))) {
             for (String arg : args) pw.println(quoteForArgFile(arg));
         }
+
         List<String> command = new ArrayList<>();
         command.add(javaExecutable);
         command.add("@" + argFile.getAbsolutePath());
         command.add(LaunchAgent.class.getName());
+
         int exitCode = new ProcessBuilder(command)
                 .inheritIO()
                 .start()
@@ -518,9 +666,10 @@ public class LaunchAgent {
                         Long.parseLong(parts[1].trim())
                 });
             }
-            for (long[] entry : entries) {
+
+            for (long[] entry : entries)
                 if (totalRamMB < entry[0]) return entry[1];
-            }
+
             return entries.get(entries.size() - 1)[1];
         }
     }
