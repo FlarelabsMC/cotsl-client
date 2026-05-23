@@ -261,9 +261,6 @@ public class LaunchAgent {
         } else if (os.contains("mac")) {
             platformTag = "macos";
             nativeExt = ".dylib";
-        } else if (os.contains("linux")) {
-            platformTag = "linux-x64";
-            nativeExt = ".so";
         } else return;
         try {
             // unique IDs for each natives folders
