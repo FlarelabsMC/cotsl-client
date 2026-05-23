@@ -1,8 +1,6 @@
 package com.flarelabsmc.cotsl.client.render.geo.replaced;
 
-import com.flarelabsmc.cotsl.common.CotSL;
-import com.flarelabsmc.cotsl.common.entity.replaced.ReplacedHorse;
-import com.geckolib.model.DefaultedEntityGeoModel;
+import com.flarelabsmc.cotsl.client.entity.replaced.ReplacedHorse;
 import com.geckolib.model.GeoModel;
 import com.geckolib.renderer.base.GeoRenderState;
 import net.minecraft.resources.Identifier;

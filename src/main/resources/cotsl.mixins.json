@@ -4,15 +4,16 @@
   "refmap": "cotsl.refmap.json",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "client.LocalPlayerMixin",
     "client.AvatarRendererMixin",
     "client.AvatarRenderStateMixin",
     "client.EntityRenderDispatcherMixin",
-    "client.LivingEntityRendererMixin"
+    "client.LivingEntityRendererMixin",
+    "client.LocalPlayerMixin"
   ],
   "mixins": [
-    "common.GrindstoneBlockMixin",
     "common.AbstractHorseMixin",
+    "common.AvatarMixin",
+    "common.GrindstoneBlockMixin",
     "common.LivingEntityMixin",
     "common.PlayerMixin"
   ],
