@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+import static com.flarelabsmc.cotsl.launch.Launcher.*;
 
 public class InstallState {
+    public static final String DIV = "InstallState";
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static InstallState.Options INSTANCE = null;
 
@@ -24,7 +26,7 @@ public class InstallState {
             try {
                 MAPPER.writerWithDefaultPrettyPrinter().writeValue(path, this);
             } catch (IOException e) {
-                System.err.println("[CotSL] Could not save install state to " + path + ": " + e.getMessage());
+                logErrWith("Could not save install state to " + path + ": " + e.getMessage(), DIV);
             }
         }
     }
@@ -38,14 +40,14 @@ public class InstallState {
 
     private static InstallState.Options loadFromPath(File file) {
         if (file.exists()) {
-            log("[CotSL] Loading install state...");
+            logWith("Loading install state...", DIV);
             try {
                 return MAPPER.readValue(file, InstallState.Options.class);
             } catch (Exception e) {
-                System.err.println("[CotSL] Could not read install state. Starting again: " + e.getMessage());
+                logErrWith("Could not read install state. Starting again: " + e.getMessage(), DIV, e);
             }
         }
-        log("[CotSL] Install state file nonexistent, creating new state...");
+        logWith("Install state file nonexistent, creating new state...", DIV);
         return new InstallState.Options();
     }
 }

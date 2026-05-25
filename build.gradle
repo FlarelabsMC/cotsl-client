@@ -7,6 +7,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.141'
     id 'idea'
+    id 'com.gradleup.shadow' version '9.3.0'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -72,6 +73,10 @@ allPlatforms.each { platform ->
 
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+tasks.named("shadowJar") {
+    isZip64 = true
+}
 
 neoForge {
     enable {
@@ -166,6 +171,8 @@ dependencies {
     // utility
     implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
     implementation("maven.modrinth:player-animation-library:1.2.3")
+
+    shadow("net.lenni0451.classtransform:core:1.15.0")
 
     // misc
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -533,8 +540,8 @@ tasks.named('jar', Jar) {
         into 'META-INF/extjarjar'
     }
     manifest {
-        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
-        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.Launcher'
+        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.Agent'
     }
 }
 
@@ -546,10 +553,10 @@ def platformBundleTaskNames = [
 allPlatforms.each { platform ->
     def safe = platform.replace('-', '_')
     def bundleTaskName = platformBundleTaskNames[platform]
-    tasks.register("jar_${safe}", Jar) {
+    tasks.register("prejar_${safe}", Jar) {
         group = 'build'
         description = "Assembles mod JAR for ${platform}"
-        archiveClassifier = platform
+        archiveClassifier = platform + "-raw"
         from sourceSets.main.output
         from rootProject.file('LICENSE')
         from(tasks.named('jarJar'))
@@ -562,9 +569,28 @@ allPlatforms.each { platform ->
             }
         }
         manifest {
-            attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
-            attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+            attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.Agent'
+            attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.Launcher'
         }
+    }
+    tasks.register("jar_${safe}",  com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        dependsOn("prejar_${safe}")
+
+        configurations = [project.configurations.shadow]
+
+        from(tasks.named("prejar_${safe}").map { task ->
+            task.outputs.files.collect { zipTree(it) }
+        })
+
+        manifest {
+            from(tasks.named("prejar_${safe}").get().manifest)
+        }
+
+        exclude 'org/objectweb/**'
+
+        archiveClassifier = platform
+
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 }
 
