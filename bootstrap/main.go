@@ -64,7 +64,7 @@ func main() {
 	}
 
 	launchArgs := append([]string{
-		"-jar", jarPath
+		"-jar", jarPath,
 	}, os.Args[1:]...)
 
 	cmd := exec.Command(javaExe, launchArgs...)
