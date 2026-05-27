@@ -604,7 +604,7 @@ tasks.register('buildBootstrapWindows', Exec) {
     environment 'GOOS', 'windows'
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
-    commandLine goBin, 'build', "-ldflags=-s -w -H windowsgui" +
+    commandLine goBin, 'build', "-ldflags=-s -w" +
             ' -X main.appVersion=' + project.version +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
