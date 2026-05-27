@@ -1,4 +1,4 @@
-package com.flarelabsmc.cotsl.launch;
+package com.flarelabsmc.cotsl.launch.services;
 
 import net.neoforged.fml.loading.FMLConfig;
 import net.neoforged.neoforgespi.earlywindow.GraphicsBootstrapper;

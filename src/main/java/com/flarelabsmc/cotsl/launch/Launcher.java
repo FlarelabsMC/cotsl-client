@@ -16,19 +16,17 @@ import java.util.jar.JarFile;
 
 public class Launcher {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
-    static final String RELAUNCHED_PROP = "cotsl.relaunched";
-    static final String MAIN_RELAUNCHED_PROP = "cotsl.mainRelaunched";
+    static final String RELAUNCHED = "cotsl.relaunched";
 
     static void initLog() {
-        String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
-                : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
-                : "first-run";
+        String phase = System.getProperty(RELAUNCHED) != null ? "POSTMAIN"
+                : "MAIN";
 
-        log("CotSL Launcher [" + phase + "] started at " + new Date());
-        if (System.getProperty(MAIN_RELAUNCHED_PROP) != null || System.getProperty(RELAUNCHED_PROP) != null) return;
-        log("    os=" + System.getProperty("os.name")
-                + "  java=" + System.getProperty("java.version")
-                + "  java.home=" + System.getProperty("java.home"));
+        log("Phase " + phase + " started at " + new Date());
+        if (System.getProperty(RELAUNCHED) != null) return;
+        log("    os=" + System.getProperty("os.name"));
+        log("    java=" + System.getProperty("java.version"));
+        log("    java.home=" + System.getProperty("java.home"));
     }
 
     static void log(String msg) {
@@ -64,7 +62,7 @@ public class Launcher {
             logErr("Unhandled exception on thread " + thread.getName(), ex);
         });
 
-        if (System.getProperty(MAIN_RELAUNCHED_PROP) != null) {
+        if (System.getProperty(RELAUNCHED) != null) {
             mainAfterBootstrap();
             return;
         }
@@ -124,7 +122,7 @@ public class Launcher {
                 );
         List<String> cmd = new ArrayList<>(List.of(
                 java,
-                "-D" + MAIN_RELAUNCHED_PROP + "=true",
+                "-D" + RELAUNCHED + "=true",
                 "-Djava.library.path=" + nativesPath,
                 "-classpath", classpath.toString(),
                 Launcher.class.getName()

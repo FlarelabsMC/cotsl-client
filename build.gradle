@@ -609,6 +609,17 @@ tasks.register('buildBootstrapWindows', Exec) {
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
+
+    def jar = tasks.named('jar_windows_x64', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapLinux', Exec) {
@@ -623,6 +634,17 @@ tasks.register('buildBootstrapLinux', Exec) {
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
+
+    def jar = tasks.named('jar_linux_x64', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapMacOS', Exec) {
@@ -637,6 +659,17 @@ tasks.register('buildBootstrapMacOS', Exec) {
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'
+
+    def jar = tasks.named('jar_macos', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapAll') {
