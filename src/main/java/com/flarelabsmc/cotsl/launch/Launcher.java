@@ -174,7 +174,7 @@ public class Launcher {
     }
 
     public static boolean isWayland() {
-        return System.getenv("XDG_SESSION_TYPE").equals("wayland");
+        return System.getenv("XDG_SESSION_TYPE") != null && System.getenv("XDG_SESSION_TYPE").equals("wayland");
     }
 
     /**
