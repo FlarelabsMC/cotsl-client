@@ -19,9 +19,11 @@ import java.nio.file.Files;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+import static com.flarelabsmc.cotsl.launch.Launcher.logErrWith;
+import static com.flarelabsmc.cotsl.launch.Launcher.logWith;
 
 public class AuthManager {
+    public static final String DIV = "Auth";
 
     public record AuthParameters(
         String playerName,
@@ -41,13 +43,13 @@ public class AuthManager {
             try {
                 Files.writeString(Paths.getAuthStatePath().toPath(), JavaAuthManager.toJson(authManager).toString());
             } catch (IOException e) {
-                log("[CotSL-Auth] Failed to save auth state file: " + e);
+                logErrWith("Failed to save auth state file: " + e, DIV);
             }
         });
 
         MinecraftProfile profile = authManager.getMinecraftProfile().getUpToDate();
         MinecraftToken token = authManager.getMinecraftToken().getUpToDate();
-        log("[CotSL-Auth] Refreshed Minecraft auth tokens");
+        logWith("Refreshed Minecraft auth tokens", DIV);
 
         return new AuthParameters(profile.getName(), profile.getId(), token.getToken());
     }
@@ -75,13 +77,13 @@ public class AuthManager {
     }
 
     public static void logIn(Consumer<MsaDeviceCode> deviceCodeConsumer) throws Exception {
-        log("[CotSL-Auth] Beginning new log in process...");
+        logWith("Beginning new log in process...", DIV);
         File authStatePath = Paths.getAuthStatePath();
 
         JavaAuthManager authManager = JavaAuthManager
                 .create(createHttpClient())
                 .login(DeviceCodeMsaAuthService::new, (Consumer<MsaDeviceCode>) code -> {
-                    log("[CotSL-Auth] Auth code received...");
+                    logWith("Auth code received...", DIV);
                     deviceCodeConsumer.accept(code);
                 });
 
@@ -98,7 +100,7 @@ public class AuthManager {
         authManager.getMinecraftToken().refreshIfExpired();
         MinecraftProfile profile = authManager.getMinecraftProfile().getUpToDate();
 
-        log("[CotSL-Auth] New log in successful as " + profile.getName());
+        logWith("New log in successful as " + profile.getName(), DIV);
     }
 
     public static HttpClient createHttpClient() {

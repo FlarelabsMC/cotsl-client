@@ -14,31 +14,31 @@ import java.util.concurrent.CountDownLatch;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/**
- * the agent itself, used to launch the launcher.
- */
-public class LaunchAgent {
+public class Launcher {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
-    private static final String RELAUNCHED_PROP = "cotsl.relaunched";
-    private static final String MAIN_RELAUNCHED_PROP = "cotsl.mainRelaunched";
+    static final String RELAUNCHED = "cotsl.relaunched";
 
-    private static void initLog() {
-        String phase = System.getProperty(MAIN_RELAUNCHED_PROP) != null ? "main-after-bootstrap"
-                : System.getProperty(RELAUNCHED_PROP) != null ? "premain-relaunched"
-                : "first-run";
+    static void initLog() {
+        String phase = System.getProperty(RELAUNCHED) != null ? "POSTMAIN"
+                : "MAIN";
 
-        log("CotSL LaunchAgent [" + phase + "] started at " + new Date());
-        log("    os=" + System.getProperty("os.name")
-                + "  java=" + System.getProperty("java.version")
-                + "  java.home=" + System.getProperty("java.home"));
+        log("Phase " + phase + " started at " + new Date());
+        if (System.getProperty(RELAUNCHED) != null) return;
+        log("    os=" + System.getProperty("os.name"));
+        log("    java=" + System.getProperty("java.version"));
+        log("    java.home=" + System.getProperty("java.home"));
     }
 
     static void log(String msg) {
-        System.out.println(msg);
+        System.out.println("[CotSL] " + msg);
+    }
+
+    static void logWith(String msg, String division) {
+        System.out.println("[CotSL-" + division + "] " + msg);
     }
 
     static void logErr(String msg) {
-        System.err.println(msg);
+        System.err.println("[CotSL] " + msg);
     }
 
     static void logErr(String msg, Throwable t) {
@@ -46,27 +46,36 @@ public class LaunchAgent {
         t.printStackTrace(System.err);
     }
 
+    static void logErrWith(String msg, String division) {
+        System.err.println("[CotSL-" + division + "] " + msg);
+    }
+
+    static void logErrWith(String msg, String division, Throwable t) {
+        logErrWith(msg, division);
+        t.printStackTrace(System.err);
+    }
+
     static void main(String[] args) throws Exception {
         initLog();
 
         Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
-            logErr("[CotSL] Unhandled exception on thread " + thread.getName(), ex);
+            logErr("Unhandled exception on thread " + thread.getName(), ex);
         });
 
-        if (System.getProperty(MAIN_RELAUNCHED_PROP) != null) {
+        if (System.getProperty(RELAUNCHED) != null) {
             mainAfterBootstrap();
             return;
         }
 
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) {
-            logErr("[CotSL] Qt6 runtime not found. Crashing.");
+            logErr("Qt6 runtime not found. Crashing.");
             System.exit(1);
         }
 
         File self = findSelf();
         if (self == null) {
-            logErr("[CotSL] Cannot locate self JAR. Aborting.");
+            logErr("Cannot locate self JAR. Aborting.");
             System.exit(1);
         }
 
@@ -113,10 +122,10 @@ public class LaunchAgent {
                 );
         List<String> cmd = new ArrayList<>(List.of(
                 java,
-                "-D" + MAIN_RELAUNCHED_PROP + "=true",
+                "-D" + RELAUNCHED + "=true",
                 "-Djava.library.path=" + nativesPath,
                 "-classpath", classpath.toString(),
-                LaunchAgent.class.getName()
+                Launcher.class.getName()
         ));
 
         if (platformPlugin != null)
@@ -142,57 +151,30 @@ public class LaunchAgent {
         System.exit(exit);
     }
 
-    public static void premain(String agentArgs, Instrumentation inst) throws Exception {
-        initLog();
-
-        if (System.getProperty(RELAUNCHED_PROP) != null) return;
-
-        if (System.getProperty("cotsl.minecraft.launch") != null) {
-            File selfJar = findSelf();
-            loadExtraJars(inst, selfJar);
-            extractQtNatives(selfJar);
-            return;
-        }
-
-        LinuxQtState qtState = extendLibraryPathForQt();
-        if (qtState == LinuxQtState.NO_QT) {
-            logErr("[CotSL] Qt6 runtime not found, cannot launch launcher window. Crashing.");
-            System.exit(1);
-            return;
-        }
-
-        File selfJar = findSelf();
-        loadExtraJars(inst, selfJar);
-
-        extractQtNatives(selfJar);
-
-        tryRelaunch();
-    }
-
     private static void mainAfterBootstrap() throws Exception {
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) System.exit(1);
 
-        log("[CotSL] Opening launcher window...");
+        log("Opening launcher window...");
 
         try {
             LauncherWindow.create(LAUNCH_LATCH);
 
-            log("[CotSL] Window returned. Latch count=" + LAUNCH_LATCH.getCount());
+            log("Window returned.");
 
             if (LAUNCH_LATCH.getCount() > 0) {
-                log("[CotSL] Window closed without launch. Exiting.");
+                log("Window closed without launch. Exiting.");
                 System.exit(0);
             }
         } catch (Throwable t) {
-            logErr("[CotSL] Launcher unavailable (" + t.getMessage() + ")", t);
+            logErr("Launcher unavailable (" + t.getMessage() + ")", t);
             System.exit(1);
         }
         launchMinecraft();
     }
 
     public static boolean isWayland() {
-        return System.getenv("XDG_SESSION_TYPE").equals("wayland");
+        return System.getenv("XDG_SESSION_TYPE") != null && System.getenv("XDG_SESSION_TYPE").equals("wayland");
     }
 
     /**
@@ -212,14 +194,14 @@ public class LaunchAgent {
             if (!file.isFile()) continue;
 
             try (JarFile jar = new JarFile(file)) {
-                boolean hasThis = jar.getEntry("com/flarelabsmc/cotsl/launch/LaunchAgent.class") != null;
+                boolean hasThis = jar.getEntry("com/flarelabsmc/cotsl/launch/Launcher.class") != null;
                 boolean hasPath = jar.stream().anyMatch(e -> e.getName().startsWith("META-INF/extjarjar/"));
 
                 if (path.contains("Temp")) throw new Exception("Sus temp file found, skipping launcher");
 
                 if (hasThis && hasPath) return file;
             } catch (Exception exc) {
-                logErr("[CotSL] Failed to find agent JAR, continuing: " + exc.getMessage());
+                logErr("Failed to find agent JAR, continuing: " + exc.getMessage());
 
                 StackTraceElement[] trace = exc.getStackTrace();
                 for (StackTraceElement s : trace) logErr("  at " + s);
@@ -227,7 +209,7 @@ public class LaunchAgent {
         }
         try {
             File protectionDomain = new File(
-                    LaunchAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+                    Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()
             );
             if (protectionDomain.isFile()) return protectionDomain;
         } catch (Exception ignored) {}
@@ -237,55 +219,36 @@ public class LaunchAgent {
     private static void launchMinecraft() throws Exception {
         InstallState.Options state = InstallState.get();
         if (state.mcDir == null) {
-            logErr("[CotSL] No mcDir recorded, cannot launch.");
+            logErr("No mcDir recorded, cannot launch.");
             System.exit(1);
         }
 
-        log("[CotSL] Launching Minecraft directly...");
+        log("Launching Minecraft directly...");
 
-        MinecraftLauncher.launch(
+        Process mc = MinecraftLauncher.launch(
                 new File(state.mcDir),
                 Paths.getInstanceDir(),
                 state,
                 InstallManager.getReqNeoVer(),
                 findSelf()
         );
-        System.exit(0);
-    }
-
-
-    /**
-     * after the agent overrides launch, it grabs the arguments from when it tried to launch as Minecraft, and relaunches the game with proper JVM arguments
-     * @throws IOException
-     */
-    private static void tryRelaunch() throws IOException {
-        long totalRamMB = getTotalSystemRamMB();
-        long recommended = totalRamMB > 0 ?
-                computeMaxHeap(totalRamMB) :
-                Runtime.getRuntime().maxMemory() / (1024 * 1024);
-
-        try { doRelaunch(recommended); }
-        catch (Exception e) {
-            logErr("[CotSL] Could not relaunch with stock JVM args, continuing as is: " + e.getMessage());
-        }
+        int exit = mc.waitFor();
+        System.exit(exit);
     }
 
     /**
      * loads the JARs within the META-INF/extjarjar folder, used by the agent because NeoForge's JarJar does not apply at this stage
-     * @param inst
-     * @param selfJar
-     * @throws Exception
      */
-    private static void loadExtraJars(Instrumentation inst, File selfJar) throws Exception {
+    static void loadExtraJars(Instrumentation inst, File selfJar) throws Exception {
         if (selfJar == null) {
-            logErr("[CotSL] Could not locate own JAR, skipping extjarjar loading (this is fatal!)");
+            logErr("Could not locate own JAR, skipping external jarjar loading (this is fatal!)");
             return;
         }
 
         try (JarFile self = new JarFile(selfJar)) {
             List<JarEntry> entries = self.stream()
                     .filter(e ->
-                            e.getName().startsWith("META-INF/extjarjar/")
+                            e.getName().startsWith("META-INF/jarjar/")
                                     && e.getName().endsWith(".jar")
                     )
                     .toList();
@@ -306,7 +269,7 @@ public class LaunchAgent {
      * extracts qt natives for windows and mac to the default temp folder. tries to reuse them, else deletes them
      * @param selfJar the mod jar itself
      */
-    private static void extractQtNatives(File selfJar) {
+    static void extractQtNatives(File selfJar) {
         if (selfJar == null) return;
 
         String os = System.getProperty("os.name", "").toLowerCase();
@@ -360,7 +323,7 @@ public class LaunchAgent {
                                 dir + File.pathSeparator + current
                 );
 
-                log("[CotSL] Qt native libs reused from: " + dir);
+                log("Qt native libs reused from: " + dir);
 
                 Path platformsDir = nativesDir.resolve("platforms");
                 if (Files.isDirectory(platformsDir))
@@ -393,7 +356,7 @@ public class LaunchAgent {
                                 && e.getName().contains("native-" + platformTag))
                         .toList();
                 if (innerJarEntries.isEmpty())
-                    logErr("[CotSL] No bundled native JARs found for platform: " + platformTag);
+                    logErr("No bundled native JARs found for platform: " + platformTag);
 
                 for (JarEntry innerJarEntry : innerJarEntries) {
                     Path tmpInner = Files.createTempFile("cotsl-native-inner-", ".jar");
@@ -460,10 +423,10 @@ public class LaunchAgent {
 
                     System.setProperty("cotsl.qt.qmlImportPath", qmlDir.toAbsolutePath().toString());
 
-                    log("[CotSL] Extracted " + qmlEntries.size() + " QML module files to: " + qmlDir);
+                    log("Extracted " + qmlEntries.size() + " QML module files to: " + qmlDir);
                 }
                 if (!bundled.isEmpty())
-                    log("[CotSL] Extracted " + bundled.size() + " bundled Qt runtime files");
+                    log("Extracted " + bundled.size() + " bundled Qt runtime files");
             }
             if (extracted > 0) {
                 if (os.contains("linux")) createLinuxSoSymlinks(nativesDir);
@@ -475,7 +438,7 @@ public class LaunchAgent {
                         current.isEmpty() ? dir : dir + File.pathSeparator + current
                 );
 
-                log("[CotSL] Qt native libs extracted to: " + dir);
+                log("Qt native libs extracted to: " + dir);
 
                 Path platformsDir = nativesDir.resolve("platforms");
                 if (Files.isDirectory(platformsDir))
@@ -491,12 +454,12 @@ public class LaunchAgent {
 
                 Files.createFile(sentinel);
             } else logErr(
-                    "[CotSL] Warning: native JARs for "
+                    "Warning: native JARs for "
                     + platformTag
                     + " were found but contained no native files."
             );
         } catch (Exception e) {
-            logErr("[CotSL] Failed to extract Qt natives: " + e.getMessage());
+            logErr("Failed to extract Qt natives: " + e.getMessage());
         }
     }
 
@@ -526,7 +489,7 @@ public class LaunchAgent {
                 } catch (IOException ignored) {}
             });
         } catch (IOException e) {
-            logErr("[CotSL] Could not create .so symlinks: " + e.getMessage());
+            logErr("Could not create .so symlinks: " + e.getMessage());
         }
     }
 
@@ -542,7 +505,7 @@ public class LaunchAgent {
      * tells the user to install Qt6 if not found for some reason
      * @return the state of whether Qt6 is available or if this is Linux at all
      */
-    private static LinuxQtState extendLibraryPathForQt() {
+    static LinuxQtState extendLibraryPathForQt() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("linux")) return LinuxQtState.NO_LINUX;
         if (System.getProperty("cotsl.qt.bundled") != null) return LinuxQtState.HAS_QT;
 
@@ -563,7 +526,7 @@ public class LaunchAgent {
                     String qtVer = versionedLibs[0].replace("libQt6Core.so.", "");
                     if (!qtVer.startsWith("6.11."))
                         logErr(
-                                "[CotSL] System Qt "
+                                "System Qt "
                                 + qtVer
                                 + " may not match QtJambi 6.11.x. Launcher UI may fail."
                                 + "Build the linux-x64 JAR with QTDIR set to bundle Qt 6.11."
@@ -576,66 +539,21 @@ public class LaunchAgent {
             }
         }
 
-        logErr("[CotSL] Qt6 runtime not found. This is fatal.");
-        logErr("[CotSL] To fix this, install Qt6:");
+        logErr("Qt6 runtime not found. This is fatal.");
+        logErr("To fix this, install Qt6:");
 
         if (new File("/usr/bin/pacman").exists())
-            logErr("[CotSL] sudo pacman -S qt6-base qt6-declarative");
+            logErr("sudo pacman -S qt6-base qt6-declarative");
         else if (new File("/usr/bin/apt").exists())
-            logErr("[CotSL] sudo apt install libqt6core6t64 libqt6quick6 libqt6qml6 libqt6widgets6t64");
+            logErr("sudo apt install libqt6core6t64 libqt6quick6 libqt6qml6 libqt6widgets6t64");
         else if (new File("/usr/bin/dnf").exists())
-            logErr("[CotSL] sudo dnf install qt6-qtbase qt6-qtdeclarative");
+            logErr("sudo dnf install qt6-qtbase qt6-qtdeclarative");
         else if (new File("/usr/bin/zypper").exists())
-            logErr("[CotSL] sudo zypper install libQt6Core6 libQt6Quick6 libQt6Qml6");
+            logErr("sudo zypper install libQt6Core6 libQt6Quick6 libQt6Qml6");
         else
-            logErr("[CotSL] Install qt6-base and qt6-declarative via your package manager.");
+            logErr("Install qt6-base and qt6-declarative via your package manager.");
 
         return LinuxQtState.NO_QT;
-    }
-
-    /**
-     * always called last in the premain method. relaunches the game with its own arguments set within the launcher
-     * @param maxHeapMB the max heap size used when launching Minecraft
-     * @throws Exception
-     */
-    private static void doRelaunch(long maxHeapMB) throws Exception {
-        String javaExecutable = ProcessHandle.current().info().command()
-                .orElseGet(() -> System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
-
-        List<String> args = new ArrayList<>();
-        for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-            if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) continue;
-            args.add(arg);
-        }
-
-        String classpath = System.getProperty("java.class.path");
-        if (classpath != null && !classpath.isEmpty()) {
-            args.add("-classpath");
-            args.add(classpath);
-        }
-
-        args.add("-Xms512M");
-        args.add("-Xmx" + maxHeapMB + "M");
-        args.add("-D" + RELAUNCHED_PROP + "=true");
-        if (System.getProperty("os.name").toLowerCase().contains("mac")) args.add("-XstartOnFirstThread");
-
-        File argFile = File.createTempFile("cotsl-jvmargs-", ".txt");
-        argFile.deleteOnExit();
-
-        try (PrintWriter pw = new PrintWriter(new FileWriter(argFile))) {
-            for (String arg : args) pw.println(quoteForArgFile(arg));
-        }
-
-        List<String> command = new ArrayList<>();
-        command.add(javaExecutable);
-        command.add("@" + argFile.getAbsolutePath());
-        command.add(LaunchAgent.class.getName());
-
-        int exitCode = new ProcessBuilder(command)
-                .inheritIO()
-                .start()
-                .waitFor();
-        System.exit(exitCode);
     }
 
     public static long getTotalSystemRamMB() {
@@ -647,12 +565,9 @@ public class LaunchAgent {
 
     /**
      * gets the memory values set within rec_mem_values.txt, based on system memory
-     * @param totalRamMB
-     * @return
-     * @throws IOException
      */
     public static long computeMaxHeap(long totalRamMB) throws IOException {
-        InputStream is = LaunchAgent.class.getResourceAsStream("/rec_mem_values.txt");
+        InputStream is = Launcher.class.getResourceAsStream("/rec_mem_values.txt");
         if (is == null) throw new FileNotFoundException("rec_mem_values.txt not found in classpath");
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
@@ -670,13 +585,7 @@ public class LaunchAgent {
             for (long[] entry : entries)
                 if (totalRamMB < entry[0]) return entry[1];
 
-            return entries.get(entries.size() - 1)[1];
+            return entries.getLast()[1];
         }
-    }
-
-    private static String quoteForArgFile(String arg) {
-        String escaped = arg.replace("\\", "\\\\").replace("\"", "\\\"");
-        if (arg.contains(" ") || arg.contains("\"")) return "\"" + escaped + "\"";
-        return escaped;
     }
 }

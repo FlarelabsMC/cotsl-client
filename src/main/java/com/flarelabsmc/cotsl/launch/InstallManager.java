@@ -12,9 +12,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.jar.JarFile;
 
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.*;
+import static com.flarelabsmc.cotsl.launch.Launcher.*;
 
 public class InstallManager {
+    public static final String DIV = "InstallManager";
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final String NEO_MAVEN = "https://maven.neoforged.net/releases/";
@@ -22,19 +24,19 @@ public class InstallManager {
 
     public static void runInstallIfNeeded() throws Exception {
         InstallState.Options state = InstallState.get();
-        log("[CotSL-Installer] Resolving Minecraft directory...");
+        logWith("Resolving Minecraft directory...", DIV);
         File mcDir = Paths.resolveMcDir(state);
-        log("[CotSL-Installer] Using minecraft directory at " + mcDir);
+        logWith("Using minecraft directory at " + mcDir, DIV);
 
         String reqNeoVer = getReqNeoVer();
         String reqSelfVer = getReqSelfVer();
-        log("[CotSL-Installer] Required versions: NeoForge=" + reqNeoVer + ",  self=" + reqSelfVer);
-        log("[CotSL-Installer] Installed versions: NeoForge=" + state.inNeoVer + ",  self=" + state.inSelfVer);
+        logWith("Required versions: NeoForge=" + reqNeoVer + ",  self=" + reqSelfVer, DIV);
+        logWith("Installed versions: NeoForge=" + state.inNeoVer + ",  self=" + state.inSelfVer, DIV);
 
         VersionJson neoVersionJson = NeoForgeInstaller.getNeoVersionJson(reqNeoVer, mcDir);
         File neoInstaller = null;
         if (neoVersionJson == null) {
-            log("[CotSL-Installer] Could not find NeoForge version.json, redownloading...");
+            logWith("Could not find NeoForge version.json, redownloading...", DIV);
             neoInstaller = NeoForgeInstaller.downloadInstaller(reqNeoVer);
 
             try (JarFile jarFile = new JarFile(neoInstaller)) {
@@ -52,11 +54,11 @@ public class InstallManager {
         }
 
         String mcVersion = neoVersionJson.inheritsFrom;
-        log("[CotSL-Installer] Detected Minecraft version " + mcVersion);
+        logWith("Detected Minecraft version " + mcVersion, DIV);
 
         VersionJson vanillaVersionJson = getVanillaVersionJson(mcDir, mcVersion);
         if (vanillaVersionJson == null) {
-            log("[CotSL-Installer] Could not find vanilla version.json, redownloading...");
+            logWith("Could not find vanilla version.json, redownloading...", DIV);
             MCVersionManifest.Entry manifestEntry = MCVersionManifest.getManifest().getVersion(neoVersionJson.inheritsFrom);
 
             vanillaVersionJson = manifestEntry.requestVersionJson();
@@ -68,16 +70,16 @@ public class InstallManager {
                     .close();
         }
 
-        log("[CotSL-Installer] Verifying installation...");
+        logWith("Verifying installation...", DIV);
         VersionJson mergedVersionJson = vanillaVersionJson.mergeWith(neoVersionJson);
 
-        log("[CotSL-Installer] Verifying libraries...");
+        logWith("Verifying libraries...", DIV);
         downloadLibraries(mcDir, mergedVersionJson.libraries);
 
-        log("[CotSL-Installer] Verifying assets...");
+        logWith("Verifying assets...", DIV);
         MCAssetIndex assetIndex = getAssetIndex(mcDir, vanillaVersionJson.assetIndex.id);
         if (assetIndex == null) {
-            log("[CotSL-Installer] Could not find asset index json, redownloading...");
+            logWith("Could not find asset index json, redownloading...", DIV);
             assetIndex = vanillaVersionJson.requestAssetIndex();
 
             File savedFile = Paths.getAssetIndexFile(mcDir, vanillaVersionJson.assetIndex.id).toFile();
@@ -90,10 +92,10 @@ public class InstallManager {
 
         assetIndex.downloadAssets(mcDir);
 
-        log("[CotSL-Installer] Verifying NeoForge installation...");
+        logWith("Verifying NeoForge installation...", DIV);
         NeoForgeInstaller.verifyInstallation(neoInstaller, reqNeoVer, mcDir, vanillaVersionJson);
 
-        log("[CotSL-Installer] Finished install check");
+        logWith("Finished install check", DIV);
 
         state.mcDir = mcDir.toString();
         state.inNeoVer = reqNeoVer;
@@ -113,7 +115,7 @@ public class InstallManager {
                 if (path.exists() && path.length() > 0 && Paths.sha1Matches(path, artifact.sha1)) {
                     continue;
                 } else {
-                    log("[CotSL-Installer] Downloading library from artifact: " + artifact.url);
+                    logWith("Downloading library from artifact: " + artifact.url, DIV);
                     path.getParentFile().mkdirs();
                     Networking.downloadFile(URI.create(artifact.url), path.toPath());
                 }
@@ -126,11 +128,11 @@ public class InstallManager {
                 String mavenPath = Paths.mavenIdentToPath(lib.name);
 
                 String url = NEO_MAVEN + mavenPath;
-                log("[CotSL-Installer] Downloading library from maven: " + url);
+                logWith("Downloading library from maven: " + url, DIV);
                 try { Networking.downloadFile(URI.create(url), target.toPath()); }
                 catch (IOException e) {
                     url = CENTRAL + mavenPath;
-                    log("[CotSL-Installer] NeoForge maven failed, trying: " + url);
+                    logWith("NeoForge maven failed, trying: " + url, DIV);
                     Networking.downloadFile(URI.create(url), target.toPath());
                 }
             }
@@ -145,7 +147,7 @@ public class InstallManager {
         try {
             return MAPPER.readValue(expectedPath.toFile(), MCAssetIndex.class);
         } catch (Exception e) {
-            log("[CotSL-Installer] Failed to read asset indox json: " + e);
+            logErrWith("Failed to read asset index json: " + e.getMessage(), DIV, e);
             return null;
         }
     }
@@ -158,33 +160,20 @@ public class InstallManager {
         try {
             return MAPPER.readValue(expectedPath, VersionJson.class);
         } catch (Exception e) {
-            log("[CotSL-Installer] Failed to read vanilla version.json: " + e);
+            logErrWith("Failed to read vanilla version.json: " + e.getMessage(), DIV, e);
             return null;
         }
     }
 
-
-    public static void deploySelf(File mcDir) throws Exception {
-        File selfJar = findSelf();
-        if (selfJar == null) throw new IllegalStateException("Cannot find self to deploy into mods folder");
-        File modsDir = new File(mcDir, "mods");
-        modsDir.mkdirs();
-        File[] old = modsDir.listFiles(f -> f.getName().startsWith("cotsl-") && f.getName().endsWith(".jar"));
-        if (old != null) for (File f : old) f.delete();
-        File dest = new File(modsDir, selfJar.getName());
-        Files.copy(selfJar.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        log("[CotSL] Deployed self to:" + dest);
-    }
-
     public static String getReqNeoVer() throws Exception {
-        try (var is = LaunchAgent.class.getResourceAsStream("/neo_version.txt")) {
+        try (var is = Launcher.class.getResourceAsStream("/neo_version.txt")) {
             if (is == null) throw new FileNotFoundException("neo_version.txt not found in JAR");
             return new String(is.readAllBytes()).trim();
         }
     }
 
     public static String getReqSelfVer() throws Exception {
-        try (var is = LaunchAgent.class.getResourceAsStream("/cotsl_version.txt")) {
+        try (var is = Launcher.class.getResourceAsStream("/cotsl_version.txt")) {
             if (is == null) throw new FileNotFoundException("cotsl_version.txt not found in JAR");
             return new String(is.readAllBytes()).trim();
         }

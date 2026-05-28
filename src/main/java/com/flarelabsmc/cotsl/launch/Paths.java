@@ -74,7 +74,6 @@ public class Paths {
     }
 
     /// Returns the absolute path of the library file
-    /// TODO: Test on Windows
     public static File resolveLibraryPath(File mcDir, String libraryPath) {
         return new File(getLibraryDir(mcDir), libraryPath);
     }
@@ -104,19 +103,6 @@ public class Paths {
 
     /// Returns the default Minecraft install directory
     private static File getMcDir() {
-//        if (System.getenv("mcdir") != null) return new File(System.getenv("mcdir"));
-//        String home = System.getProperty("user.home", ".");
-//        String os = System.getProperty("os.name", "").toLowerCase();
-//        if (os.contains("win") && System.getenv("APPDATA") != null)
-//            return new File(System.getenv("APPDATA"), ".minecraft");
-//        if (os.contains("mac")) return new File(home, "Library/Application Support/minecraft");
-//        File c = new File(home, ".minecraft");
-//        if (!c.exists() && os.contains("linux")) {
-//            File flatpak = new File(home, ".var/app/com.mojang.Minecraft/.minecraft");
-//            if (flatpak.exists()) return flatpak;
-//            if (flatpak.exists()) return flatpak;
-//        }
-//        return c;
         return getInstallDir().toPath().resolve("runtime").resolve("minecraft").toFile();
     }
 

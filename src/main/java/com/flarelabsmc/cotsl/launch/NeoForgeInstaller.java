@@ -9,9 +9,12 @@ import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+import static com.flarelabsmc.cotsl.launch.Launcher.logErrWith;
+import static com.flarelabsmc.cotsl.launch.Launcher.logWith;
 
 public class NeoForgeInstaller {
+    public static final String DIV = "NeoForge-Installer";
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String NEO_MAVEN = "https://maven.neoforged.net/releases/";
     private static final String MC_MAVEN = "https://libraries.minecraft.net/";
@@ -28,7 +31,7 @@ public class NeoForgeInstaller {
         }
 
         install(neoInstaller, neoVersion, mcDir, vanillaVersionJson, progress -> {
-            log("[CotSL-NeoForge] " + progress);
+            logWith(progress, DIV);
         });
     }
 
@@ -70,7 +73,7 @@ public class NeoForgeInstaller {
         File installerJar = File.createTempFile("neoforge-installer-", ".jar");
         installerJar.deleteOnExit();
 
-        log("[CotSL-NeoForge] Downloading NeoForge " + neoVersion + " installer...");
+        logWith("Downloading NeoForge " + neoVersion + " installer...", DIV);
         Networking.downloadFile(URI.create(installerUrl), installerJar.toPath());
 
         return installerJar;
@@ -84,7 +87,7 @@ public class NeoForgeInstaller {
         try {
             return MAPPER.readValue(expectedPath, VersionJson.class);
         } catch (Exception e) {
-            log("[CotSL-NeoForge] Failed to read NeoForge version.json: " + e);
+            logErrWith("Failed to read NeoForge version.json: " + e.getMessage(), DIV, e);
             return null;
         }
     }
@@ -203,9 +206,6 @@ public class NeoForgeInstaller {
                 t.setContextClassLoader(processorClassLoader);
                 t.start();
                 t.join();
-                if (t.getState() == Thread.State.TERMINATED) {
-                    //
-                }
             }
         }
     }

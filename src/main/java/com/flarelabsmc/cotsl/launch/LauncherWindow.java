@@ -13,7 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.flarelabsmc.cotsl.launch.Launcher.logWith;
+
 public class LauncherWindow {
+    public static final String DIV = "LauncherWindow";
+
     public static void create(CountDownLatch latch) throws Exception {
         QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL);
 
@@ -23,7 +27,7 @@ public class LauncherWindow {
         if (platformPluginPath != null) {
             appArgs.add("-platformpluginpath");
             appArgs.add(platformPluginPath);
-            System.out.println("[CotSL] Using bundled platform plugin at: " + platformPluginPath);
+            logWith("Using bundled platform plugin at: " + platformPluginPath, DIV);
         }
 
         QApplication.initialize(appArgs.toArray(new String[0]));
@@ -47,7 +51,7 @@ public class LauncherWindow {
 
         engine.load(qmlRoot.resolve("Launcher.qml").toUri().toString());
 
-        if (engine.rootObjects().isEmpty()) throw new IllegalStateException("[CotSL] QML failed to load");
+        if (engine.rootObjects().isEmpty()) throw new IllegalStateException("QML failed to load");
 
         bridge.launchRequested.connect(latch::countDown);
 
@@ -57,7 +61,6 @@ public class LauncherWindow {
     /**
      * actually adds the QML resources to the launch process. yeah, this has to be done manually, sadly
      * @return the path of the final resources
-     * @throws Exception
      */
     private static Path extractResources() throws Exception {
         Path tmp = Files.createTempDirectory("cotsl-qml-");
@@ -141,22 +144,6 @@ public class LauncherWindow {
                     AuthManager.logIn((code) -> {
                         authCodeReady.emit(code.getDirectVerificationUri(), code.getUserCode());
                     });
-
-//                    HttpClient httpClient = new HttpClient();
-//                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(
-//                            httpClient,
-//                            new StepMsaDeviceCode.MsaDeviceCodeCallback(code ->
-//                            )
-//                    );
-//                    StepMCProfile.MCProfile profile = session.getMcProfile();
-//
-//                    InstallState.Options state = InstallState.get();
-//                    state.minecraftToken = profile.getMcToken().getAccessToken();
-//                    state.playerName = profile.getName();
-//                    state.playerUuid = profile.getId().toString();
-//                    state.minecraftTokenExpiry = profile.getMcToken().getExpireTimeMs();
-//                    state.save();
-
                     authDone.emit();
                 } catch (Exception e) {
                     authError.emit(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());

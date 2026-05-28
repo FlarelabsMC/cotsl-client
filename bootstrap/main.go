@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	_ "embed"
 	"fmt"
 	"io"
 	"log"
@@ -16,44 +17,36 @@ import (
 	"strings"
 )
 
+//go:embed payload/cotsl.jar
+var embeddedJar []byte
+
 var (
 	appVersion = "devtest"
-	repoOwner = "FlarelabsMC"
-	repoName = "cotsl-client"
 )
-
 
 const javaVersion = "25"
 const adoptiumURL = "https://api.adoptium.net/v3/binary/latest/%s/ga/%s/%s/jre/hotspot/normal/eclipse"
 
-func jarDownloadURL() string {
-	// e.g. https://github.com/FlarelabsMC/cotsl-client/releases/download/v1.0.0/cotsl-1.0.0-windows-x64.jar
-	osTag := map[string]string{
-		"windows": "windows-x64",
-		"linux":   "linux-x64",
-		"darwin":  "macos",
-	}[runtime.GOOS]
-	return fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/cotsl-%s-%s.jar",
-		repoOwner, repoName, appVersion, appVersion, osTag)
-}
-
 func main() {
-    log.Print(appVersion)
+	log.Print(appVersion)
 	installDir := resolveInstallDir()
 	os.MkdirAll(installDir, 0755)
 	logFile, _ := os.OpenFile(filepath.Join(installDir, "bootstrap.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_TRUNC, 0644)
 
-	jarPath := filepath.Join(installDir, "cotsl.jar")
-	versionPath := filepath.Join(installDir, "version.txt")
 	runtimeDir := filepath.Join(installDir, "runtime", "jdk-"+javaVersion)
+	jarDir := filepath.Join(installDir, "runtime", "cotsl")
+	jarPath := filepath.Join(jarDir, "cotsl.jar")
 	javaExe := filepath.Join(runtimeDir, "bin", "java")
 	if runtime.GOOS == "windows" {
 		javaExe += "w.exe"
 	}
 
-	if needsJarUpdate(jarPath, versionPath) {
-		if err := downloadJar(jarPath, versionPath, logFile); err != nil {
-			fatalf(logFile, "Failed to download launcher: %v", err)
+	if needsJarUpdate(jarPath) {
+		if err := os.MkdirAll(jarDir, 0755); err != nil {
+			fatalf(logFile, "Failed to create install directory: %v", err)
+		}
+		if err := os.WriteFile(jarPath, embeddedJar, 0644); err != nil {
+			fatalf(logFile, "Failed to write JAR: %v", err)
 		}
 	}
 
@@ -64,14 +57,16 @@ func main() {
 	}
 
 	launchArgs := append([]string{
-		"-javaagent:" + jarPath,
 		"-jar", jarPath,
 	}, os.Args[1:]...)
 
+	compositeOut := io.MultiWriter(os.Stdout, logFile)
+	compositeErr := io.MultiWriter(os.Stderr, logFile)
+
 	cmd := exec.Command(javaExe, launchArgs...)
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
+	cmd.Stdout = compositeOut
+	cmd.Stderr = compositeErr
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			os.Exit(exitErr.ExitCode())
@@ -80,47 +75,12 @@ func main() {
 	}
 }
 
-func needsJarUpdate(jarPath, versionPath string) bool {
-	if _, err := os.Stat(jarPath); os.IsNotExist(err) {
+func needsJarUpdate(jarPath string) bool {
+	info, err := os.Stat(jarPath)
+	if os.IsNotExist(err) {
 		return true
 	}
-	data, err := os.ReadFile(versionPath)
-	if err != nil {
-		return true
-	}
-	return strings.TrimSpace(string(data)) != appVersion
-}
-
-func downloadJar(jarPath, versionPath string, logFile *os.File) error {
-	url := jarDownloadURL()
-	logWrite(logFile, "[CotSL] Downloading launcher v"+appVersion+" from: "+url)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("GitHub returned HTTP %d for JAR download", resp.StatusCode)
-	}
-
-	tmp, err := os.CreateTemp(filepath.Dir(jarPath), "cotsl-jar-*.tmp")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
-
-	if _, err := io.Copy(tmp, resp.Body); err != nil {
-		tmp.Close()
-		return err
-	}
-	tmp.Close()
-
-	if err := os.Rename(tmpName, jarPath); err != nil {
-		return err
-	}
-	return os.WriteFile(versionPath, []byte(appVersion), 0644)
+	return info.Size() != int64(len(embeddedJar))
 }
 
 func downloadJre(destDir string, logFile *os.File) error {
@@ -267,9 +227,9 @@ func resolveInstallDir() string {
 		return filepath.Join(home, "Library", "Application Support", ".cotsl")
 	}
 	if datahome != "" {
-	    return filepath.Join(datahome, "cotsl")
+		return filepath.Join(datahome, "cotsl")
 	}
-	return filepath.Join(home + "/.local/share/", "cotsl")
+	return filepath.Join(home+"/.local/share/", "cotsl")
 }
 
 func fatalf(log *os.File, format string, args ...any) {

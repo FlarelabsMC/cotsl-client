@@ -42,10 +42,18 @@ public class MinecraftLauncher {
         vars.put("game_directory",     gameDir.getAbsolutePath());
         vars.put("assets_root",        new File(mcDir, "assets").getAbsolutePath());
         vars.put("assets_index_name",  assetIndex);
-        vars.put("auth_player_name",   authParams.playerName()  != null ? authParams.playerName()  : "Player");
-        vars.put("auth_uuid",          authParams.playerUuid()  != null ? authParams.playerUuid().toString() : "00000000-0000-0000-0000-000000000000");
-        vars.put("auth_access_token",  authParams.minecraftToken() != null ? authParams.minecraftToken() : "0");
-        vars.put("auth_xuid",          state.xuid        != null ? state.xuid        : "0");
+        vars.put("auth_player_name",   authParams.playerName() != null ? authParams.playerName() :
+                                                                         "Player"
+        );
+        vars.put("auth_uuid",          authParams.playerUuid() != null ? authParams.playerUuid().toString() :
+                                                                         "00000000-0000-0000-0000-000000000000"
+        );
+        vars.put("auth_access_token",  authParams.minecraftToken() != null ? authParams.minecraftToken() :
+                                                                             "0"
+        );
+        vars.put("auth_xuid",          state.xuid != null ? state.xuid :
+                                                            "0"
+        );
         vars.put("clientid",           "0");
         vars.put("user_type",          "msa");
         vars.put("version_type",       "release");
@@ -60,17 +68,19 @@ public class MinecraftLauncher {
 
         String nvidiaBS = System.getenv("__GL_THREADED_OPTIMIZATIONS");
         boolean validWaylandSystem = nvidiaBS == null || nvidiaBS.equals("0");
-        if (LaunchAgent.isWayland() && validWaylandSystem) {
+        if (Launcher.isWayland() && validWaylandSystem) {
             cmd.add("-DMC_DEBUG_ENABLED");
             cmd.add("-DMC_DEBUG_PREFER_WAYLAND");
         }
 
-        long totalRamMB = LaunchAgent.getTotalSystemRamMB();
-        long recommended = totalRamMB > 0 ? LaunchAgent.computeMaxHeap(totalRamMB) : Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long totalRamMB = Launcher.getTotalSystemRamMB();
+        long recommended = totalRamMB > 0 ? Launcher.computeMaxHeap(totalRamMB) : Runtime.getRuntime().maxMemory() / (1024 * 1024);
         cmd.add("-Xms512M");
         cmd.add("-Xmx" + recommended + "M");
 
         cmd.add("-XX:+UseZGC");
+        cmd.add("-XX:+UseCompactObjectHeaders");
+        cmd.add("-XX:+UseStringDeduplication");
 
         if (vanilla.arguments != null) addArgs(cmd, vanilla.arguments.jvm, vars);
         if (neo.arguments != null) addArgs(cmd, neo.arguments.jvm, vars);

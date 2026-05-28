@@ -5,8 +5,9 @@ import java.util.zip.ZipFile
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version "${mdg_version}"
     id 'idea'
+    id 'com.gradleup.shadow' version "${shadow_version}"
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -72,6 +73,10 @@ allPlatforms.each { platform ->
 
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+tasks.named("shadowJar") {
+    isZip64 = true
+}
 
 neoForge {
     enable {
@@ -140,14 +145,14 @@ configurations {
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    jarJar(implementation('org.xerial:sqlite-jdbc:3.53.0.0'))
-    jarJar(implementation('com.j256.ormlite:ormlite-core:6.1'))
-    jarJar(implementation('com.j256.ormlite:ormlite-jdbc:6.1'))
-    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-core:2.15.0')))
-    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-databind:2.15.0')))
-    jarJar(implementation(embed('com.fasterxml.jackson.core:jackson-annotations:2.15.0')))
-    jarJar(implementation(embed('com.fasterxml.jackson.module:jackson-module-parameter-names:2.18.2')))
-    jarJar(implementation('com.github.luben:zstd-jni:1.5.7-7'))
+    jarJar(implementation("org.xerial:sqlite-jdbc:${sqlite_jdbc_version}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormlite_version}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormlite_version}"))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jackson_core_version}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jackson_core_version}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jackson_core_version}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jackson_module_version}")))
+    jarJar(implementation("com.github.luben:zstd-jni:${zstd_jni_version}"))
 
     // qtjambi for launcher ui
     embed "io.qtjambi:qtjambi:${qt_version}"
@@ -161,11 +166,13 @@ dependencies {
     }
 
     // launcher auth
-    jarJar(implementation(embed("net.raphimc:MinecraftAuth:5.0.0")))
+    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauth_version}")))
 
     // utility
     implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
-    implementation("maven.modrinth:player-animation-library:1.2.3")
+    implementation("maven.modrinth:player-animation-library:${pal_version}")
+
+    shadow("net.lenni0451.classtransform:core:${classtransform_version}")
 
     // misc
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -181,9 +188,9 @@ tasks.register('downloadRhubarb') {
         def os = System.getProperty('os.name').toLowerCase()
         def downloadUrl
 
-        if (os.contains('win')) downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-Windows.zip'
-        else if (os.contains('mac')) downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-macOS.zip'
-        else downloadUrl = 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.14.0/Rhubarb-Lip-Sync-1.14.0-Linux.zip'
+        if (os.contains('win')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Windows.zip"
+        else if (os.contains('mac')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-macOS.zip"
+        else downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Linux.zip"
 
         buildDir.mkdirs()
 
@@ -533,8 +540,8 @@ tasks.named('jar', Jar) {
         into 'META-INF/extjarjar'
     }
     manifest {
-        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
-        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.Launcher'
+        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.Agent'
     }
 }
 
@@ -546,10 +553,10 @@ def platformBundleTaskNames = [
 allPlatforms.each { platform ->
     def safe = platform.replace('-', '_')
     def bundleTaskName = platformBundleTaskNames[platform]
-    tasks.register("jar_${safe}", Jar) {
+    tasks.register("prejar_${safe}", Jar) {
         group = 'build'
         description = "Assembles mod JAR for ${platform}"
-        archiveClassifier = platform
+        archiveClassifier = platform + "-raw"
         from sourceSets.main.output
         from rootProject.file('LICENSE')
         from(tasks.named('jarJar'))
@@ -562,9 +569,28 @@ allPlatforms.each { platform ->
             }
         }
         manifest {
-            attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
-            attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.LaunchAgent'
+            attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.Agent'
+            attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.Launcher'
         }
+    }
+    tasks.register("jar_${safe}",  com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        dependsOn("prejar_${safe}")
+
+        configurations = [project.configurations.shadow]
+
+        from(tasks.named("prejar_${safe}").map { task ->
+            task.outputs.files.collect { zipTree(it) }
+        })
+
+        manifest {
+            from(tasks.named("prejar_${safe}").get().manifest)
+        }
+
+        exclude 'org/objectweb/**'
+
+        archiveClassifier = platform
+
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 }
 
@@ -578,11 +604,22 @@ tasks.register('buildBootstrapWindows', Exec) {
     environment 'GOOS', 'windows'
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
-    commandLine goBin, 'build', "-ldflags=-s -w -H windowsgui" +
+    commandLine goBin, 'build', "-ldflags=-s -w" +
             ' -X main.appVersion=' + project.version +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
+
+    def jar = tasks.named('jar_windows_x64', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapLinux', Exec) {
@@ -597,6 +634,17 @@ tasks.register('buildBootstrapLinux', Exec) {
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
+
+    def jar = tasks.named('jar_linux_x64', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapMacOS', Exec) {
@@ -611,6 +659,17 @@ tasks.register('buildBootstrapMacOS', Exec) {
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'
+
+    def jar = tasks.named('jar_macos', Jar).flatMap { it.archiveFile }
+    def payload = file("${bootstrapDir}/payload")
+    doFirst {
+        def fileSystem = services.get(FileSystemOperations)
+        fileSystem.copy {
+            from jar
+            into payload
+            rename { 'cotsl.jar' }
+        }
+    }
 }
 
 tasks.register('buildBootstrapAll') {

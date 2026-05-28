@@ -6,9 +6,11 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static com.flarelabsmc.cotsl.launch.LaunchAgent.log;
+import static com.flarelabsmc.cotsl.launch.Launcher.logWith;
 
 public class MCAssetIndex {
+    public static final String DIV = "Assets";
+
     public Map<String, AssetObject> objects;
 
     public static class AssetObject {
@@ -17,7 +19,7 @@ public class MCAssetIndex {
     }
 
     public void downloadAssets(File mcDir) {
-        log("[CotSL-Assets] Beginning parallel asset downloading...");
+        logWith("Beginning parallel asset downloading...", DIV);
         this.objects.entrySet().parallelStream().forEach(object -> {
             AssetObject asset = object.getValue();
 
@@ -38,6 +40,6 @@ public class MCAssetIndex {
                 }
             }
         });
-        log("[CotSL-Assets] Asset downloading complete");
+        logWith("Asset downloading complete", DIV);
     }
 }
