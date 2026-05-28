@@ -25,6 +25,8 @@ To build from source, you will need:
 
 If you don't see syntax highlighting for QML files in IntelliJ IDEA Community, you can use Visual Studio Code with the previously mentioned plugin.
 
+Addendum: Using Zed Editor is viable on macOS and Linux with the QML, Gradle and Java plugins.
+
 ### Setting up Qt
 **If you're on Linux, KDE Plasma and similar desktop environments may have Qt installed by default.**
 
@@ -49,14 +51,13 @@ The path to the Qt Shader Baker (`qsb`) executable. If your `QTDIR` is set corre
 
 ### Building
 To build the project, first, run the `./gradlew generateDialogueMetadata` task, and then run one of the Gradle tasks for your desired operating system:
-- `./gradlew jar_linux_x64`
-- `./gradlew jar_windows_x64`
-- `./gradlew jar_macos`
+- `./gradlew buildBootstrapWindows`
+- `./gradlew buildBootstrapMacOS`
+- `./gradlew buildBootstrapLinux`
 
 Executables should only be built through the workflows.
 
 **You can only build for the OS you're currently using. Except Linux. That works always.**<br>
-If you want to build for Windows *and* macOS, currently, you will need to set up a virtual machine.
 
 # Notes
 - The client and dedicated server code are in the same JAR. You will still need a Qt account and installation to build the JAR yourself.
