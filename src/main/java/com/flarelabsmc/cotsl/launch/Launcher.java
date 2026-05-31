@@ -63,7 +63,7 @@ public class Launcher {
         });
 
         if (System.getProperty(RELAUNCHED) != null) {
-            mainAfterBootstrap();
+            postmain();
             return;
         }
 
@@ -151,7 +151,7 @@ public class Launcher {
         System.exit(exit);
     }
 
-    private static void mainAfterBootstrap() throws Exception {
+    private static void postmain() throws Exception {
         LinuxQtState qtState = extendLibraryPathForQt();
         if (qtState == LinuxQtState.NO_QT) System.exit(1);
 
