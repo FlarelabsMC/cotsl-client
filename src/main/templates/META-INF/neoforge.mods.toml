@@ -29,5 +29,17 @@ config="${mod_id}.mixins.json"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="blazesdl"
+    type="required"
+    versionRange="[${blazesdl_version},)"
+    ordering="NONE"
+    side="CLIENT"
+[[dependencies.${mod_id}]]
+    modId="player_animation_library"
+    type="required"
+    versionRange="[${pal_version},)"
+    ordering="NONE"
+    side="BOTH"
 #[features.${mod_id}]
 #openGLVersion="[3.2,)"

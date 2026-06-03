@@ -19,14 +19,10 @@ Item {
             model: root.text.length
             Image {
                 required property int index
-                width:  root.cell * root.charScale
+                width: root.cell * root.charScale
                 height: root.cell * root.charScale
                 source: Qt.resolvedUrl("textures/font/ascii.png")
-                sourceClipRect: Qt.rect(
-                    (root.text.charCodeAt(index) % 16) * root.cell,
-                    Math.floor(root.text.charCodeAt(index) / 16) * root.cell,
-                    root.cell, root.cell
-                )
+                sourceClipRect: Qt.rect((root.text.charCodeAt(index) % 16) * root.cell, Math.floor(root.text.charCodeAt(index) / 16) * root.cell, root.cell, root.cell)
                 smooth: false
                 fillMode: Image.Stretch
             }
