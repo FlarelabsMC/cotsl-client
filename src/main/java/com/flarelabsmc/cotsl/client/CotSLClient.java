@@ -12,9 +12,11 @@ import com.flarelabsmc.cotsl.client.render.texture.Frankenstein;
 import com.flarelabsmc.cotsl.client.speech.SpeechData;
 import com.flarelabsmc.cotsl.common.CotSL;
 import com.flarelabsmc.cotsl.common.registry.ParticleRegistry;
+import com.flarelabsmc.cotsl.core.transform.mixin.client.DebugScreenEntriesAccessor;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranimcore.enums.PlayState;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -30,13 +32,21 @@ import net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
 import static com.zigythebird.playeranim.PlayerAnimLibMod.ANIMATION_LAYER_ID;
+import static com.jsoftbiz.utils.OS.OS;
 
 @Mod(value = CotSL.MOD_ID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = CotSL.MOD_ID, value = Dist.CLIENT)
 public class CotSLClient {
+    private static final Identifier DEBUG_GROUP = Identifier.fromNamespaceAndPath("cotsl", "debug");
+    public static final Identifier PLATFORM_DEBUG_ENTRY = Identifier.fromNamespaceAndPath("cotsl", "platform");
+
     public CotSLClient(ModContainer container) {
         CotSLEntityRenderers.init();
         PlayerDefaultAnimationHandler.init();
+        var entries = DebugScreenEntriesAccessor.cotsl$entries();
+        entries.put(PLATFORM_DEBUG_ENTRY, (debugScreenDisplayer, level, levelChunk, levelChunk1) -> {
+            debugScreenDisplayer.addToGroup(DEBUG_GROUP, "Platform: %s%s".formatted(ChatFormatting.UNDERLINE, OS.getPlatformName()));
+        });
     }
 
     @SubscribeEvent

@@ -78,6 +78,7 @@ public class LauncherWindow {
                 "/qml/shaders/pixelate.frag.qsb",
                 "/assets/cotsl/textures/launch/icon.png",
                 "/assets/cotsl/textures/launch/bg/launch_bg.png",
+                "/assets/cotsl/textures/launch/bg/ground.png",
                 "/assets/cotsl/textures/launch/ui/bottom_bar.png",
                 "/assets/cotsl/textures/launch/ui/x.png",
                 "/assets/cotsl/textures/launch/ui/fullscreen.png",

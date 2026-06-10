@@ -175,13 +175,15 @@ dependencies {
 
     // utility
     implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
-    implementation("maven.modrinth:player-animation-library:${pal_version}")
+    implementation(jarJar("maven.modrinth:player-animation-library:${pal_version}"))
 
     shadow("net.lenni0451.classtransform:core:${classtransform_version}")
 
     implementation("maven.modrinth:blazesdl:${blazesdl_version}")
     implementation("org.lwjgl:lwjgl:${lwjgl_version}")
     implementation("org.lwjgl:lwjgl-sdl:${lwjgl_version}")
+
+    shadow("com.jsoftbiz:os-platform-finder:1.1");
 
     // misc
 //    implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -383,6 +385,7 @@ tasks.register('bundleQtRuntimeWindows') {
         }
         def min = [
                 'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll', 'Qt6OpenGL.dll',
+                'QtQuick3D',
                 'Qt6Qml.dll', 'Qt6QmlCompiler.dll', 'Qt6QmlCore.dll',
                 'Qt6QmlMeta.dll', 'Qt6QmlModels.dll', 'Qt6QmlNetwork.dll',
                 'Qt6QmlWorkerScript.dll', 'Qt6Quick.dll', 'Qt6QuickEffects.dll',
@@ -438,6 +441,7 @@ tasks.register('bundleQtRuntimeMacOS') {
         def libDir = new File(qtDir, 'lib')
         def min = [
                 'QtCore', 'QtDBus', 'QtGui', 'QtNetwork', 'QtQml', 'QtQmlCompiler', 'QtQmlCore', 'QtOpenGL',
+                'QtQuick3D',
                 'QtQmlMeta', 'QtQmlModels', 'QtQmlNetwork', 'QtQmlWorkerScript',
                 'QtQuick', 'QtQuickEffects', 'QtQuickShapes', 'QtShaderTools', 'QtWidgets'
         ]

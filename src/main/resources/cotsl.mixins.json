@@ -6,6 +6,8 @@
   "client": [
     "client.AvatarRendererMixin",
     "client.AvatarRenderStateMixin",
+    "client.DebugScreenEntriesAccessor",
+    "client.DebugScreenEntryListMixin",
     "client.EntityRenderDispatcherMixin",
     "client.LivingEntityRendererMixin",
     "client.LocalPlayerMixin",

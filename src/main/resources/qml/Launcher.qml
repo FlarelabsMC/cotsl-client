@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Effects
+import QtQuick3D
+import QtQuick3D.Helpers
 
 Window {
     id: root
@@ -10,6 +12,21 @@ Window {
     visible: true
     flags: Qt.FramelessWindowHint | Qt.Window
     color: "#0f0d0b"
+    property real uiScale: 1
+
+    function gcd(w, h) {
+        return (h == 0) ? w : gcd(h, w % h);
+    }
+
+    function aspect() {
+        var w = Screen.width;
+        var h = Screen.height;
+        var r = gcd(w, h);
+        return {
+            w: w / r,
+            h: h / r
+        };
+    }
 
     Item {
         focus: true
@@ -33,15 +50,17 @@ Window {
     property real smoothMX: 0.7
     Behavior on smoothMX {
         SmoothedAnimation {
-            velocity: -0.5
             duration: 400
+            maximumEasingTime: 200
+            easing.type: Easing.OutQuad
         }
     }
     property real smoothMY: 0.7
     Behavior on smoothMY {
         SmoothedAnimation {
-            velocity: -0.5
             duration: 400
+            maximumEasingTime: 200
+            easing.type: Easing.OutQuad
         }
     }
 
@@ -157,17 +176,6 @@ Window {
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onPositionChanged: mouse => {
-            root.targetMX = mouse.x / root.width;
-            root.targetMY = mouse.y / root.height;
-        }
-        propagateComposedEvents: true
-        onPressed: mouse => mouse.accepted = false
-    }
-
     Timer {
         interval: 16
         running: true
@@ -216,43 +224,80 @@ Window {
         }
     }
 
-    Item {
-        id: bgContainer
+    View3D {
+        id: world
         anchors.fill: parent
-        clip: true
+        renderMode: View3D.Offscreen
 
-        Image {
-            id: bgImage
-            anchors.centerIn: parent
-            width: (parent.width * 1.2) * (1.25 - (1 / root.width))
-            height: (parent.height * 1.2) * (1.25 - (1 / root.height))
-            source: Qt.resolvedUrl("textures/launch/bg/launch_bg.png")
-            fillMode: Image.FillMode.PreserveAspectFit
-            smooth: true
+        environment: ExtendedSceneEnvironment {
+            backgroundMode: SceneEnvironment.Color
+            clearColor: thisFog.color
+            fog: Fog {
+                id: thisFog
+                color: "#000000"
+                depthNear: 3.0
+                depthFar: 50.0
+                enabled: true
+                depthEnabled: true
+            }
+            fxaaEnabled: true
+            ditheringEnabled: true
+            tonemapMode: SceneEnvironment.TonemapModeAces
+            vignetteEnabled: true
+        }
 
-            transform: [
-                Rotation {
-                    origin.x: bgImage.width / 2
-                    origin.y: bgImage.height / 2
-                    axis {
-                        x: 0
-                        y: 1
-                        z: 0
+        PerspectiveCamera {
+            id: cam
+            readonly property real xrot: -(root.smoothMX - 0.5) * 10 - (((root.smoothMX - 0.5) * 10) / 2)
+
+            position: Qt.vector3d(0, 5, 15)
+            eulerRotation.y: xrot
+            eulerRotation.z: xrot
+            eulerRotation.x: 60 - (root.smoothMY - 0.5) * 6
+            fieldOfView: 90
+        }
+
+        DirectionalLight {
+            eulerRotation.x: -45
+            eulerRotation.y: 30
+            brightness: 1.0
+        }
+
+        Model {
+            id: ground
+
+            geometry: PlaneGeometry {
+                width: 200
+                height: 200
+            }
+
+            position: Qt.vector3d(0, -40, 0)
+
+            materials: [
+                DefaultMaterial {
+                    diffuseMap: Texture {
+                        source: Qt.resolvedUrl("textures/launch/bg/ground.png")
+                        tilingModeHorizontal: Texture.Repeat
+                        tilingModeVertical: Texture.Repeat
+                        scaleU: 8
+                        scaleV: 8
+                        minFilter: Texture.Nearest
+                        magFilter: Texture.Nearest
                     }
-                    angle: (root.smoothMX - 0.5) * 8
-                },
-                Rotation {
-                    origin.x: bgImage.width / 2
-                    origin.y: bgImage.height / 2
-                    axis {
-                        x: 1
-                        y: 0
-                        z: 0
-                    }
-                    angle: -(root.smoothMY - 0.5) * 12
                 }
             ]
         }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: mouse => {
+            root.targetMX = mouse.x / root.width;
+            root.targetMY = mouse.y / root.height;
+        }
+        propagateComposedEvents: true
+        onPressed: mouse => mouse.accepted = false
     }
 
     property real fadeProgress: 0.0
@@ -260,7 +305,7 @@ Window {
 
     ShaderEffectSource {
         id: sceneCapture
-        sourceItem: bgContainer
+        sourceItem: world
         hideSource: false
         live: !root.fadeActive
     }
@@ -459,7 +504,7 @@ Window {
             left: parent.left
             right: parent.right
             bottom: parent.bottom
-            bottomMargin: root.settingsOpen ? -height : 0
+            bottomMargin: root.settingsOpen || root.fadeActive ? -height : 0
             Behavior on bottomMargin {
                 NumberAnimation {
                     duration: 300
@@ -467,7 +512,7 @@ Window {
                 }
             }
         }
-        height: 96
+        height: 96 * root.uiScale
         color: "#00000000"
 
         Item {
@@ -477,7 +522,7 @@ Window {
 
             readonly property int sliceW: 128
             readonly property int sliceH: 32
-            readonly property real tileScale: 3.0
+            readonly property real tileScale: 3.0 * root.uiScale
             readonly property int tileW: sliceW * tileScale
             readonly property int tileH: sliceH * tileScale
 
@@ -502,8 +547,8 @@ Window {
                 horizontalCenter: parent.horizontalCenter
                 bottomMargin: 28
             }
-            width: 216
-            height: 96
+            width: 256 * root.uiScale * 0.75
+            height: 96 * root.uiScale * 0.75
             label: launchState === "ready" ? "" : launchState === "installing" ? "Installing..." : launchState === "launching" ? "Launching..." : "Loading..."
             visible: authState === "launch"
             active: launchState === "ready"
@@ -511,11 +556,21 @@ Window {
                 launchState = "installing";
                 bridge.beginLaunch();
             }
+            closed: launchState === "installing" || launchState === "launching"
+            bgOpacity: closed ? 0.0 : 1.0
+            textColor: closed ? "#ffffff" : Qt.rgba(0.29, 0.28, 0.26, 1)
+
+            Behavior on bgOpacity {
+                NumberAnimation {
+                    duration: 350
+                    easing.type: Easing.InOutQuad
+                }
+            }
 
             Image {
                 id: launchTxt
-                width: parent.width
-                height: parent.tileH
+                width: 72 * 3 * root.uiScale
+                height: parent.height
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 source: Qt.resolvedUrl("textures/launch/ui/launch.png")
@@ -531,8 +586,8 @@ Window {
                 rightMargin: 12
                 verticalCenter: parent.verticalCenter
             }
-            width: 72
-            height: 72
+            width: 72 * root.uiScale
+            height: 72 * root.uiScale
             onClicked: settingsOpen = true
         }
     }
@@ -566,8 +621,8 @@ Window {
                 topMargin: 12
                 leftMargin: 12
             }
-            width: 12
-            height: 14
+            width: 12 * root.uiScale
+            height: 14 * root.uiScale
             source: Qt.resolvedUrl("textures/launch/ui/x.png")
             smooth: false
 
@@ -601,7 +656,7 @@ Window {
             }
             text: "Settings"
             textColor: "#b4a58c"
-            charScale: 2
+            charScale: 2 * root.uiScale
         }
 
         Column {

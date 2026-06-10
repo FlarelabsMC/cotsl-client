@@ -11,6 +11,11 @@ Item {
     property color glowColor: "#ffffff"
     property int glowRadius: 10
     property bool active: true
+    property real bgOpacity: 1.0
+    property color textColor: Qt.rgba(0.29, 0.28, 0.26, 1)
+
+    property bool closed: false
+    property bool hovered: false
 
     property real _glow: 0.0
     Behavior on _glow {
@@ -23,41 +28,57 @@ Item {
     readonly property int midW: 32
     readonly property int rightW: 8
     readonly property int sliceH: 24
-    readonly property real tileScale: 3.0
-    readonly property int tileW: midW * tileScale
-    readonly property int tileH: sliceH * tileScale
-    readonly property real capScale: 3.0
+    readonly property real uniformScale: height / sliceH
+    readonly property int capWidth: leftW * uniformScale
+    readonly property int midTileWidth: midW * uniformScale
+    readonly property int capHeight: sliceH * uniformScale
+
+    readonly property int fullOpenMidWidth: Math.max(0, width - (leftW + rightW) * uniformScale) - (hovered ? 0 : 14)
+    property int midTargetWidth: closed ? 0 : fullOpenMidWidth
+
+    height: sliceH * tileScale
 
     Item {
         id: bg
-        anchors.fill: parent
+        width: (leftW + rightW) * uniformScale + midContainer.width
+        height: parent.height
+        anchors.horizontalCenter: parent.horizontalCenter
+        opacity: bgOpacity
 
         Image {
             id: leftCap
-            width: leftW * capScale
-            height: sliceH * tileScale
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             source: Qt.resolvedUrl("textures/launch/ui/button_3s.png")
+            width: leftW * uniformScale
+            height: sliceH * uniformScale
             sourceClipRect: Qt.rect(0, 0, leftW, sliceH)
             smooth: false
         }
 
         Item {
-            id: mid
+            id: midContainer
             anchors.left: leftCap.right
-            anchors.right: rightCap.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
+            anchors.verticalCenter: parent.verticalCenter
+
+            width: btn.midTargetWidth
+            height: parent.height
             clip: true
 
+            Behavior on width {
+                NumberAnimation {
+                    duration: 350
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
             Repeater {
-                model: Math.ceil(mid.width / tileW)
+                model: Math.ceil(midContainer.width / midTileWidth)
                 Image {
-                    width: tileW
-                    height: tileH
-                    x: index * tileW
-                    y: (mid.height - tileH) / 2
+                    width: midTileWidth
+                    height: sliceH * uniformScale
+                    x: index * midTileWidth
+                    y: (midContainer.height - sliceH * uniformScale) / 2
                     source: "textures/launch/ui/button_3s.png"
                     sourceClipRect: Qt.rect(leftW, 0, midW, sliceH)
                     smooth: false
@@ -67,9 +88,9 @@ Item {
 
         Image {
             id: rightCap
-            width: rightW * capScale
-            height: sliceH * tileScale
-            anchors.right: parent.right
+            width: rightW * uniformScale
+            height: sliceH * uniformScale
+            anchors.left: midContainer.right
             anchors.verticalCenter: parent.verticalCenter
             source: Qt.resolvedUrl("textures/launch/ui/button_3s.png")
             sourceClipRect: Qt.rect(leftW + midW, 0, rightW, sliceH)
@@ -87,21 +108,23 @@ Item {
     }
 
     BitmapText {
-        anchors.verticalCenter: btn.verticalCenter
-        anchors.horizontalCenter: btn.horizontalCenter
+        anchors.centerIn: parent
         text: btn.label
-        charScale: 2.0
-        textColor: Qt.rgba(0.29, 0.28, 0.26, 1)
+        charScale: 2.0 * uniformScale
+        textColor: textColor
     }
 
     MouseArea {
-        id: mouseArea
-        anchors.fill: parent
+        anchors.fill: bg
         hoverEnabled: true
-        enabled: active
+        enabled: active && !btn.closed
         cursorShape: active ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onEntered: btn._glow = 1.0
-        onExited: btn._glow = 0.0
+        onEntered: {
+            hovered = true;
+        }
+        onExited: {
+            hovered = false;
+        }
         onClicked: btn.clicked()
     }
 }

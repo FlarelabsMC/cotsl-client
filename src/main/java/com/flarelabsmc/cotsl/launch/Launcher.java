@@ -14,6 +14,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import static com.jsoftbiz.utils.OS.OS;
+
 public class Launcher {
     static final CountDownLatch LAUNCH_LATCH = new CountDownLatch(1);
     static final String RELAUNCHED = "cotsl.relaunched";
@@ -24,7 +26,7 @@ public class Launcher {
 
         log("Phase " + phase + " started at " + new Date());
         if (System.getProperty(RELAUNCHED) != null) return;
-        log("    os=" + System.getProperty("os.name"));
+        log("    os=" + OS.getPlatformName());
         log("    java=" + System.getProperty("java.version"));
         log("    java.home=" + System.getProperty("java.home"));
     }
@@ -248,7 +250,7 @@ public class Launcher {
         try (JarFile self = new JarFile(selfJar)) {
             List<JarEntry> entries = self.stream()
                     .filter(e ->
-                            e.getName().startsWith("META-INF/jarjar/")
+                            (e.getName().startsWith("META-INF/extjarjar/") || e.getName().startsWith("META-INF/jarjar"))
                                     && e.getName().endsWith(".jar")
                     )
                     .toList();
