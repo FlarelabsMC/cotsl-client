@@ -78,7 +78,6 @@ allPlatforms.each { platform ->
 
 almostgradle.setup { ext ->
     ext.modPackage.set('com.flarelabsmc.cotsl')
-    ext.buildConfig.set(false)
 
     ext.launchArgs { args ->
         args.resizeClient.set(false)
