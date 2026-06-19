@@ -488,6 +488,13 @@ tasks.register('bundleQtRuntimeMacOS') {
 
 processResources.dependsOn compileShaders
 
+// speech.json is generated into the committed source resources tree, so processResources and
+// sourcesJar consume it. Order them after generation (without forcing the rhubarb download chain
+// into every build) so a fresh speech.json is packaged whenever generateDialogueMetadata is run.
+['processResources', 'sourcesJar'].each { consumer ->
+    tasks.named(consumer).configure { mustRunAfter('generateDialogueMetadata') }
+}
+
 // AlmostGradle's processResources expands only neoforge.mods.toml; these runtime version files need it too.
 tasks.named('processResources', ProcessResources).configure {
     def neoforgeVer = project.neoforgeVersion
