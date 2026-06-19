@@ -171,6 +171,7 @@ dependencies {
 }
 
 tasks.register('downloadRhubarb') {
+    def rhubarbVersion = project.rhubarbVersion
     def rhubarbDir = file('rhubarb')
     def rhubarbExe = new File(rhubarbDir, 'rhubarb')
     def buildDir = layout.buildDirectory.asFile.get()
