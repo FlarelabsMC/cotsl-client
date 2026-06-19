@@ -522,10 +522,6 @@ publishing {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
 // The default shadowJar bundles the full runtimeClasspath (all of Minecraft), exceeding the
 // 65535-entry zip limit; zip64 lets it and the per-platform jar_* ShadowJars build.
 tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configureEach {
