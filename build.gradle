@@ -106,11 +106,6 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
         }
 
-        data {
-            clientData()
-            programArguments.addAll '--mod', project.modId, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
 //            systemProperty 'terminal.ansi', 'true'
@@ -118,8 +113,6 @@ neoForge {
         }
     }
 }
-
-sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
     embed {
