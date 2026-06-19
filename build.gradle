@@ -137,7 +137,6 @@ configurations {
         }
     }
     compileOnly.extendsFrom embed
-    runtimeClasspath.extendsFrom localRuntime
 }
 
 
