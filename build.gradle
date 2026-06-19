@@ -5,17 +5,16 @@ import java.util.zip.ZipFile
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version "${mdg_version}"
+    id 'net.neoforged.moddev' version "${mdgVersion}"
+    id 'com.almostreliable.almostgradle' version "${almostgradleVersion}"
     id 'idea'
-    id 'com.gradleup.shadow' version "${shadow_version}"
+    id 'com.gradleup.shadow' version "${shadowVersion}"
 }
 
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
-group = mod_group_id
 def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
 def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
     def os = System.getProperty('os.name').toLowerCase()
@@ -64,10 +63,6 @@ repositories {
   }
 }
 
-base {
-    archivesName = mod_id
-}
-
 allPlatforms.each { platform ->
     configurations.create("embedNative_${platform.replace('-', '_')}") {
         canBeResolved = true
@@ -81,17 +76,25 @@ allPlatforms.each { platform ->
 }
 
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+almostgradle.setup { ext ->
+    ext.modPackage.set('com.flarelabsmc.cotsl')
+    ext.buildConfig.set(false)
+
+    ext.launchArgs { args ->
+        args.resizeClient.set(false)
+    }
+}
+
+// Override AlmostGradle's defaults, which would be cotsl-neoforge / 26.1.2-modVersion.
+version = mod_version
+base {
+    archivesName = modId
+}
 
 neoForge {
-    enable {
-        version = project.neo_version
-    }
-
     runs {
         client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
             jvmArgument '-XX:+UnlockExperimentalVMOptions'
             jvmArgument '-XX:+UseZGC'
 
@@ -101,31 +104,24 @@ neoForge {
         }
 
         server {
-            server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
         }
 
         gameTestServer {
             type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
         }
 
         data {
             clientData()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            programArguments.addAll '--mod', project.modId, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
 //            systemProperty 'terminal.ansi', 'true'
             logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
         }
     }
 }
@@ -150,38 +146,38 @@ configurations {
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    jarJar(implementation("org.xerial:sqlite-jdbc:${sqlite_jdbc_version}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormlite_version}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormlite_version}"))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jackson_module_version}")))
-    jarJar(implementation("com.github.luben:zstd-jni:${zstd_jni_version}"))
+    jarJar(implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormliteVersion}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormliteVersion}"))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonModuleVersion}")))
+    jarJar(implementation("com.github.luben:zstd-jni:${zstdJniVersion}"))
 
     // qtjambi for launcher ui
-    embed "io.qtjambi:qtjambi:${qt_version}"
-    embed "io.qtjambi:qtjambi-qml:${qt_version}"
-    embed "io.qtjambi:qtjambi-quick:${qt_version}"
+    embed "io.qtjambi:qtjambi:${qtVersion}"
+    embed "io.qtjambi:qtjambi-qml:${qtVersion}"
+    embed "io.qtjambi:qtjambi-quick:${qtVersion}"
     allPlatforms.each { platform ->
         def cfg = "embedNative_${platform.replace('-', '_')}"
-        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qt_version}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qt_version}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qt_version}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
     }
 
     // launcher auth
-    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauth_version}")))
+    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauthVersion}")))
 
     // utility
-    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
-    implementation(jarJar("maven.modrinth:player-animation-library:${pal_version}"))
+    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraftVersion}:${geckolibVersion}"))
+    implementation(jarJar("maven.modrinth:player-animation-library:${palVersion}"))
 
-    shadow("net.lenni0451.classtransform:core:${classtransform_version}")
+    shadow("net.lenni0451.classtransform:core:${classtransformVersion}")
 
-    implementation("maven.modrinth:blazesdl:${blazesdl_version}")
-    implementation("org.lwjgl:lwjgl:${lwjgl_version}")
-    implementation("org.lwjgl:lwjgl-sdl:${lwjgl_version}")
+    implementation("maven.modrinth:blazesdl:${blazesdlVersion}")
+    implementation("org.lwjgl:lwjgl:${lwjglVersion}")
+    implementation("org.lwjgl:lwjgl-sdl:${lwjglVersion}")
 
     shadow("com.jsoftbiz:os-platform-finder:1.1");
 
@@ -199,9 +195,9 @@ tasks.register('downloadRhubarb') {
         def os = System.getProperty('os.name').toLowerCase()
         def downloadUrl
 
-        if (os.contains('win')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Windows.zip"
-        else if (os.contains('mac')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-macOS.zip"
-        else downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Linux.zip"
+        if (os.contains('win')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-Windows.zip"
+        else if (os.contains('mac')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-macOS.zip"
+        else downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-Linux.zip"
 
         buildDir.mkdirs()
 
@@ -238,7 +234,7 @@ tasks.register('generateDialogueMetadata') {
     group = 'build'
     dependsOn downloadRhubarb
 
-    def modId = project.mod_id
+    def modId = project.modId
     def audioDir = file("src/main/resources/assets/${modId}/sounds/dialogue")
     def rhubarbExeWin = file('rhubarb/rhubarb.exe')
     def rhubarbExeUnix = file('rhubarb/rhubarb')
@@ -506,27 +502,14 @@ tasks.register('bundleQtRuntimeMacOS') {
 
 processResources.dependsOn compileShaders
 
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            release                : release,
-
-            blazesdl_version       : blazesdl_version,
-            pal_version            : pal_version
-    ]
-    inputs.properties replaceProperties
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+// AlmostGradle's processResources expands only neoforge.mods.toml; these runtime version files need it too.
+tasks.named('processResources', ProcessResources).configure {
+    def neoforgeVer = project.neoforgeVersion
+    def selfVer = project.mod_version
+    filesMatching(['neo_version.txt', 'cotsl_version.txt']) {
+        expand(neoforgeVersion: neoforgeVer, mod_version: selfVer)
+    }
 }
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
 
 publishing {
     publications {
@@ -543,6 +526,12 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+// The default shadowJar bundles the full runtimeClasspath (all of Minecraft), exceeding the
+// 65535-entry zip limit; zip64 lets it and the per-platform jar_* ShadowJars build.
+tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configureEach {
+    zip64 = true
 }
 
 tasks.named('jar', Jar) {
