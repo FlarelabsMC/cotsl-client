@@ -4,7 +4,6 @@ import java.util.zip.ZipFile
 
 plugins {
     id 'java-library'
-    id 'maven-publish'
     id 'net.neoforged.moddev' version "${mdgVersion}"
     id 'com.almostreliable.almostgradle' version "${almostgradleVersion}"
     id 'idea'
