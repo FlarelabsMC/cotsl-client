@@ -27,7 +27,6 @@ def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos
 
 repositories {
     mavenCentral()
-    mavenLocal()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     maven {
         name = "Modrinth"
