@@ -27,14 +27,10 @@ def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos
 
 repositories {
     mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     maven {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
-    }
-    maven {
-        name "redlancePublic"
-        url "https://repo.redlance.org/public"
+        content { includeGroup("maven.modrinth") }
     }
     exclusiveContent {
         forRepository {
