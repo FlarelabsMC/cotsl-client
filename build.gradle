@@ -78,8 +78,7 @@ almostgradle.setup { ext ->
     }
 }
 
-// Override AlmostGradle's defaults, which would be cotsl-neoforge / 26.1.2-modVersion.
-version = mod_version
+version = buildVersion
 base {
     archivesName = modId
 }
@@ -488,19 +487,15 @@ tasks.register('bundleQtRuntimeMacOS') {
 
 processResources.dependsOn compileShaders
 
-// speech.json is generated into the committed source resources tree, so processResources and
-// sourcesJar consume it. Order them after generation (without forcing the rhubarb download chain
-// into every build) so a fresh speech.json is packaged whenever generateDialogueMetadata is run.
 ['processResources', 'sourcesJar'].each { consumer ->
     tasks.named(consumer).configure { mustRunAfter('generateDialogueMetadata') }
 }
 
-// AlmostGradle's processResources expands only neoforge.mods.toml; these runtime version files need it too.
 tasks.named('processResources', ProcessResources).configure {
     def neoforgeVer = project.neoforgeVersion
-    def selfVer = project.mod_version
+    def selfVer = project.buildVersion
     filesMatching(['neo_version.txt', 'cotsl_version.txt']) {
-        expand(neoforgeVersion: neoforgeVer, mod_version: selfVer)
+        expand(neoforgeVersion: neoforgeVer, buildVersion: selfVer)
     }
 }
 
@@ -517,8 +512,6 @@ publishing {
     }
 }
 
-// The default shadowJar bundles the full runtimeClasspath (all of Minecraft), exceeding the
-// 65535-entry zip limit; zip64 lets it and the per-platform jar_* ShadowJars build.
 tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configureEach {
     zip64 = true
 }
@@ -599,7 +592,7 @@ tasks.register('buildBootstrapWindows', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
@@ -624,7 +617,7 @@ tasks.register('buildBootstrapLinux', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
@@ -649,7 +642,7 @@ tasks.register('buildBootstrapMacOS', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'
