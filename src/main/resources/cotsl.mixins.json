@@ -17,7 +17,8 @@
     "common.AbstractHorseMixin",
     "common.GrindstoneBlockMixin",
     "common.LivingEntityMixin",
-    "common.PlayerMixin"
+    "common.PlayerMixin",
+    "common.AvatarMixin"
   ],
   "server": [],
   "injectors": {

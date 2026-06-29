@@ -1,73 +1,78 @@
 package com.flarelabsmc.cotsl.client.animation;
 
-import com.flarelabsmc.cotsl.common.CotSL;
-import com.flarelabsmc.cotsl.core.transform.duck.AbstractHorseDuck;
+import com.flarelabsmc.cotsl.core.transform.duck.AvatarDuck;
 import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.animation.PlayerRawAnimationBuilder;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
-import com.zigythebird.playeranimcore.animation.AnimationController;
-import com.zigythebird.playeranimcore.animation.AnimationData;
+import com.zigythebird.playeranimcore.animation.Animation;
 import com.zigythebird.playeranimcore.animation.RawAnimation;
 import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier;
+import com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier;
 import com.zigythebird.playeranimcore.bones.AdvancedPlayerAnimBone;
 import com.zigythebird.playeranimcore.easing.EasingType;
-import com.zigythebird.playeranimcore.enums.PlayState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import static com.zigythebird.playeranim.PlayerAnimLibMod.ANIMATION_LAYER_ID;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class PlayerDefaultAnimationHandler {
-    private static boolean wasMoving;
-
     public static void init() {}
 
     @SubscribeEvent
-    public static void handle(ClientTickEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (!(mc.player instanceof LocalPlayer player)) return;
-        PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(player, ANIMATION_LAYER_ID);
+    public static void handle(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+        PlayerAnimationController controller =
+                (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(
+                        player, ANIMATION_LAYER_ID
+                );
         if (controller == null) return;
-        Avatar a = controller.getAvatar();
-        if (a.getVehicle() instanceof AbstractHorse horse) {
-            AbstractHorseDuck hd = (AbstractHorseDuck) horse;
-            boolean isMoving = hd.getVel() > 0;
+        Avatar avatar = controller.getAvatar();
+        AvatarDuck avatarExt = (AvatarDuck) avatar;
+        boolean wasMoving = avatarExt.wasMoving();
+        if (avatar.getVehicle() instanceof AbstractHorse horse) {
+            float speed = (float) horse.getDeltaMovement().normalize().length();
+            boolean isMoving = speed > 0;
+            String startMoving = "cotsl:horse_start_moving";
+            String idle = "cotsl:horse_idle";
             if (isMoving && !wasMoving) {
-                if (controller.hasAnimationFinished()) wasMoving = true;
-                else {
-                    controller.triggerAnimation(Identifier.parse("cotsl:horse_start_moving"));
-                    controller.addModifierBefore(AbstractFadeModifier.standardFadeIn(10, EasingType.EASE_OUT_BACK));
-                    controller.setPostAnimationSetupConsumer(bonefunc -> {
-                        AdvancedPlayerAnimBone head = bonefunc.apply("head");
-                        head.rotYEnabled = false;
-                    });
-                    return;
-                }
+                fadeAnimation(getRawAnim(startMoving, false), EasingType.LINEAR, controller, speed);
+                avatarExt.setWasMoving(true);
+            } else if (isMoving) {
+                String horseAnim = speed > 0.1 ? "cotsl:horse_run" : "cotsl:horse_walk";
+                if (isPlayingAnim(startMoving, controller)) return;
+                fadeAnimation(getRawAnim(horseAnim, true), EasingType.LINEAR, controller, speed);
+            } else {
+                if (!isPlayingAnim(idle, controller)) fadeAnimation(getRawAnim(idle, true), EasingType.LINEAR, controller, speed);
+                avatarExt.setWasMoving(false);
             }
-            if (isMoving && wasMoving) {
-                Identifier horseAnim = Identifier.parse("cotsl:horse_run");
-                if (!controller.isPlayingTriggeredAnimation()) {
-                    controller.triggerAnimation(horseAnim);
-                    controller.addModifierBefore(AbstractFadeModifier.standardFadeIn(10, EasingType.EASE_OUT_BACK));
-                    controller.setPostAnimationSetupConsumer(bonefunc -> {
-                        AdvancedPlayerAnimBone head = bonefunc.apply("head");
-                        head.rotYEnabled = false;
-                    });
-                    return;
-                }
-            }
-            wasMoving = isMoving;
+            return;
         }
         controller.stopTriggeredAnimation();
+    }
+
+    private static boolean isPlayingAnim(String anim, PlayerAnimationController controller) {
+        return controller.getCurrentAnimation() != null && controller.getCurrentAnimation().animation() == getAnim(anim);
+    }
+
+    private static Animation getAnim(String anim) {
+        return PlayerAnimResources.getAnimation(Identifier.parse(anim));
+    }
+
+    private static RawAnimation getRawAnim(String anim, boolean loop) {
+        Animation animation = PlayerAnimResources.getAnimation(Identifier.parse(anim));
+        RawAnimation init = RawAnimation.begin();
+        return loop ? init.thenLoop(animation) : init.thenPlay(animation);
+    }
+
+    private static void fadeAnimation(RawAnimation anim, EasingType easing, PlayerAnimationController controller, float speed) {
+        controller.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(10, easing), anim);
+        if (!controller.getModifier(0).isActive()) controller.addModifier(new SpeedModifier(speed), 0);
     }
 }
