@@ -4,18 +4,16 @@ import java.util.zip.ZipFile
 
 plugins {
     id 'java-library'
-    id 'maven-publish'
-    id 'net.neoforged.moddev' version "${mdg_version}"
+    id 'net.neoforged.moddev' version "${mdgVersion}"
+    id 'com.almostreliable.almostgradle' version "${almostgradleVersion}"
     id 'idea'
-    id 'com.gradleup.shadow' version "${shadow_version}"
+    id 'com.gradleup.shadow' version "${shadowVersion}"
 }
 
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
-group = mod_group_id
 def allPlatforms = ['windows-x64', 'linux-x64', 'macos']
 def currentPlatform = (project.findProperty('buildPlatform') as String) ?: {
     def os = System.getProperty('os.name').toLowerCase()
@@ -29,15 +27,10 @@ def qtNativesGenDirMacOS = layout.buildDirectory.dir('generated/qt-natives-macos
 
 repositories {
     mavenCentral()
-    mavenLocal()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     maven {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
-    }
-    maven {
-        name "redlancePublic"
-        url "https://repo.redlance.org/public"
+        content { includeGroup("maven.modrinth") }
     }
     exclusiveContent {
         forRepository {
@@ -53,10 +46,15 @@ repositories {
     flatDir {
         dirs 'libs'
     }
-}
-
-base {
-    archivesName = mod_id
+  maven {
+      name = "NeoForge"
+      url = uri("https://maven.neoforged.net/")
+      content {
+          includeGroupAndSubgroups("net.neoforged")
+          includeGroup("codechicken")
+          includeGroup("net.covers1624")
+      }
+  }
 }
 
 allPlatforms.each { platform ->
@@ -72,21 +70,23 @@ allPlatforms.each { platform ->
 }
 
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+almostgradle.setup { ext ->
+    ext.modPackage.set('com.flarelabsmc.cotsl')
 
-tasks.named("shadowJar") {
-    isZip64 = true
+    ext.launchArgs { args ->
+        args.resizeClient.set(false)
+    }
+}
+
+version = buildVersion
+base {
+    archivesName = modId
 }
 
 neoForge {
-    enable {
-        version = project.neo_version
-    }
-
     runs {
         client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
             jvmArgument '-XX:+UnlockExperimentalVMOptions'
             jvmArgument '-XX:+UseZGC'
 
@@ -96,19 +96,13 @@ neoForge {
         }
 
         server {
-            server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
         }
 
         gameTestServer {
             type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        data {
-            clientData()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.modId
         }
 
         configureEach {
@@ -117,15 +111,7 @@ neoForge {
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
 }
-
-sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
     embed {
@@ -138,47 +124,50 @@ configurations {
         }
     }
     compileOnly.extendsFrom embed
-    runtimeClasspath.extendsFrom localRuntime
 }
 
 
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    jarJar(implementation("org.xerial:sqlite-jdbc:${sqlite_jdbc_version}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormlite_version}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormlite_version}"))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jackson_core_version}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jackson_module_version}")))
-    jarJar(implementation("com.github.luben:zstd-jni:${zstd_jni_version}"))
+    jarJar(implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormliteVersion}"))
+    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormliteVersion}"))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jacksonCoreVersion}")))
+    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonModuleVersion}")))
+    jarJar(implementation("com.github.luben:zstd-jni:${zstdJniVersion}"))
 
     // qtjambi for launcher ui
-    embed "io.qtjambi:qtjambi:${qt_version}"
-    embed "io.qtjambi:qtjambi-qml:${qt_version}"
-    embed "io.qtjambi:qtjambi-quick:${qt_version}"
+    embed "io.qtjambi:qtjambi:${qtVersion}"
+    embed "io.qtjambi:qtjambi-qml:${qtVersion}"
+    embed "io.qtjambi:qtjambi-quick:${qtVersion}"
     allPlatforms.each { platform ->
         def cfg = "embedNative_${platform.replace('-', '_')}"
-        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qt_version}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qt_version}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qt_version}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
+        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
     }
 
     // launcher auth
-    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauth_version}")))
+    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauthVersion}")))
 
     // utility
-    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"))
-    implementation("maven.modrinth:player-animation-library:${pal_version}")
+    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraftVersion}:${geckolibVersion}"))
+    implementation(jarJar("maven.modrinth:player-animation-library:${palVersion}"))
 
-    shadow("net.lenni0451.classtransform:core:${classtransform_version}")
+    shadow("net.lenni0451.classtransform:core:${classtransformVersion}")
 
-    // misc
-//    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation("maven.modrinth:blazesdl:${blazesdlVersion}")
+    implementation("org.lwjgl:lwjgl:${lwjglVersion}")
+    implementation("org.lwjgl:lwjgl-sdl:${lwjglVersion}")
+
+    shadow("com.jsoftbiz:os-platform-finder:1.1");
 }
 
 tasks.register('downloadRhubarb') {
+    def rhubarbVersion = project.rhubarbVersion
     def rhubarbDir = file('rhubarb')
     def rhubarbExe = new File(rhubarbDir, 'rhubarb')
     def buildDir = layout.buildDirectory.asFile.get()
@@ -188,9 +177,9 @@ tasks.register('downloadRhubarb') {
         def os = System.getProperty('os.name').toLowerCase()
         def downloadUrl
 
-        if (os.contains('win')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Windows.zip"
-        else if (os.contains('mac')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-macOS.zip"
-        else downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarb_version}/Rhubarb-Lip-Sync-${rhubarb_version}-Linux.zip"
+        if (os.contains('win')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-Windows.zip"
+        else if (os.contains('mac')) downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-macOS.zip"
+        else downloadUrl = "https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v${rhubarbVersion}/Rhubarb-Lip-Sync-${rhubarbVersion}-Linux.zip"
 
         buildDir.mkdirs()
 
@@ -227,7 +216,7 @@ tasks.register('generateDialogueMetadata') {
     group = 'build'
     dependsOn downloadRhubarb
 
-    def modId = project.mod_id
+    def modId = project.modId
     def audioDir = file("src/main/resources/assets/${modId}/sounds/dialogue")
     def rhubarbExeWin = file('rhubarb/rhubarb.exe')
     def rhubarbExeUnix = file('rhubarb/rhubarb')
@@ -374,6 +363,7 @@ tasks.register('bundleQtRuntimeWindows') {
         }
         def min = [
                 'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Network.dll', 'Qt6OpenGL.dll',
+                'QtQuick3D',
                 'Qt6Qml.dll', 'Qt6QmlCompiler.dll', 'Qt6QmlCore.dll',
                 'Qt6QmlMeta.dll', 'Qt6QmlModels.dll', 'Qt6QmlNetwork.dll',
                 'Qt6QmlWorkerScript.dll', 'Qt6Quick.dll', 'Qt6QuickEffects.dll',
@@ -429,6 +419,7 @@ tasks.register('bundleQtRuntimeMacOS') {
         def libDir = new File(qtDir, 'lib')
         def min = [
                 'QtCore', 'QtDBus', 'QtGui', 'QtNetwork', 'QtQml', 'QtQmlCompiler', 'QtQmlCore', 'QtOpenGL',
+                'QtQuick3D',
                 'QtQmlMeta', 'QtQmlModels', 'QtQmlNetwork', 'QtQmlWorkerScript',
                 'QtQuick', 'QtQuickEffects', 'QtQuickShapes', 'QtShaderTools', 'QtWidgets'
         ]
@@ -493,24 +484,17 @@ tasks.register('bundleQtRuntimeMacOS') {
 
 processResources.dependsOn compileShaders
 
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            release                : release
-    ]
-    inputs.properties replaceProperties
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+['processResources', 'sourcesJar'].each { consumer ->
+    tasks.named(consumer).configure { mustRunAfter('generateDialogueMetadata') }
 }
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
+
+tasks.named('processResources', ProcessResources).configure {
+    def neoforgeVer = project.neoforgeVersion
+    def selfVer = project.buildVersion
+    filesMatching(['neo_version.txt', 'cotsl_version.txt']) {
+        expand(neoforgeVersion: neoforgeVer, buildVersion: selfVer)
+    }
+}
 
 publishing {
     publications {
@@ -525,8 +509,8 @@ publishing {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
+tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configureEach {
+    zip64 = true
 }
 
 tasks.named('jar', Jar) {
@@ -605,7 +589,7 @@ tasks.register('buildBootstrapWindows', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-windows.exe", '.'
@@ -630,7 +614,7 @@ tasks.register('buildBootstrapLinux', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o', "${buildDir}/bootstrap/build/cotsl-linux", '.'
@@ -655,7 +639,7 @@ tasks.register('buildBootstrapMacOS', Exec) {
     environment 'GOARCH', 'amd64'
     environment 'CGO_ENABLED', '0'
     commandLine goBin, 'build', "-ldflags=-s -w" +
-            ' -X main.appVersion=' + project.version +
+            ' -X main.appVersion=' + project.buildVersion +
             ' -X main.repoOwner=FlarelabsMC' +
             ' -X main.repoName=cotsl-client',
             '-o',"${buildDir}/bootstrap/build/cotsl-macos", '.'

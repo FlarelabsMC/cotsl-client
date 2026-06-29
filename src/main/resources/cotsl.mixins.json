@@ -6,16 +6,19 @@
   "client": [
     "client.AvatarRendererMixin",
     "client.AvatarRenderStateMixin",
+    "client.DebugScreenEntriesAccessor",
+    "client.DebugScreenEntryListMixin",
     "client.EntityRenderDispatcherMixin",
     "client.LivingEntityRendererMixin",
-    "client.LocalPlayerMixin"
+    "client.LocalPlayerMixin",
+    "client.MinecraftMixin"
   ],
   "mixins": [
     "common.AbstractHorseMixin",
-    "common.AvatarMixin",
     "common.GrindstoneBlockMixin",
     "common.LivingEntityMixin",
-    "common.PlayerMixin"
+    "common.PlayerMixin",
+    "common.AvatarMixin"
   ],
   "server": [],
   "injectors": {

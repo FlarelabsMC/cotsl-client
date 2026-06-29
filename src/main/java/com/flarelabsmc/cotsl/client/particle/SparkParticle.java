@@ -18,7 +18,7 @@ import java.util.Arrays;
 
 public class SparkParticle extends SingleQuadParticle {
     public static final ParticleRenderType RENDER_TYPE =
-            new ParticleRenderType("cotsl:spark");
+            new ParticleRenderType("cotsl:spark", "spark");
     private static final float LOD_DIVISOR = 500.0f;
 
     private static final int TRAIL_LENGTH = 12;

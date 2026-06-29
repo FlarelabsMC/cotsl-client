@@ -2,6 +2,7 @@ package com.flarelabsmc.cotsl.launch;
 
 import io.qt.QtInvokable;
 import io.qt.core.*;
+import io.qt.gui.QIcon;
 import io.qt.qml.*;
 import io.qt.quick.*;
 import io.qt.widgets.QApplication;
@@ -32,6 +33,8 @@ public class LauncherWindow {
 
         QApplication.initialize(appArgs.toArray(new String[0]));
         QApplication.setApplicationName("Crypt of the Second Lord");
+        QIcon icon = new QIcon(":/assets/cotsl/textures/launch/cotsl_icon.png");
+        QApplication.setWindowIcon(icon);
 
         Path qmlRoot = extractResources();
 
@@ -69,10 +72,22 @@ public class LauncherWindow {
         String[] resources = {
                 "/qml/Launcher.qml",
                 "/qml/GlowButton.qml",
+                "/qml/LaunchButton.qml",
                 "/qml/BitmapText.qml",
+                "/qml/SettingsButton.qml",
                 "/qml/shaders/pixelate.frag.qsb",
+                "/assets/cotsl/textures/launch/icon.png",
                 "/assets/cotsl/textures/launch/bg/launch_bg.png",
+                "/assets/cotsl/textures/launch/bg/ground.png",
+                "/assets/cotsl/textures/launch/ui/bottom_bar.png",
                 "/assets/cotsl/textures/launch/ui/x.png",
+                "/assets/cotsl/textures/launch/ui/fullscreen.png",
+                "/assets/cotsl/textures/launch/ui/windowed.png",
+                "/assets/cotsl/textures/launch/ui/minimize.png",
+                "/assets/cotsl/textures/launch/ui/gear.png",
+                "/assets/cotsl/textures/launch/ui/online.png",
+                "/assets/cotsl/textures/launch/ui/button_3s.png",
+                "/assets/cotsl/textures/launch/ui/launch.png",
                 "/assets/cotsl/textures/font/ascii.png",
         };
         for (String res : resources) {

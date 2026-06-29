@@ -2,15 +2,6 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        maven {
-            name = "NeoForge"
-            url = uri("https://maven.neoforged.net/")
-            content {
-                includeGroupAndSubgroups("net.neoforged")
-                includeGroup("codechicken")
-                includeGroup("net.covers1624")
-            }
-        }
     }
 }
 
