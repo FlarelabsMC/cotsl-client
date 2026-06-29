@@ -164,9 +164,6 @@ dependencies {
     implementation("org.lwjgl:lwjgl-sdl:${lwjglVersion}")
 
     shadow("com.jsoftbiz:os-platform-finder:1.1");
-
-    // misc
-//    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 tasks.register('downloadRhubarb') {

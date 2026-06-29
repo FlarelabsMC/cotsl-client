@@ -3,12 +3,15 @@ package com.flarelabsmc.cotsl.client.render;
 import com.flarelabsmc.cotsl.client.render.geo.WayfinderBeamEntityRenderer;
 import com.flarelabsmc.cotsl.client.render.geo.replaced.ReplacedHorseEntityRenderer;
 import com.flarelabsmc.cotsl.common.entity.EntityRegistry;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -29,7 +32,7 @@ public class CotSLEntityRenderers {
                         )
         );
         event.registerEntityRenderer(
-                EntityType.HORSE, ReplacedHorseEntityRenderer::new
+                EntityTypes.HORSE, ReplacedHorseEntityRenderer::new
         );
     }
 
@@ -41,22 +44,22 @@ public class CotSLEntityRenderers {
                 RenderPipeline.builder(RenderPipelines.MATRICES_FOG_LIGHT_DIR_SNIPPET)
                         .withVertexShader("core/entity")
                         .withFragmentShader("core/entity")
-                        .withSampler("Sampler0")
-                        .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                         .withShaderDefine("EMISSIVE")
                         .withShaderDefine("NO_OVERLAY")
                         .withShaderDefine("NO_CARDINAL_LIGHTING")
+                        .withPrimitiveTopology(PrimitiveTopology.LINES)
+                        .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+                        .withVertexBinding(0, DefaultVertexFormat.ENTITY)
                         .buildSnippet();
 
         ENTITY_CUTOUT_NO_CULL_EMISSIVE =
                 RenderPipeline.builder(ENTITY_CUTOUT_NO_CULL_EMISSIVE_SNIPPET)
                         .withLocation("pipeline/entity_cutout_no_cull_emissive")
                         .withShaderDefine("ALPHA_CUTOUT", 0.1f)
-                        .withSampler("Sampler0")
-                        .withSampler("Sampler2")
                         .withCull(false)
-                        .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                         .withDepthStencilState(DepthStencilState.DEFAULT)
+                        .withPrimitiveTopology(PrimitiveTopology.LINES)
+                        .withBindGroupLayout(BindGroupLayouts.SAMPLER2)
                         .build();
     }
 

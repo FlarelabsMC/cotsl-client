@@ -51,7 +51,7 @@ public abstract class GeoModelRenderLayer<
                        S s,
                        float yRot,
                        float xRot) {
-        CameraRenderState cstate = Minecraft.getInstance().gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
+        CameraRenderState cstate = Minecraft.getInstance().gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         poseStack.pushPose();
 
         this.modifyPose(poseStack, s, yRot, xRot);
