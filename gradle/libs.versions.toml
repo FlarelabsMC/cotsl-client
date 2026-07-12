@@ -11,7 +11,7 @@ jacksonCoreVersion = "2.15.0"
 jacksonModuleVersion = "2.18.2"
 zstdJniVersion = "1.5.7-11"
 
-geckolibVersion = "5.5.2"
+geckolibVersion = "5.5.3"
 palVersion = "g8XDqDTi"
 blazesdlVersion = "0.1.9"
 minecraftauthVersion = "5.0.0"
