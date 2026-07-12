@@ -7,7 +7,7 @@ qtVersion = "6.11.1"
 
 sqliteJdbcVersion = "3.53.0.0"
 ormliteVersion = "6.1"
-jacksonCoreVersion = "2.15.0"
+jacksonCoreVersion = "2.22"
 jacksonModuleVersion = "2.18.2"
 zstdJniVersion = "1.5.7-11"
 
