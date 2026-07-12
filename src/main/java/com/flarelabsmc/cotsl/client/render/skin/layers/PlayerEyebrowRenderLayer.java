@@ -1,6 +1,9 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
+import com.flarelabsmc.cotsl.core.transform.mixin.client.CameraEntityRendererAccessor;
+import com.github.exopandora.shouldersurfing.client.ShoulderSurfing;
+import com.github.exopandora.shouldersurfing.client.renderer.rendertype.ShoulderSurfingRenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -16,7 +19,6 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 
@@ -40,6 +42,8 @@ public class PlayerEyebrowRenderLayer<
                        S state,
                        float yRot,
                        float xRot) {
+        CameraEntityRendererAccessor car = (CameraEntityRendererAccessor) ShoulderSurfing.getInstance().getCameraEntityRenderer();
+        car.setRenderingCameraEntity(true);
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         UUID uuid = ((AvatarRenderStateDuck) state).getUUID();
@@ -47,7 +51,7 @@ public class PlayerEyebrowRenderLayer<
                 eyebrowModel,
                 state,
                 stack,
-                RenderTypes.entityTranslucent(
+                ShoulderSurfingRenderTypes.entityTranslucentItemTarget(
                         Identifier.parse("cotsl:avatars/" + uuid)
                 ),
                 packedLight,
@@ -58,6 +62,7 @@ public class PlayerEyebrowRenderLayer<
                 null
         );
         stack.popPose();
+        car.setRenderingCameraEntity(false);
     }
 
     public static class PlayerEyebrowModel extends EntityModel<AvatarRenderState> {
@@ -68,7 +73,7 @@ public class PlayerEyebrowRenderLayer<
         private final ModelPart leftEyebrow, rightEyebrow;
 
         public PlayerEyebrowModel(ModelPart root) {
-            super(root);
+            super(root, ShoulderSurfingRenderTypes::entityTranslucentItemTarget);
             this.leftEyebrow = root.getChild("left_eyebrow");
             this.rightEyebrow = root.getChild("right_eyebrow");
         }

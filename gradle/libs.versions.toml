@@ -1,0 +1,62 @@
+[versions]
+almostgradleVersion = "2.2.0"
+shadowVersion = "9.3.0"
+mdgVersion = "2.0.141"
+
+qtVersion = "6.11.1"
+
+sqliteJdbcVersion = "3.53.0.0"
+ormliteVersion = "6.1"
+jacksonCoreVersion = "2.15.0"
+jacksonModuleVersion = "2.18.2"
+zstdJniVersion = "1.5.7-7"
+
+geckolibVersion = "5.5.2"
+palVersion = "g8XDqDTi"
+blazesdlVersion = "0.1.9"
+minecraftauthVersion = "5.0.0"
+classtransformVersion = "1.15.0"
+lwjglVersion = "3.4.1"
+osPlatformFinderVersion = "1.1"
+shoulderSurfingVersion = "26.2-5.0.4+neoforge"
+
+[libraries]
+sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqliteJdbcVersion" }
+ormlite-core = { group = "com.j256.ormlite", name = "ormlite-core", version.ref = "ormliteVersion" }
+ormlite-jdbc = { group = "com.j256.ormlite", name = "ormlite-jdbc", version.ref = "ormliteVersion" }
+jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jacksonCoreVersion" }
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jacksonCoreVersion" }
+jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jacksonCoreVersion" }
+jackson-module-parameter-names = { group = "com.fasterxml.jackson.module", name = "jackson-module-parameter-names", version.ref = "jacksonModuleVersion" }
+zstd-jni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstdJniVersion" }
+
+qtjambi = { group = "io.qtjambi", name = "qtjambi", version.ref = "qtVersion" }
+qtjambi-qml = { group = "io.qtjambi", name = "qtjambi-qml", version.ref = "qtVersion" }
+qtjambi-quick = { group = "io.qtjambi", name = "qtjambi-quick", version.ref = "qtVersion" }
+
+qtjambi-native-windows = { group = "io.qtjambi", name = "qtjambi-native-windows-x64", version.ref = "qtVersion" }
+qtjambi-qml-native-windows = { group = "io.qtjambi", name = "qtjambi-qml-native-windows-x64", version.ref = "qtVersion" }
+qtjambi-quick-native-windows = { group = "io.qtjambi", name = "qtjambi-quick-native-windows-x64", version.ref = "qtVersion" }
+
+qtjambi-native-linux = { group = "io.qtjambi", name = "qtjambi-native-linux-x64", version.ref = "qtVersion" }
+qtjambi-qml-native-linux = { group = "io.qtjambi", name = "qtjambi-qml-native-linux-x64", version.ref = "qtVersion" }
+qtjambi-quick-native-linux = { group = "io.qtjambi", name = "qtjambi-quick-native-linux-x64", version.ref = "qtVersion" }
+
+qtjambi-native-macos = { group = "io.qtjambi", name = "qtjambi-native-macos", version.ref = "qtVersion" }
+qtjambi-qml-native-macos = { group = "io.qtjambi", name = "qtjambi-qml-native-macos", version.ref = "qtVersion" }
+qtjambi-quick-native-macos = { group = "io.qtjambi", name = "qtjambi-quick-native-macos", version.ref = "qtVersion" }
+
+minecraftAuth = { group = "net.raphimc", name = "MinecraftAuth", version.ref = "minecraftauthVersion" }
+geckolib = { group = "com.geckolib", name = "geckolib-neoforge-26.2", version.ref = "geckolibVersion" }
+player-animation-library = { group = "maven.modrinth", name = "player-animation-library", version.ref = "palVersion" }
+classtransform-core = { group = "net.lenni0451.classtransform", name = "core", version.ref = "classtransformVersion" }
+blazesdl = { group = "maven.modrinth", name = "blazesdl", version.ref = "blazesdlVersion" }
+lwjgl = { group = "org.lwjgl", name = "lwjgl", version.ref = "lwjglVersion" }
+lwjgl-sdl = { group = "org.lwjgl", name = "lwjgl-sdl", version.ref = "lwjglVersion" }
+os-platform-finder = { group = "com.jsoftbiz", name = "os-platform-finder", version.ref = "osPlatformFinderVersion" }
+shoulder-surfing = { group = "maven.modrinth", name = "shoulder-surfing-reloaded", version.ref = "shoulderSurfingVersion" }
+
+[plugins]
+neoforge-moddev = { id = "net.neoforged.moddev", version.ref = "mdgVersion" }
+almostgradle = { id = "com.almostreliable.almostgradle", version.ref = "almostgradleVersion" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadowVersion" }

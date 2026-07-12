@@ -14,6 +14,8 @@
     "client.MinecraftMixin"
   ],
   "mixins": [
+    "client.CameraEntityRendererAccessor",
+    "client.GeoRendererMixin",
     "common.AbstractHorseMixin",
     "common.GrindstoneBlockMixin",
     "common.LivingEntityMixin",

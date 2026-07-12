@@ -6,6 +6,9 @@ import com.flarelabsmc.cotsl.common.network.NetworkHandler;
 import com.flarelabsmc.cotsl.common.sound.CotSLSoundEvents;
 import com.flarelabsmc.cotsl.common.sound.TrackableSoundInstance;
 import com.flarelabsmc.cotsl.common.storage.user.PermanentUser;
+import com.flarelabsmc.cotsl.core.transform.mixin.client.CameraEntityRendererAccessor;
+import com.github.exopandora.shouldersurfing.client.ShoulderSurfing;
+import com.github.exopandora.shouldersurfing.client.renderer.rendertype.ShoulderSurfingRenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -43,6 +46,8 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
                        S state,
                        float yRot,
                        float xRot) {
+        CameraEntityRendererAccessor car = (CameraEntityRendererAccessor) ShoulderSurfing.getInstance().getCameraEntityRenderer();
+        car.setRenderingCameraEntity(true);
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
         AvatarRenderStateDuck ext = (AvatarRenderStateDuck) state;
@@ -84,9 +89,10 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
 
         stack.mulPose(Axis.ZP.rotationDegrees(2.5f));
 
-        RenderType type = RenderTypes.entityTranslucent(Identifier.parse("cotsl:textures/skin/mouth/mouth_" + user.getCharacterData().skinColor() + ".png"));
+        RenderType type = ShoulderSurfingRenderTypes.entityTranslucentItemTarget(Identifier.parse("cotsl:textures/skin/mouth/mouth_" + user.getCharacterData().skinColor() + ".png"));
         collector.submitModelPart(mouthModel.mouthPoses[pose], stack, type, packedLight, OverlayTexture.NO_OVERLAY, null);
         stack.popPose();
+        car.setRenderingCameraEntity(false);
     }
 
     public static class PlayerMouthModel extends EntityModel<AvatarRenderState> {
@@ -97,7 +103,7 @@ public class PlayerMouthRenderLayer<S extends AvatarRenderState, M extends Playe
         ModelPart[] mouthPoses;
 
         public PlayerMouthModel(ModelPart root) {
-            super(root);
+            super(root, ShoulderSurfingRenderTypes::entityTranslucentItemTarget);
 
             this.mouthPoses = new ModelPart[9];
             for (int i = 0; i < 9; i++) this.mouthPoses[i] = root.getChild("mouth_" + i);

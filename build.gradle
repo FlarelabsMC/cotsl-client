@@ -4,10 +4,10 @@ import java.util.zip.ZipFile
 
 plugins {
     id 'java-library'
-    id 'net.neoforged.moddev' version "${mdgVersion}"
-    id 'com.almostreliable.almostgradle' version "${almostgradleVersion}"
     id 'idea'
-    id 'com.gradleup.shadow' version "${shadowVersion}"
+    alias(libs.plugins.neoforge.moddev)
+    alias(libs.plugins.almostgradle)
+    alias(libs.plugins.shadow)
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -130,40 +130,45 @@ configurations {
 dependencies {
     // deps for local database storage
     // I really hate NBT
-    jarJar(implementation("org.xerial:sqlite-jdbc:${sqliteJdbcVersion}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-core:${ormliteVersion}"))
-    jarJar(implementation("com.j256.ormlite:ormlite-jdbc:${ormliteVersion}"))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-databind:${jacksonCoreVersion}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.core:jackson-annotations:${jacksonCoreVersion}")))
-    jarJar(implementation(embed("com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonModuleVersion}")))
-    jarJar(implementation("com.github.luben:zstd-jni:${zstdJniVersion}"))
+    jarJar(implementation(libs.sqlite.jdbc.get()))
+    jarJar(implementation(libs.ormlite.core.get()))
+    jarJar(implementation(libs.ormlite.jdbc.get()))
+    jarJar(implementation(embed(libs.jackson.core.get())))
+    jarJar(implementation(embed(libs.jackson.databind.get())))
+    jarJar(implementation(embed(libs.jackson.annotations.get())))
+    jarJar(implementation(embed(libs.jackson.module.parameter.names.get())))
+    jarJar(implementation(libs.zstd.jni.get()))
 
     // qtjambi for launcher ui
-    embed "io.qtjambi:qtjambi:${qtVersion}"
-    embed "io.qtjambi:qtjambi-qml:${qtVersion}"
-    embed "io.qtjambi:qtjambi-quick:${qtVersion}"
+    embed libs.qtjambi
+    embed libs.qtjambi.qml
+    embed libs.qtjambi.quick
+
     allPlatforms.each { platform ->
         def cfg = "embedNative_${platform.replace('-', '_')}"
-        dependencies.add(cfg, "io.qtjambi:qtjambi-native-${platform}:${qtVersion}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-qml-native-${platform}:${qtVersion}")
-        dependencies.add(cfg, "io.qtjambi:qtjambi-quick-native-${platform}:${qtVersion}")
+        def key = platform.replace('-x64', '')
+
+        dependencies.add(cfg, libs.qtjambi.native."${key}")
+        dependencies.add(cfg, libs.qtjambi.qml.native."${key}")
+        dependencies.add(cfg, libs.qtjambi.quick.native."${key}")
     }
 
     // launcher auth
-    jarJar(implementation(embed("net.raphimc:MinecraftAuth:${minecraftauthVersion}")))
+    jarJar(implementation(embed(libs.minecraftAuth.get())))
 
     // utility
-    implementation(jarJar("com.geckolib:geckolib-neoforge-${minecraftVersion}:${geckolibVersion}"))
-    implementation(jarJar("maven.modrinth:player-animation-library:${palVersion}"))
+    implementation(jarJar(libs.geckolib.get()))
+    implementation(jarJar(libs.player.animation.library.get()))
 
-    shadow("net.lenni0451.classtransform:core:${classtransformVersion}")
+    shadow(libs.classtransform.core.get())
 
-    implementation("maven.modrinth:blazesdl:${blazesdlVersion}")
-    implementation("org.lwjgl:lwjgl:${lwjglVersion}")
-    implementation("org.lwjgl:lwjgl-sdl:${lwjglVersion}")
+    implementation(libs.blazesdl.get())
+    implementation(libs.lwjgl)
+    implementation(libs.lwjgl.sdl.get())
 
-    shadow("com.jsoftbiz:os-platform-finder:1.1");
+    // other
+    shadow(libs.os.platform.finder.get())
+    implementation(libs.shoulder.surfing.get())
 }
 
 tasks.register('downloadRhubarb') {
@@ -522,10 +527,6 @@ tasks.named('jar', Jar) {
     }
     from(configurations["embedNative_${currentPlatform.replace('-', '_')}"]) {
         into 'META-INF/extjarjar'
-    }
-    manifest {
-        attributes 'Main-Class': 'com.flarelabsmc.cotsl.launch.Launcher'
-        attributes 'Premain-Class': 'com.flarelabsmc.cotsl.launch.Agent'
     }
 }
 

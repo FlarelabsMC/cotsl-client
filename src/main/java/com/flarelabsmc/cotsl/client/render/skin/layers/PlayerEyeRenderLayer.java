@@ -1,6 +1,9 @@
 package com.flarelabsmc.cotsl.client.render.skin.layers;
 
 import com.flarelabsmc.cotsl.core.transform.duck.AvatarRenderStateDuck;
+import com.flarelabsmc.cotsl.core.transform.mixin.client.CameraEntityRendererAccessor;
+import com.github.exopandora.shouldersurfing.client.ShoulderSurfing;
+import com.github.exopandora.shouldersurfing.client.renderer.rendertype.ShoulderSurfingRenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -16,7 +19,6 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -40,28 +42,14 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
 
     @Override
     public void submit(PoseStack stack, SubmitNodeCollector collector, int packedLight, S state, float yRot, float xRot) {
+        CameraEntityRendererAccessor car = (CameraEntityRendererAccessor) ShoulderSurfing.getInstance().getCameraEntityRenderer();
+        car.setRenderingCameraEntity(true);
         long now = System.currentTimeMillis();
         float delta = (Mth.clamp(now - then, 1, 1000)) / 50f;
 
-        if (state.walkAnimationSpeed > 0.01f) {
-            idleTimer = 0;
-            nextMoveTick = 0;
-            eyeTargetX = 0;
-        } else idleTimer += (int)(now - then);
 
-        then = now;
-
-        if (idleTimer > 5000) {
-            if (idleTimer >= nextMoveTick) {
-                eyeTargetX = (float)(Math.random() * 0.06f - 0.03f);
-                nextMoveTick = (idleTimer + 60 + (int)(Math.random() * 5000));
-            }
-        }
-
-
-        float eyeLerp = 1f - (float) Math.pow(1f - 0.5f, delta);
-        eyeCurrentX  = Mth.lerp(eyeLerp,  eyeCurrentX,  eyeTargetX);
-        eyeModel.setIdleOffset(eyeCurrentX);
+        float eyeLerp = 1f - (float) Math.pow(0.5f, delta);
+        eyeCurrentX = Mth.lerp(eyeLerp, eyeCurrentX, eyeTargetX);
 
         stack.pushPose();
         this.getParentModel().head.translateAndRotate(stack);
@@ -70,7 +58,7 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
                 eyeModel,
                 state,
                 stack,
-                RenderTypes.entityTranslucent(
+                ShoulderSurfingRenderTypes.entityTranslucentItemTarget(
                         Identifier.parse("cotsl:avatars/" + uuid)
                 ),
                 packedLight,
@@ -81,22 +69,18 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
                 null
         );
         stack.popPose();
+        car.setRenderingCameraEntity(false);
+        then = now;
     }
 
     public static class PlayerEyeModel extends EntityModel<AvatarRenderState> {
         public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Identifier.parse("cotsl:eyes"), "main");
         private final ModelPart leftEye, rightEye;
 
-        private float idleOffsetX;
-
         public PlayerEyeModel(ModelPart root) {
-            super(root);
+            super(root, ShoulderSurfingRenderTypes::entityTranslucentItemTarget);
             this.leftEye = root.getChild("left_eye");
             this.rightEye = root.getChild("right_eye");
-        }
-
-        public void setIdleOffset(float x) {
-            this.idleOffsetX = x;
         }
 
         public static LayerDefinition createLayer() {
@@ -125,8 +109,8 @@ public class PlayerEyeRenderLayer<S extends AvatarRenderState, M extends PlayerM
         @Override
         public void setupAnim(AvatarRenderState state) {
             float diff = ((Mth.wrapDegrees(state.bodyRot) * Mth.DEG_TO_RAD) - state.yRot) * 3f;
-            this.leftEye.x = diff / 360 + idleOffsetX;
-            this.rightEye.x = diff / 360 + idleOffsetX;
+            this.leftEye.x = diff / 360;
+            this.rightEye.x = diff / 360;
         }
     }
 }

@@ -14,31 +14,31 @@ Contains every module and internal API for Crypt of the Second Lord.
 '''
 [[mixins]]
 config="${modId}.mixins.json"
-#[[accessTransformers]]
-#file="META-INF/accesstransformer.cfg"
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
 [[dependencies.${modId}]]
     modId="neoforge"
     type="required"
-    #reason="..."
-    versionRange="[${neoforgeVersion},)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.${modId}]]
     modId="minecraft"
     type="required"
-    versionRange="${minecraftVersionRange}"
     ordering="NONE"
     side="BOTH"
 [[dependencies.${modId}]]
     modId="blazesdl"
     type="required"
-    versionRange="[${blazesdlVersion},)"
     ordering="NONE"
     side="CLIENT"
 [[dependencies.${modId}]]
     modId="player_animation_library"
     type="required"
-    versionRange="[${palVersion},)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.${modId}]]
+    modId="shouldersurfing"
+    type="required"
     ordering="NONE"
     side="BOTH"
 #[features.${modId}]
