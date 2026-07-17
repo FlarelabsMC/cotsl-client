@@ -1,7 +1,7 @@
 [versions]
 almostgradleVersion = "2.3.0"
 shadowVersion = "9.6.0"
-mdgVersion = "2.0.141"
+mdgVersion = "2.0.142"
 
 qtVersion = "6.11.1"
 
