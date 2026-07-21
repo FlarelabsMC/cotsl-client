@@ -13,7 +13,7 @@ zstdJniVersion = "1.5.7-11"
 
 geckolibVersion = "5.5.3"
 palVersion = "g8XDqDTi"
-blazesdlVersion = "0.1.10"
+blazesdlVersion = "0.1.11"
 minecraftauthVersion = "5.0.1"
 classtransformVersion = "1.15.0"
 lwjglVersion = "3.4.1"
