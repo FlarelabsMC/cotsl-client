@@ -9,7 +9,7 @@ sqliteJdbcVersion = "3.53.2.0"
 ormliteVersion = "6.1"
 jacksonCoreVersion = "2.15.0"
 jacksonModuleVersion = "2.18.2"
-zstdJniVersion = "1.5.7-11"
+zstdJniVersion = "1.5.7-12"
 
 geckolibVersion = "5.5.3"
 palVersion = "g8XDqDTi"
